@@ -123,3 +123,8 @@ dist/protocol.schema.json
 # Synthing
 **/.stfolder/
 .dev-state
+
+# OpenClaw state directories (NEVER COMMIT)
+.openclaw-upstream-state/
+.openclaw-zero-state/
+dev-debug.sh

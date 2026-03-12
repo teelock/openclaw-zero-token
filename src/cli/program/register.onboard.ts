@@ -12,6 +12,7 @@ import type {
   TailscaleMode,
 } from "../../commands/onboard-types.js";
 import { onboardCommand } from "../../commands/onboard.js";
+import { runOnboardWebAuth } from "../../commands/onboard-web-auth.js";
 import { defaultRuntime } from "../../runtime.js";
 import { formatDocsLink } from "../../terminal/links.js";
 import { theme } from "../../terminal/theme.js";
@@ -54,7 +55,21 @@ export function registerOnboardCommand(program: Command) {
       "after",
       () =>
         `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/onboard", "docs.openclaw.ai/cli/onboard")}\n`,
+    );
+
+  program
+    .command("webauth")
+    .description("Authorize Web AI models (Claude, ChatGPT, DeepSeek, etc.)")
+    .addHelpText(
+      "after",
+      () =>
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/providers/web-models", "docs.openclaw.ai/providers/web-models")}\n`,
     )
+    .action(async () => {
+      await runOnboardWebAuth();
+    });
+
+  command
     .option("--workspace <dir>", "Agent workspace directory (default: ~/.openclaw/workspace)")
     .option(
       "--reset",

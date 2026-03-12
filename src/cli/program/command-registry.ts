@@ -67,6 +67,19 @@ const coreEntries: CoreCliEntry[] = [
   {
     commands: [
       {
+        name: "webauth",
+        description: "Authorize Web AI models (Claude, ChatGPT, DeepSeek, etc.)",
+        hasSubcommands: false,
+      },
+    ],
+    register: async ({ program }) => {
+      const mod = await import("./register.webauth.js");
+      mod.registerWebauthCommand(program);
+    },
+  },
+  {
+    commands: [
+      {
         name: "configure",
         description:
           "Interactive setup wizard for credentials, channels, gateway, and agent defaults",
