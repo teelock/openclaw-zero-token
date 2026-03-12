@@ -490,7 +490,7 @@ function countHiddenCronSessions(sessionKey: string, sessions: SessionsListResul
 const THEME_ORDER: ThemeMode[] = ["system", "light", "dark"];
 
 export function renderThemeToggle(state: AppViewState) {
-  const index = Math.max(0, THEME_ORDER.indexOf(state.themeMode));
+  const index = Math.max(0, THEME_ORDER.indexOf(state.theme));
   const applyTheme = (next: ThemeMode) => (event: MouseEvent) => {
     const element = event.currentTarget as HTMLElement;
     const context: ThemeTransitionContext = { element };
@@ -498,7 +498,7 @@ export function renderThemeToggle(state: AppViewState) {
       context.pointerClientX = event.clientX;
       context.pointerClientY = event.clientY;
     }
-    state.setThemeMode(next, context);
+    state.setTheme(next, context);
   };
 
   return html`
@@ -506,27 +506,27 @@ export function renderThemeToggle(state: AppViewState) {
       <div class="theme-toggle__track" role="group" aria-label="Theme">
         <span class="theme-toggle__indicator"></span>
         <button
-          class="theme-toggle__button ${state.themeMode === "system" ? "active" : ""}"
+          class="theme-toggle__button ${state.theme === "system" ? "active" : ""}"
           @click=${applyTheme("system")}
-          aria-pressed=${state.themeMode === "system"}
+          aria-pressed=${state.theme === "system"}
           aria-label="System theme"
           title="System"
         >
           ${renderMonitorIcon()}
         </button>
         <button
-          class="theme-toggle__button ${state.themeMode === "light" ? "active" : ""}"
+          class="theme-toggle__button ${state.theme === "light" ? "active" : ""}"
           @click=${applyTheme("light")}
-          aria-pressed=${state.themeMode === "light"}
+          aria-pressed=${state.theme === "light"}
           aria-label="Light theme"
           title="Light"
         >
           ${renderSunIcon()}
         </button>
         <button
-          class="theme-toggle__button ${state.themeMode === "dark" ? "active" : ""}"
+          class="theme-toggle__button ${state.theme === "dark" ? "active" : ""}"
           @click=${applyTheme("dark")}
-          aria-pressed=${state.themeMode === "dark"}
+          aria-pressed=${state.theme === "dark"}
           aria-label="Dark theme"
           title="Dark"
         >

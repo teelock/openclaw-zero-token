@@ -222,10 +222,15 @@ pnpm ui:build
 # Start Chrome in debug mode
 ./start-chrome-debug.sh
 
+# IMPORTANT: Do not close this terminal, otherwise subsequent steps will fail.
+# Keep this terminal open throughout the process.
+
 # Log into each web model once (for example DeepSeek)
 #   https://chat.deepseek.com/
 
 # Run onboarding wizard
+# IMPORTANT: Open a new terminal for this step (do not use the same terminal as the previous step,
+# because the ./start-chrome-debug.sh terminal needs to stay open).
 ./onboard.sh webauth
 
 

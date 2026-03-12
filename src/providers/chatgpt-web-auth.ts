@@ -101,13 +101,24 @@ export async function loginChatGPTWeb(params: {
           const cookieNames = cookies.map((c) => c.name);
           console.log(`[ChatGPT] Found cookies: ${cookieNames.join(", ")}`);
 
-          // Look for session token
+          // Look for session token (may be split into .0 and .1 parts)
           const sessionCookie = cookies.find(
             (c) => c.name === "__Secure-next-auth.session-token"
           );
 
-          if (sessionCookie || capturedAccessToken) {
-            const finalToken = capturedAccessToken || sessionCookie?.value || "";
+          // Handle split session tokens (.0 and .1)
+          let splitToken = "";
+          if (!sessionCookie) {
+            const token0 = cookies.find((c) => c.name === "__Secure-next-auth.session-token.0");
+            const token1 = cookies.find((c) => c.name === "__Secure-next-auth.session-token.1");
+            if (token0 && token1) {
+              splitToken = token0.value + token1.value;
+              console.log(`[ChatGPT] Found split session token (.0 + .1)`);
+            }
+          }
+
+          if (sessionCookie || capturedAccessToken || splitToken) {
+            const finalToken = capturedAccessToken || sessionCookie?.value || splitToken || "";
             
             if (finalToken) {
               resolved = true;

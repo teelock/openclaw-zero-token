@@ -48,12 +48,10 @@ import {
   resetToolStream as resetToolStreamInternal,
   type ToolStreamEntry,
   type CompactionStatus,
-  type FallbackStatus,
 } from "./app-tool-stream.ts";
 import type { AppViewState } from "./app-view-state.ts";
 import { normalizeAssistantIdentity } from "./assistant-identity.ts";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity.ts";
-import type { CronFieldErrors } from "./controllers/cron.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
@@ -78,12 +76,10 @@ import type {
   ChannelsStatusSnapshot,
   SessionsListResult,
   SkillStatusReport,
-  ToolsCatalogResult,
   StatusSummary,
   NostrProfile,
 } from "./types.ts";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types.ts";
-import { generateUUID } from "./uuid.ts";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form.ts";
 
 declare global {
@@ -110,185 +106,174 @@ function resolveOnboardingMode(): boolean {
 @customElement("openclaw-app")
 export class OpenClawApp extends LitElement {
   private i18nController = new I18nController(this);
-  clientInstanceId = generateUUID();
-  connectGeneration = 0;
-  @state() settings: UiSettings = loadSettings();
+  @state() accessor settings: UiSettings = loadSettings();
   constructor() {
     super();
     if (isSupportedLocale(this.settings.locale)) {
       void i18n.setLocale(this.settings.locale);
     }
   }
-  @state() password = "";
-  @state() tab: Tab = "chat";
-  @state() onboarding = resolveOnboardingMode();
-  @state() connected = false;
-  @state() theme: ThemeMode = this.settings.theme ?? "system";
-  @state() themeResolved: ResolvedTheme = "dark";
-  @state() hello: GatewayHelloOk | null = null;
-  @state() lastError: string | null = null;
-  @state() lastErrorCode: string | null = null;
-  @state() eventLog: EventLogEntry[] = [];
+  @state() accessor password = "";
+  @state() accessor tab: Tab = "chat";
+  @state() accessor onboarding = resolveOnboardingMode();
+  @state() accessor connected = false;
+  @state() accessor theme: ThemeMode = this.settings.theme ?? "system";
+  @state() accessor themeResolved: ResolvedTheme = "dark";
+  @state() accessor hello: GatewayHelloOk | null = null;
+  @state() accessor lastError: string | null = null;
+  @state() accessor eventLog: EventLogEntry[] = [];
   private eventLogBuffer: EventLogEntry[] = [];
   private toolStreamSyncTimer: number | null = null;
   private sidebarCloseTimer: number | null = null;
 
-  @state() assistantName = bootAssistantIdentity.name;
-  @state() assistantAvatar = bootAssistantIdentity.avatar;
-  @state() assistantAgentId = bootAssistantIdentity.agentId ?? null;
-  @state() serverVersion: string | null = null;
+  @state() accessor assistantName = bootAssistantIdentity.name;
+  @state() accessor assistantAvatar = bootAssistantIdentity.avatar;
+  @state() accessor assistantAgentId = bootAssistantIdentity.agentId ?? null;
 
-  @state() sessionKey = this.settings.sessionKey;
-  @state() chatLoading = false;
-  @state() chatSending = false;
-  @state() chatMessage = "";
-  @state() chatMessages: unknown[] = [];
-  @state() chatToolMessages: unknown[] = [];
-  @state() chatStreamSegments: Array<{ text: string; ts: number }> = [];
-  @state() chatStream: string | null = null;
-  @state() chatStreamStartedAt: number | null = null;
-  @state() chatRunId: string | null = null;
-  @state() compactionStatus: CompactionStatus | null = null;
-  @state() fallbackStatus: FallbackStatus | null = null;
-  @state() chatAvatarUrl: string | null = null;
-  @state() chatThinkingLevel: string | null = null;
-  @state() chatQueue: ChatQueueItem[] = [];
-  @state() chatAttachments: ChatAttachment[] = [];
-  @state() chatManualRefreshInFlight = false;
+  @state() accessor sessionKey = this.settings.sessionKey;
+  @state() accessor chatLoading = false;
+  @state() accessor chatSending = false;
+  @state() accessor chatMessage = "";
+  @state() accessor chatMessages: unknown[] = [];
+  @state() accessor chatToolMessages: unknown[] = [];
+  @state() accessor chatStream: string | null = null;
+  @state() accessor chatStreamStartedAt: number | null = null;
+  @state() accessor chatRunId: string | null = null;
+  @state() accessor compactionStatus: CompactionStatus | null = null;
+  @state() accessor chatAvatarUrl: string | null = null;
+  @state() accessor chatThinkingLevel: string | null = null;
+  @state() accessor chatQueue: ChatQueueItem[] = [];
+  @state() accessor chatAttachments: ChatAttachment[] = [];
+  @state() accessor chatManualRefreshInFlight = false;
   // Sidebar state for tool output viewing
-  @state() sidebarOpen = false;
-  @state() sidebarContent: string | null = null;
-  @state() sidebarError: string | null = null;
-  @state() splitRatio = this.settings.splitRatio;
+  @state() accessor sidebarOpen = false;
+  @state() accessor sidebarContent: string | null = null;
+  @state() accessor sidebarError: string | null = null;
+  @state() accessor splitRatio = this.settings.splitRatio;
 
-  @state() nodesLoading = false;
-  @state() nodes: Array<Record<string, unknown>> = [];
-  @state() devicesLoading = false;
-  @state() devicesError: string | null = null;
-  @state() devicesList: DevicePairingList | null = null;
-  @state() execApprovalsLoading = false;
-  @state() execApprovalsSaving = false;
-  @state() execApprovalsDirty = false;
-  @state() execApprovalsSnapshot: ExecApprovalsSnapshot | null = null;
-  @state() execApprovalsForm: ExecApprovalsFile | null = null;
-  @state() execApprovalsSelectedAgent: string | null = null;
-  @state() execApprovalsTarget: "gateway" | "node" = "gateway";
-  @state() execApprovalsTargetNodeId: string | null = null;
-  @state() execApprovalQueue: ExecApprovalRequest[] = [];
-  @state() execApprovalBusy = false;
-  @state() execApprovalError: string | null = null;
-  @state() pendingGatewayUrl: string | null = null;
-  pendingGatewayToken: string | null = null;
+  @state() accessor nodesLoading = false;
+  @state() accessor nodes: Array<Record<string, unknown>> = [];
+  @state() accessor devicesLoading = false;
+  @state() accessor devicesError: string | null = null;
+  @state() accessor devicesList: DevicePairingList | null = null;
+  @state() accessor execApprovalsLoading = false;
+  @state() accessor execApprovalsSaving = false;
+  @state() accessor execApprovalsDirty = false;
+  @state() accessor execApprovalsSnapshot: ExecApprovalsSnapshot | null = null;
+  @state() accessor execApprovalsForm: ExecApprovalsFile | null = null;
+  @state() accessor execApprovalsSelectedAgent: string | null = null;
+  @state() accessor execApprovalsTarget: "gateway" | "node" = "gateway";
+  @state() accessor execApprovalsTargetNodeId: string | null = null;
+  @state() accessor execApprovalQueue: ExecApprovalRequest[] = [];
+  @state() accessor execApprovalBusy = false;
+  @state() accessor execApprovalError: string | null = null;
+  @state() accessor pendingGatewayUrl: string | null = null;
 
-  @state() configLoading = false;
-  @state() configRaw = "{\n}\n";
-  @state() configRawOriginal = "";
-  @state() configValid: boolean | null = null;
-  @state() configIssues: unknown[] = [];
-  @state() configSaving = false;
-  @state() configApplying = false;
-  @state() updateRunning = false;
-  @state() applySessionKey = this.settings.lastActiveSessionKey;
-  @state() configSnapshot: ConfigSnapshot | null = null;
-  @state() configSchema: unknown = null;
-  @state() configSchemaVersion: string | null = null;
-  @state() configSchemaLoading = false;
-  @state() configUiHints: ConfigUiHints = {};
-  @state() configForm: Record<string, unknown> | null = null;
-  @state() configFormOriginal: Record<string, unknown> | null = null;
-  @state() configFormDirty = false;
-  @state() configFormMode: "form" | "raw" = "form";
-  @state() configSearchQuery = "";
-  @state() configActiveSection: string | null = null;
-  @state() configActiveSubsection: string | null = null;
+  @state() accessor configLoading = false;
+  @state() accessor configRaw = "{\n}\n";
+  @state() accessor configRawOriginal = "";
+  @state() accessor configValid: boolean | null = null;
+  @state() accessor configIssues: unknown[] = [];
+  @state() accessor configSaving = false;
+  @state() accessor configApplying = false;
+  @state() accessor updateRunning = false;
+  @state() accessor applySessionKey = this.settings.lastActiveSessionKey;
+  @state() accessor configSnapshot: ConfigSnapshot | null = null;
+  @state() accessor configSchema: unknown = null;
+  @state() accessor configSchemaVersion: string | null = null;
+  @state() accessor configSchemaLoading = false;
+  @state() accessor configUiHints: ConfigUiHints = {};
+  @state() accessor configForm: Record<string, unknown> | null = null;
+  @state() accessor configFormOriginal: Record<string, unknown> | null = null;
+  @state() accessor configFormDirty = false;
+  @state() accessor configFormMode: "form" | "raw" = "form";
+  @state() accessor configSearchQuery = "";
+  @state() accessor configActiveSection: string | null = null;
+  @state() accessor configActiveSubsection: string | null = null;
 
-  @state() channelsLoading = false;
-  @state() channelsSnapshot: ChannelsStatusSnapshot | null = null;
-  @state() channelsError: string | null = null;
-  @state() channelsLastSuccess: number | null = null;
-  @state() whatsappLoginMessage: string | null = null;
-  @state() whatsappLoginQrDataUrl: string | null = null;
-  @state() whatsappLoginConnected: boolean | null = null;
-  @state() whatsappBusy = false;
-  @state() nostrProfileFormState: NostrProfileFormState | null = null;
-  @state() nostrProfileAccountId: string | null = null;
+  @state() accessor channelsLoading = false;
+  @state() accessor channelsSnapshot: ChannelsStatusSnapshot | null = null;
+  @state() accessor channelsError: string | null = null;
+  @state() accessor channelsLastSuccess: number | null = null;
+  @state() accessor whatsappLoginMessage: string | null = null;
+  @state() accessor whatsappLoginQrDataUrl: string | null = null;
+  @state() accessor whatsappLoginConnected: boolean | null = null;
+  @state() accessor whatsappBusy = false;
+  @state() accessor nostrProfileFormState: NostrProfileFormState | null = null;
+  @state() accessor nostrProfileAccountId: string | null = null;
 
-  @state() presenceLoading = false;
-  @state() presenceEntries: PresenceEntry[] = [];
-  @state() presenceError: string | null = null;
-  @state() presenceStatus: string | null = null;
+  @state() accessor presenceLoading = false;
+  @state() accessor presenceEntries: PresenceEntry[] = [];
+  @state() accessor presenceError: string | null = null;
+  @state() accessor presenceStatus: string | null = null;
 
-  @state() agentsLoading = false;
-  @state() agentsList: AgentsListResult | null = null;
-  @state() agentsError: string | null = null;
-  @state() agentsSelectedId: string | null = null;
-  @state() toolsCatalogLoading = false;
-  @state() toolsCatalogError: string | null = null;
-  @state() toolsCatalogResult: ToolsCatalogResult | null = null;
-  @state() agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
+  @state() accessor agentsLoading = false;
+  @state() accessor agentsList: AgentsListResult | null = null;
+  @state() accessor agentsError: string | null = null;
+  @state() accessor agentsSelectedId: string | null = null;
+  @state() accessor agentsPanel: "overview" | "files" | "tools" | "skills" | "channels" | "cron" =
     "overview";
-  @state() agentFilesLoading = false;
-  @state() agentFilesError: string | null = null;
-  @state() agentFilesList: AgentsFilesListResult | null = null;
-  @state() agentFileContents: Record<string, string> = {};
-  @state() agentFileDrafts: Record<string, string> = {};
-  @state() agentFileActive: string | null = null;
-  @state() agentFileSaving = false;
-  @state() agentIdentityLoading = false;
-  @state() agentIdentityError: string | null = null;
-  @state() agentIdentityById: Record<string, AgentIdentityResult> = {};
-  @state() agentSkillsLoading = false;
-  @state() agentSkillsError: string | null = null;
-  @state() agentSkillsReport: SkillStatusReport | null = null;
-  @state() agentSkillsAgentId: string | null = null;
+  @state() accessor agentFilesLoading = false;
+  @state() accessor agentFilesError: string | null = null;
+  @state() accessor agentFilesList: AgentsFilesListResult | null = null;
+  @state() accessor agentFileContents: Record<string, string> = {};
+  @state() accessor agentFileDrafts: Record<string, string> = {};
+  @state() accessor agentFileActive: string | null = null;
+  @state() accessor agentFileSaving = false;
+  @state() accessor agentIdentityLoading = false;
+  @state() accessor agentIdentityError: string | null = null;
+  @state() accessor agentIdentityById: Record<string, AgentIdentityResult> = {};
+  @state() accessor agentSkillsLoading = false;
+  @state() accessor agentSkillsError: string | null = null;
+  @state() accessor agentSkillsReport: SkillStatusReport | null = null;
+  @state() accessor agentSkillsAgentId: string | null = null;
 
-  @state() sessionsLoading = false;
-  @state() sessionsResult: SessionsListResult | null = null;
-  @state() sessionsError: string | null = null;
-  @state() sessionsFilterActive = "";
-  @state() sessionsFilterLimit = "120";
-  @state() sessionsIncludeGlobal = true;
-  @state() sessionsIncludeUnknown = false;
-  @state() sessionsHideCron = true;
+  @state() accessor sessionsLoading = false;
+  @state() accessor sessionsResult: SessionsListResult | null = null;
+  @state() accessor sessionsError: string | null = null;
+  @state() accessor sessionsFilterActive = "";
+  @state() accessor sessionsFilterLimit = "120";
+  @state() accessor sessionsIncludeGlobal = true;
+  @state() accessor sessionsIncludeUnknown = false;
 
-  @state() usageLoading = false;
-  @state() usageResult: import("./types.js").SessionsUsageResult | null = null;
-  @state() usageCostSummary: import("./types.js").CostUsageSummary | null = null;
-  @state() usageError: string | null = null;
-  @state() usageStartDate = (() => {
+  @state() accessor usageLoading = false;
+  @state() accessor usageResult: import("./types.js").SessionsUsageResult | null = null;
+  @state() accessor usageCostSummary: import("./types.js").CostUsageSummary | null = null;
+  @state() accessor usageError: string | null = null;
+  @state() accessor usageStartDate = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   })();
-  @state() usageEndDate = (() => {
+  @state() accessor usageEndDate = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   })();
-  @state() usageSelectedSessions: string[] = [];
-  @state() usageSelectedDays: string[] = [];
-  @state() usageSelectedHours: number[] = [];
-  @state() usageChartMode: "tokens" | "cost" = "tokens";
-  @state() usageDailyChartMode: "total" | "by-type" = "by-type";
-  @state() usageTimeSeriesMode: "cumulative" | "per-turn" = "per-turn";
-  @state() usageTimeSeriesBreakdownMode: "total" | "by-type" = "by-type";
-  @state() usageTimeSeries: import("./types.js").SessionUsageTimeSeries | null = null;
-  @state() usageTimeSeriesLoading = false;
-  @state() usageTimeSeriesCursorStart: number | null = null;
-  @state() usageTimeSeriesCursorEnd: number | null = null;
-  @state() usageSessionLogs: import("./views/usage.js").SessionLogEntry[] | null = null;
-  @state() usageSessionLogsLoading = false;
-  @state() usageSessionLogsExpanded = false;
+  @state() accessor usageSelectedSessions: string[] = [];
+  @state() accessor usageSelectedDays: string[] = [];
+  @state() accessor usageSelectedHours: number[] = [];
+  @state() accessor usageChartMode: "tokens" | "cost" = "tokens";
+  @state() accessor usageDailyChartMode: "total" | "by-type" = "by-type";
+  @state() accessor usageTimeSeriesMode: "cumulative" | "per-turn" = "per-turn";
+  @state() accessor usageTimeSeriesBreakdownMode: "total" | "by-type" = "by-type";
+  @state() accessor usageTimeSeries: import("./types.js").SessionUsageTimeSeries | null = null;
+  @state() accessor usageTimeSeriesLoading = false;
+  @state() accessor usageTimeSeriesCursorStart: number | null = null;
+  @state() accessor usageTimeSeriesCursorEnd: number | null = null;
+  @state() accessor usageSessionLogs: import("./views/usage.js").SessionLogEntry[] | null = null;
+  @state() accessor usageSessionLogsLoading = false;
+  @state() accessor usageSessionLogsExpanded = false;
   // Applied query (used to filter the already-loaded sessions list client-side).
-  @state() usageQuery = "";
+  @state() accessor usageQuery = "";
   // Draft query text (updates immediately as the user types; applied via debounce or "Search").
-  @state() usageQueryDraft = "";
-  @state() usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
-  @state() usageSessionSortDir: "desc" | "asc" = "desc";
-  @state() usageRecentSessions: string[] = [];
-  @state() usageTimeZone: "local" | "utc" = "local";
-  @state() usageContextExpanded = false;
-  @state() usageHeaderPinned = false;
-  @state() usageSessionsTab: "all" | "recent" = "all";
-  @state() usageVisibleColumns: string[] = [
+  @state() accessor usageQueryDraft = "";
+  @state() accessor usageSessionSort: "tokens" | "cost" | "recent" | "messages" | "errors" = "recent";
+  @state() accessor usageSessionSortDir: "desc" | "asc" = "desc";
+  @state() accessor usageRecentSessions: string[] = [];
+  @state() accessor usageTimeZone: "local" | "utc" = "local";
+  @state() accessor usageContextExpanded = false;
+  @state() accessor usageHeaderPinned = false;
+  @state() accessor usageSessionsTab: "all" | "recent" = "all";
+  @state() accessor usageVisibleColumns: string[] = [
     "channel",
     "agent",
     "provider",
@@ -298,92 +283,75 @@ export class OpenClawApp extends LitElement {
     "errors",
     "duration",
   ];
-  @state() usageLogFilterRoles: import("./views/usage.js").SessionLogRole[] = [];
-  @state() usageLogFilterTools: string[] = [];
-  @state() usageLogFilterHasTools = false;
-  @state() usageLogFilterQuery = "";
+  @state() accessor usageLogFilterRoles: import("./views/usage.js").SessionLogRole[] = [];
+  @state() accessor usageLogFilterTools: string[] = [];
+  @state() accessor usageLogFilterHasTools = false;
+  @state() accessor usageLogFilterQuery = "";
 
   // Non-reactive (don’t trigger renders just for timer bookkeeping).
   usageQueryDebounceTimer: number | null = null;
 
-  @state() cronLoading = false;
-  @state() cronJobsLoadingMore = false;
-  @state() cronJobs: CronJob[] = [];
-  @state() cronJobsTotal = 0;
-  @state() cronJobsHasMore = false;
-  @state() cronJobsNextOffset: number | null = null;
-  @state() cronJobsLimit = 50;
-  @state() cronJobsQuery = "";
-  @state() cronJobsEnabledFilter: import("./types.js").CronJobsEnabledFilter = "all";
-  @state() cronJobsScheduleKindFilter: import("./controllers/cron.js").CronJobsScheduleKindFilter =
-    "all";
-  @state() cronJobsLastStatusFilter: import("./controllers/cron.js").CronJobsLastStatusFilter =
-    "all";
-  @state() cronJobsSortBy: import("./types.js").CronJobsSortBy = "nextRunAtMs";
-  @state() cronJobsSortDir: import("./types.js").CronSortDir = "asc";
-  @state() cronStatus: CronStatus | null = null;
-  @state() cronError: string | null = null;
-  @state() cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
-  @state() cronFieldErrors: CronFieldErrors = {};
-  @state() cronEditingJobId: string | null = null;
-  @state() cronRunsJobId: string | null = null;
-  @state() cronRunsLoadingMore = false;
-  @state() cronRuns: CronRunLogEntry[] = [];
-  @state() cronRunsTotal = 0;
-  @state() cronRunsHasMore = false;
-  @state() cronRunsNextOffset: number | null = null;
-  @state() cronRunsLimit = 50;
-  @state() cronRunsScope: import("./types.js").CronRunScope = "all";
-  @state() cronRunsStatuses: import("./types.js").CronRunsStatusValue[] = [];
-  @state() cronRunsDeliveryStatuses: import("./types.js").CronDeliveryStatus[] = [];
-  @state() cronRunsStatusFilter: import("./types.js").CronRunsStatusFilter = "all";
-  @state() cronRunsQuery = "";
-  @state() cronRunsSortDir: import("./types.js").CronSortDir = "desc";
-  @state() cronModelSuggestions: string[] = [];
-  @state() cronBusy = false;
+  @state() accessor cronLoading = false;
+  @state() accessor cronJobs: CronJob[] = [];
+  @state() accessor cronStatus: CronStatus | null = null;
+  @state() accessor cronError: string | null = null;
+  @state() accessor cronForm: CronFormState = { ...DEFAULT_CRON_FORM };
+  @state() accessor cronRunsJobId: string | null = null;
+  @state() accessor cronRuns: CronRunLogEntry[] = [];
+  @state() accessor cronBusy = false;
 
-  @state() updateAvailable: import("./types.js").UpdateAvailable | null = null;
+  @state() accessor updateAvailable: import("./types.js").UpdateAvailable | null = null;
 
-  @state() skillsLoading = false;
-  @state() skillsReport: SkillStatusReport | null = null;
-  @state() skillsError: string | null = null;
-  @state() skillsFilter = "";
-  @state() skillEdits: Record<string, string> = {};
-  @state() skillsBusyKey: string | null = null;
-  @state() skillMessages: Record<string, SkillMessage> = {};
+  @state() accessor skillsLoading = false;
+  @state() accessor skillsReport: SkillStatusReport | null = null;
+  @state() accessor skillsError: string | null = null;
+  @state() accessor skillsFilter = "";
+  @state() accessor skillEdits: Record<string, string> = {};
+  @state() accessor skillsBusyKey: string | null = null;
+  @state() accessor skillMessages: Record<string, SkillMessage> = {};
 
-  @state() debugLoading = false;
-  @state() debugStatus: StatusSummary | null = null;
-  @state() debugHealth: HealthSnapshot | null = null;
-  @state() debugModels: unknown[] = [];
-  @state() debugHeartbeat: unknown = null;
-  @state() debugCallMethod = "";
-  @state() debugCallParams = "{}";
-  @state() debugCallResult: string | null = null;
-  @state() debugCallError: string | null = null;
+  @state() accessor debugLoading = false;
+  @state() accessor debugStatus: StatusSummary | null = null;
+  @state() accessor debugHealth: HealthSnapshot | null = null;
+  @state() accessor debugModels: unknown[] = [];
+  @state() accessor debugHeartbeat: unknown = null;
+  @state() accessor debugCallMethod = "";
+  @state() accessor debugCallParams = "{}";
+  @state() accessor debugCallResult: string | null = null;
+  @state() accessor debugCallError: string | null = null;
 
-  @state() logsLoading = false;
-  @state() logsError: string | null = null;
-  @state() logsFile: string | null = null;
-  @state() logsEntries: LogEntry[] = [];
-  @state() logsFilterText = "";
-  @state() logsLevelFilters: Record<LogLevel, boolean> = {
+  @state() accessor logsLoading = false;
+  @state() accessor logsError: string | null = null;
+  @state() accessor logsFile: string | null = null;
+  @state() accessor logsEntries: LogEntry[] = [];
+  @state() accessor logsFilterText = "";
+  @state() accessor logsLevelFilters: Record<LogLevel, boolean> = {
     ...DEFAULT_LOG_LEVEL_FILTERS,
   };
-  @state() logsAutoFollow = true;
-  @state() logsTruncated = false;
-  @state() logsCursor: number | null = null;
-  @state() logsLastFetchAt: number | null = null;
-  @state() logsLimit = 500;
-  @state() logsMaxBytes = 250_000;
-  @state() logsAtBottom = true;
+  @state() accessor logsAutoFollow = true;
+  @state() accessor logsTruncated = false;
+  @state() accessor logsCursor: number | null = null;
+  @state() accessor logsLastFetchAt: number | null = null;
+  @state() accessor logsLimit = 500;
+  @state() accessor logsMaxBytes = 250_000;
+  @state() accessor logsAtBottom = true;
+
+  // AskOnce state
+  @state() accessor askonceModelsLoading = false;
+  @state() accessor askonceModels: import("./controllers/askonce.js").AskOnceModelInfo[] = [];
+  @state() accessor askonceModelsError: string | null = null;
+  @state() accessor askonceQueryLoading = false;
+  @state() accessor askonceQueryQuestion = "";
+  @state() accessor askonceQueryResult: import("./controllers/askonce.js").AskOnceQueryResult | null = null;
+  @state() accessor askonceQueryError: string | null = null;
+  @state() accessor askonceSelectedModels: string[] = [];
 
   client: GatewayBrowserClient | null = null;
   private chatScrollFrame: number | null = null;
   private chatScrollTimeout: number | null = null;
   private chatHasAutoScrolled = false;
   private chatUserNearBottom = true;
-  @state() chatNewMessagesBelow = false;
+  @state() accessor chatNewMessagesBelow = false;
   private nodesPollInterval: number | null = null;
   private logsPollInterval: number | null = null;
   private debugPollInterval: number | null = null;
@@ -574,20 +542,16 @@ export class OpenClawApp extends LitElement {
     if (!nextGatewayUrl) {
       return;
     }
-    const nextToken = this.pendingGatewayToken?.trim() || "";
     this.pendingGatewayUrl = null;
-    this.pendingGatewayToken = null;
     applySettingsInternal(this as unknown as Parameters<typeof applySettingsInternal>[0], {
       ...this.settings,
       gatewayUrl: nextGatewayUrl,
-      token: nextToken,
     });
     this.connect();
   }
 
   handleGatewayUrlCancel() {
     this.pendingGatewayUrl = null;
-    this.pendingGatewayToken = null;
   }
 
   // Sidebar handlers for tool output viewing

@@ -272,12 +272,15 @@ pnpm ui:build
 
 # 启动浏览器调试模式
 ./start-chrome-debug.sh
+注意不要关闭这个终端，否则后续步骤会失败，要一直打开它
+
 
 # 登录各模型网页
 以 DeepSeek 为例，登录 https://chat.deepseek.com/
 
 
 # 运行配置向导
+新开一个终端执行（不要和上一步在同一个终端，因为./start-chrome-debug.sh终端要一直开着）
 ./onboard.sh webauth
 # 或使用编译后的版本
 node openclaw.mjs onboard
