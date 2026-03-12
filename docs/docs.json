@@ -104,10 +104,6 @@
       "destination": "/providers/opencode"
     },
     {
-      "source": "/opencode-go",
-      "destination": "/providers/opencode-go"
-    },
-    {
       "source": "/qianfan",
       "destination": "/providers/qianfan"
     },
@@ -876,7 +872,6 @@
                 "group": "Hosting and deployment",
                 "pages": [
                   "vps",
-                  "install/kubernetes",
                   "install/fly",
                   "install/hetzner",
                   "install/gcp",
@@ -1018,7 +1013,8 @@
                   "tools/browser",
                   "tools/browser-login",
                   "tools/chrome-extension",
-                  "tools/browser-linux-troubleshooting"
+                  "tools/browser-linux-troubleshooting",
+                  "tools/browser-wsl2-windows-remote-cdp-troubleshooting"
                 ]
               },
               {
@@ -1116,7 +1112,6 @@
                   "providers/nvidia",
                   "providers/ollama",
                   "providers/openai",
-                  "providers/opencode-go",
                   "providers/opencode",
                   "providers/openrouter",
                   "providers/qianfan",

@@ -174,12 +174,7 @@ OpenClaw **blocks** Control UI connections without device identity.
 }
 ```
 
-`allowInsecureAuth` is a local compatibility toggle only:
-
-- It allows localhost Control UI sessions to proceed without device identity in
-  non-secure HTTP contexts.
-- It does not bypass pairing checks.
-- It does not relax remote (non-localhost) device identity requirements.
+`allowInsecureAuth` does not bypass Control UI device identity or pairing checks.
 
 **Break-glass only:**
 

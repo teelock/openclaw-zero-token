@@ -86,13 +86,12 @@ OpenClaw ships with the pi‑ai catalog. These providers require **no**
 }
 ```
 
-### OpenCode
+### OpenCode Zen
 
+- Provider: `opencode`
 - Auth: `OPENCODE_API_KEY` (or `OPENCODE_ZEN_API_KEY`)
-- Zen runtime provider: `opencode`
-- Go runtime provider: `opencode-go`
-- Example models: `opencode/claude-opus-4-6`, `opencode-go/kimi-k2.5`
-- CLI: `openclaw onboard --auth-choice opencode-zen` or `openclaw onboard --auth-choice opencode-go`
+- Example model: `opencode/claude-opus-4-6`
+- CLI: `openclaw onboard --auth-choice opencode-zen`
 
 ```json5
 {
@@ -105,8 +104,8 @@ OpenClaw ships with the pi‑ai catalog. These providers require **no**
 - Provider: `google`
 - Auth: `GEMINI_API_KEY`
 - Optional rotation: `GEMINI_API_KEYS`, `GEMINI_API_KEY_1`, `GEMINI_API_KEY_2`, `GOOGLE_API_KEY` fallback, and `OPENCLAW_LIVE_GEMINI_KEY` (single override)
-- Example models: `google/gemini-3.1-pro-preview`, `google/gemini-3-flash-preview`
-- Compatibility: legacy OpenClaw config using `google/gemini-3.1-flash-preview` is normalized to `google/gemini-3-flash-preview`
+- Example models: `google/gemini-3.1-pro-preview`, `google/gemini-3-flash-preview`, `google/gemini-3.1-flash-lite-preview`
+- Compatibility: legacy OpenClaw config using `google/gemini-3.1-flash-preview` is normalized to `google/gemini-3-flash-preview`, and bare `google/gemini-3.1-flash-lite` is normalized to `google/gemini-3.1-flash-lite-preview`
 - CLI: `openclaw onboard --auth-choice gemini-api-key`
 
 ### Google Vertex, Antigravity, and Gemini CLI
@@ -357,7 +356,7 @@ Ollama is a local LLM runtime that provides an OpenAI-compatible API:
 - Provider: `ollama`
 - Auth: None required (local server)
 - Example model: `ollama/llama3.3`
-- Installation: [https://ollama.com/download](https://ollama.com/download)
+- Installation: [https://ollama.ai](https://ollama.ai)
 
 ```bash
 # Install Ollama, then pull a model:
@@ -372,7 +371,7 @@ ollama pull llama3.3
 }
 ```
 
-Ollama is detected locally at `http://127.0.0.1:11434` when you opt in with `OLLAMA_API_KEY`, and `openclaw onboard` can configure it directly as a first-class provider. See [/providers/ollama](/providers/ollama) for onboarding, cloud/local mode, and custom configuration.
+Ollama is automatically detected when running locally at `http://127.0.0.1:11434/v1`. See [/providers/ollama](/providers/ollama) for model recommendations and custom configuration.
 
 ### vLLM
 
