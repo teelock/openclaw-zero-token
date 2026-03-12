@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
-import { ChatSendSessionKeyString, InputProvenanceSchema, NonEmptyString } from "./primitives.js";
+import { INPUT_PROVENANCE_KIND_VALUES } from "../../../sessions/input-provenance.js";
+import { ChatSendSessionKeyString, NonEmptyString } from "./primitives.js";
 
 export const LogsTailParamsSchema = Type.Object(
   {
@@ -39,7 +40,18 @@ export const ChatSendParamsSchema = Type.Object(
     deliver: Type.Optional(Type.Boolean()),
     attachments: Type.Optional(Type.Array(Type.Unknown())),
     timeoutMs: Type.Optional(Type.Integer({ minimum: 0 })),
-    systemInputProvenance: Type.Optional(InputProvenanceSchema),
+    systemInputProvenance: Type.Optional(
+      Type.Object(
+        {
+          kind: Type.String({ enum: [...INPUT_PROVENANCE_KIND_VALUES] }),
+          originSessionId: Type.Optional(Type.String()),
+          sourceSessionKey: Type.Optional(Type.String()),
+          sourceChannel: Type.Optional(Type.String()),
+          sourceTool: Type.Optional(Type.String()),
+        },
+        { additionalProperties: false },
+      ),
+    ),
     systemProvenanceReceipt: Type.Optional(Type.String()),
     idempotencyKey: NonEmptyString,
   },

@@ -8,10 +8,7 @@ export {
   promptAccountId,
   resolveAccountIdForConfigure,
 } from "../channels/plugins/onboarding/helpers.js";
-export {
-  applyAccountNameToChannelSection,
-  patchScopedAccountConfig,
-} from "../channels/plugins/setup-helpers.js";
+export { applyAccountNameToChannelSection } from "../channels/plugins/setup-helpers.js";
 export type {
   ChannelAccountSnapshot,
   ChannelOutboundAdapter,

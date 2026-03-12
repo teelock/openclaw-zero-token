@@ -55,7 +55,7 @@ export class GeminiWebClientBrowser {
       console.log(`[Gemini Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -69,7 +69,7 @@ export class GeminiWebClientBrowser {
       const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -112,7 +112,7 @@ export class GeminiWebClientBrowser {
     message: string;
     signal?: AbortSignal;
   }): Promise<ReadableStream<Uint8Array>> {
-    if (!this.page) {throw new Error("GeminiWebClientBrowser not initialized");}
+    if (!this.page) throw new Error("GeminiWebClientBrowser not initialized");
 
     const sent = await this.page.evaluate(
       (msg: string) => {
@@ -135,16 +135,16 @@ export class GeminiWebClientBrowser {
             break;
           }
         }
-        if (!inputEl) {return { ok: false, error: "找不到输入框" };}
+        if (!inputEl) return { ok: false, error: "找不到输入框" };
 
         inputEl.focus();
         if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
           (inputEl as HTMLTextAreaElement).value = msg;
           (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
         } else {
-          (inputEl).innerText = msg;
-          (inputEl).dispatchEvent(new Event("input", { bubbles: true }));
-          (inputEl).dispatchEvent(new Event("change", { bubbles: true }));
+          (inputEl as HTMLElement).innerText = msg;
+          (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
+          (inputEl as HTMLElement).dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         const sendSelectors = [
@@ -163,10 +163,10 @@ export class GeminiWebClientBrowser {
         let sendBtn: HTMLElement | null = null;
         for (const sel of sendSelectors) {
           sendBtn = document.querySelector(sel);
-          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {break;}
+          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
         }
         if (sendBtn) {
-          (sendBtn).click();
+          (sendBtn as HTMLElement).click();
           return { ok: true };
         }
         const formSubmit = inputEl.closest("form")?.querySelector("button[type=submit]");
@@ -195,7 +195,7 @@ export class GeminiWebClientBrowser {
     const signal = params.signal;
 
     for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollIntervalMs) {
-      if (signal?.aborted) {throw new Error("Gemini 请求已取消");}
+      if (signal?.aborted) throw new Error("Gemini 请求已取消");
 
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
@@ -223,7 +223,7 @@ export class GeminiWebClientBrowser {
         const isGreeting = (t: string) =>
           /sage[,，]?\s*你好/i.test(t) ||
           (t.includes("你好") && (t.includes("需要") || t.includes("做些什么"))) ||
-          t.startsWith('需要我为你做些什么');
+          /^需要我为你做些什么/i.test(t);
         const isSkip = (t: string) =>
           skipTexts.some((s) => t.includes(s)) ||
           isGreeting(t) ||
@@ -259,21 +259,21 @@ export class GeminiWebClientBrowser {
           const els = scoped.querySelectorAll(sel);
           for (let i = els.length - 1; i >= 0; i--) {
             const el = els[i];
-            if (!notInSidebar(el) || !notInInputArea(el)) {continue;}
+            if (!notInSidebar(el) || !notInInputArea(el)) continue;
             const t = clean((el as HTMLElement).textContent ?? "");
             if (t.length >= 30 && !isSkip(t)) {
               text = t;
               break;
             }
           }
-          if (text) {break;}
+          if (text) break;
         }
 
         // 策略 2：主区域内按文本量取最后的实质内容块（排除输入区）
         if (!text) {
           const candidates: Array<{ el: Element; text: string }> = [];
           scoped.querySelectorAll("p, div[class], li, span[class]").forEach((el) => {
-            if (!notInSidebar(el) || !notInInputArea(el)) {return;}
+            if (!notInSidebar(el) || !notInInputArea(el)) return;
             const t = clean((el as HTMLElement).textContent ?? "");
             if (t.length > 50 && !isSkip(t) && !candidates.some((c) => c.text === t)) {
               candidates.push({ el, text: t });

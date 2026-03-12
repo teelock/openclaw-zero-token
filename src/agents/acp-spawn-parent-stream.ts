@@ -180,9 +180,7 @@ export function startAcpSpawnParentStreamRelay(params: {
   };
   const wake = () => {
     requestHeartbeatNow(
-      scopedHeartbeatWakeOptions(parentSessionKey, {
-        reason: "acp:spawn:stream",
-      }),
+      scopedHeartbeatWakeOptions(parentSessionKey, { reason: "acp:spawn:stream" }),
     );
   };
   const emit = (text: string, contextKey: string) => {

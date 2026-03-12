@@ -350,7 +350,7 @@ async function sendExecFinishedEvent(
       sessionKey: params.sessionKey,
       runId: params.runId,
       host: "node",
-      command: params.commandText,
+      command: params.cmdText,
       exitCode: params.result.exitCode ?? undefined,
       timedOut: params.result.timedOut,
       success: params.result.success,
@@ -505,6 +505,7 @@ export async function handleInvoke(
         return;
       }
       await sendJsonPayloadResult(client, frame, {
+        cmdText: prepared.cmdText,
         plan: prepared.plan,
       });
     } catch (err) {
@@ -548,8 +549,8 @@ export async function handleInvoke(
     sendInvokeResult: async (result) => {
       await sendInvokeResult(client, frame, result);
     },
-    sendExecFinishedEvent: async ({ sessionKey, runId, commandText, result }) => {
-      await sendExecFinishedEvent({ client, sessionKey, runId, commandText, result });
+    sendExecFinishedEvent: async ({ sessionKey, runId, cmdText, result }) => {
+      await sendExecFinishedEvent({ client, sessionKey, runId, cmdText, result });
     },
     preferMacAppExecHost,
   });

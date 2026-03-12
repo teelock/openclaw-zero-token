@@ -5,8 +5,7 @@ import type {
 } from "../../gateway/server-methods/types.js";
 
 export type PluginRuntimeGatewayRequestScope = {
-  context?: GatewayRequestContext;
-  client?: GatewayRequestOptions["client"];
+  context: GatewayRequestContext;
   isWebchatConnect: GatewayRequestOptions["isWebchatConnect"];
 };
 

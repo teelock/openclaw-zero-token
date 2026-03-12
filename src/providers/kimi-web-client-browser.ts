@@ -60,7 +60,7 @@ export class KimiWebClientBrowser {
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -73,12 +73,12 @@ export class KimiWebClientBrowser {
         .connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) }))
         .contexts()[0]!;
 
-      const pages = this.browser.pages();
+      const pages = this.browser!.pages();
       let kimiPage = pages.find((p) => p.url().includes("kimi.com") || p.url().includes("moonshot.cn"));
       if (kimiPage) {
         this.page = kimiPage;
       } else {
-        this.page = await this.browser.newPage();
+        this.page = await this.browser!.newPage();
         await this.page.goto(`${this.baseUrl}/`, { waitUntil: "domcontentloaded" });
       }
     } else {
@@ -87,15 +87,15 @@ export class KimiWebClientBrowser {
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
-      if (!wsUrl) {throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);}
+      if (!wsUrl) throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
 
       this.browser = (await chromium
         .connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) }))
         .contexts()[0]!;
-      this.page = this.browser.pages()[0] || (await this.browser.newPage());
+      this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
     }
 
     if (this.cookie.trim()) {
@@ -106,7 +106,7 @@ export class KimiWebClientBrowser {
         const [name, ...valueParts] = c.trim().split("=");
         const nameStr = name?.trim() ?? "";
         const valueStr = valueParts.join("=").trim();
-        if (!nameStr) {return null;}
+        if (!nameStr) return null;
         const cookie: { name: string; value: string; domain: string; path: string; secure?: boolean } = {
           name: nameStr,
           value: valueStr,
@@ -121,7 +121,7 @@ export class KimiWebClientBrowser {
       const cookies = rawCookies.filter((c): c is NonNullable<typeof c> => c !== null);
       if (cookies.length > 0) {
         try {
-          await this.browser.addCookies(cookies);
+          await this.browser!.addCookies(cookies);
         } catch (err) {
           console.warn(
             `[Kimi Web] addCookies failed (page may already have session): ${err instanceof Error ? err.message : String(err)}`
@@ -213,7 +213,7 @@ export class KimiWebClientBrowser {
             u8.byteOffset + o + 1,
             4
           ).getUint32(0, false);
-          if (o + 5 + len > u8.length) {break;}
+          if (o + 5 + len > u8.length) break;
           const chunk = u8.slice(o + 5, o + 5 + len);
           try {
             const obj = JSON.parse(new TextDecoder().decode(chunk));
@@ -229,7 +229,7 @@ export class KimiWebClientBrowser {
             ) {
               texts.push(obj.block.text.content);
             }
-            if (obj.done) {break;}
+            if (obj.done) break;
           } catch {
             // ignore parse errors for non-JSON chunks
           }

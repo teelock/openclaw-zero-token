@@ -51,7 +51,7 @@ export type ExecFinishedResult = {
 export type ExecFinishedEventParams = {
   sessionKey: string;
   runId: string;
-  commandText: string;
+  cmdText: string;
   result: ExecFinishedResult;
   suppressNotifyOnExit?: boolean;
 };

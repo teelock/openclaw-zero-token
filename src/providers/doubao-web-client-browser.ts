@@ -103,7 +103,7 @@ export class DoubaoWebClientBrowser {
       })).contexts()[0]!;
 
       // Find the Doubao page or create new one
-      const pages = this.browser.pages();
+      const pages = this.browser!.pages();
       let doubaoPage = pages.find(p => p.url().includes('doubao.com'));
 
       if (doubaoPage) {
@@ -111,7 +111,7 @@ export class DoubaoWebClientBrowser {
         this.page = doubaoPage;
       } else {
         console.log(`[Doubao Web Browser] No Doubao page found, creating new one...`);
-        this.page = await this.browser.newPage();
+        this.page = await this.browser!.newPage();
         await this.page.goto('https://www.doubao.com/chat/', { waitUntil: 'domcontentloaded' });
       }
       
@@ -139,7 +139,7 @@ export class DoubaoWebClientBrowser {
         headers: getHeadersWithAuth(wsUrl),
       })).contexts()[0]!;
 
-      this.page = this.browser.pages()[0] || (await this.browser.newPage());
+      this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
     }
 
     // Set cookies
@@ -153,7 +153,7 @@ export class DoubaoWebClientBrowser {
       };
     });
 
-    await this.browser.addCookies(cookies);
+    await this.browser!.addCookies(cookies);
 
     return { browser: this.browser, page: this.page };
   }
@@ -259,7 +259,7 @@ export class DoubaoWebClientBrowser {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {break;}
+          if (done) break;
           fullText += decoder.decode(value, { stream: true });
         }
 

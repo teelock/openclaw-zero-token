@@ -19,8 +19,6 @@ export type GatewayServiceControlArgs = {
   env?: GatewayServiceEnv;
 };
 
-export type GatewayServiceRestartResult = { outcome: "completed" } | { outcome: "scheduled" };
-
 export type GatewayServiceEnvArgs = {
   env?: GatewayServiceEnv;
 };

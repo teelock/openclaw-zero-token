@@ -77,7 +77,7 @@ export class ManusApiClient {
       agentProfile: params.agentProfile || "manus-1.6",
       taskMode: params.taskMode || "chat",
     };
-    if (params.taskId) {body.taskId = params.taskId;}
+    if (params.taskId) body.taskId = params.taskId;
 
     return this.request<CreateTaskResponse>("/v1/tasks", {
       method: "POST",

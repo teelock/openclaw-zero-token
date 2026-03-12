@@ -1,10 +1,6 @@
 import type { DeliveryContext } from "../utils/delivery-context.js";
 import type { SubagentRunRecord } from "./subagent-registry.types.js";
 
-function resolveControllerSessionKey(entry: SubagentRunRecord): string {
-  return entry.controllerSessionKey?.trim() || entry.requesterSessionKey;
-}
-
 export function findRunIdsByChildSessionKeyFromRuns(
   runs: Map<string, SubagentRunRecord>,
   childSessionKey: string,
@@ -53,17 +49,6 @@ export function listRunsForRequesterFromRuns(
     }
     return true;
   });
-}
-
-export function listRunsForControllerFromRuns(
-  runs: Map<string, SubagentRunRecord>,
-  controllerSessionKey: string,
-): SubagentRunRecord[] {
-  const key = controllerSessionKey.trim();
-  if (!key) {
-    return [];
-  }
-  return [...runs.values()].filter((entry) => resolveControllerSessionKey(entry) === key);
 }
 
 function findLatestRunForChildSession(
@@ -119,9 +104,9 @@ export function shouldIgnorePostCompletionAnnounceForSessionFromRuns(
 
 export function countActiveRunsForSessionFromRuns(
   runs: Map<string, SubagentRunRecord>,
-  controllerSessionKey: string,
+  requesterSessionKey: string,
 ): number {
-  const key = controllerSessionKey.trim();
+  const key = requesterSessionKey.trim();
   if (!key) {
     return 0;
   }
@@ -138,7 +123,7 @@ export function countActiveRunsForSessionFromRuns(
 
   let count = 0;
   for (const entry of runs.values()) {
-    if (resolveControllerSessionKey(entry) !== key) {
+    if (entry.requesterSessionKey !== key) {
       continue;
     }
     if (typeof entry.endedAt !== "number") {

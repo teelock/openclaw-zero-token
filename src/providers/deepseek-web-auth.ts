@@ -39,7 +39,7 @@ export async function loginDeepseekWebAttachOnly(params: {
     let wsUrl: string | null = null;
     for (let i = 0; i < 10; i++) {
       wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-      if (wsUrl) {break;}
+      if (wsUrl) break;
       await new Promise((r) => setTimeout(r, 500));
     }
 
@@ -100,7 +100,7 @@ export async function loginDeepseekWebAttachOnly(params: {
           const data: Record<string, string> = {};
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key) {data[key] = localStorage.getItem(key) || "";}
+            if (key) data[key] = localStorage.getItem(key) || "";
           }
           return data;
         });
@@ -110,10 +110,10 @@ export async function loginDeepseekWebAttachOnly(params: {
           if (key.toLowerCase().includes("token") || key.toLowerCase().includes("auth")) {
             try {
               const parsed = JSON.parse(value);
-              if (parsed.token) {bearer = parsed.token;}
-              else if (typeof parsed === "string" && parsed.length > 20) {bearer = parsed;}
+              if (parsed.token) bearer = parsed.token;
+              else if (typeof parsed === "string" && parsed.length > 20) bearer = parsed;
             } catch {
-              if (value.length > 20) {bearer = value;}
+              if (value.length > 20) bearer = value;
             }
           }
         }
@@ -164,17 +164,17 @@ export async function loginDeepseekWebAttachOnly(params: {
 
         const timeout = setTimeout(() => {
           if (!resolved) {
-            if (checkInterval) {clearInterval(checkInterval);}
+            if (checkInterval) clearInterval(checkInterval);
             reject(new Error("Login timed out (5 minutes)."));
           }
         }, 300000);
 
         const tryResolve = async () => {
-          if (!capturedBearer || resolved) {return;}
+          if (!capturedBearer || resolved) return;
 
           try {
             const cookies = await context!.cookies(["https://chat.deepseek.com", "https://deepseek.com"]);
-            if (cookies.length === 0) {return;}
+            if (cookies.length === 0) return;
 
             const cookieStr = cookies.map((c) => `${c.name}=${c.value}`).join("; ");
             const hasDId = cookieStr.includes("d_id=");
@@ -183,7 +183,7 @@ export async function loginDeepseekWebAttachOnly(params: {
             if (hasDId || hasSession || cookies.length > 3) {
               resolved = true;
               clearTimeout(timeout);
-              if (checkInterval) {clearInterval(checkInterval);}
+              if (checkInterval) clearInterval(checkInterval);
               console.log(`[DeepSeek Attach] Credentials captured`);
               resolve({ cookie: cookieStr, bearer: capturedBearer, userAgent });
             }
@@ -214,7 +214,7 @@ export async function loginDeepseekWebAttachOnly(params: {
               const bizData = body?.data as Record<string, unknown> | undefined;
               const token = (bizData?.biz_data as Record<string, unknown> | undefined)?.token;
               if (typeof token === "string" && token.length > 0) {
-                if (!capturedBearer) {capturedBearer = token;}
+                if (!capturedBearer) capturedBearer = token;
                 await tryResolve();
               }
             } catch {}
@@ -365,7 +365,7 @@ export async function loginDeepseekWeb(params: {
 
         const timeout = setTimeout(() => {
           if (!resolved) {
-            if (checkInterval) {clearInterval(checkInterval);}
+            if (checkInterval) clearInterval(checkInterval);
             reject(new Error("Login timed out (5 minutes)."));
           }
         }, 300000);
@@ -397,7 +397,7 @@ export async function loginDeepseekWeb(params: {
             if (hasDeviceId || hasSessionId || hasSessionInfo || cookies.length > 3) {
               resolved = true;
               clearTimeout(timeout);
-              if (checkInterval) {clearInterval(checkInterval);}
+              if (checkInterval) clearInterval(checkInterval);
               console.log(
                 `[DeepSeek] Credentials captured (d_id: ${hasDeviceId}, ds_session_id: ${hasSessionId})`,
               );
@@ -457,7 +457,7 @@ export async function loginDeepseekWeb(params: {
         });
 
         page.on("close", () => {
-          if (checkInterval) {clearInterval(checkInterval);}
+          if (checkInterval) clearInterval(checkInterval);
           reject(new Error("Browser window closed before login was captured."));
         });
 

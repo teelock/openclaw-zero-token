@@ -1,6 +1,5 @@
 import {
-  compileAllowlist,
-  resolveAllowlistCandidates,
+  resolveAllowlistMatchByCandidates,
   type AllowlistMatch,
 } from "../../channels/allowlist-match.js";
 import {
@@ -57,11 +56,11 @@ export function resolveSlackAllowListMatch(params: {
   name?: string;
   allowNameMatching?: boolean;
 }): SlackAllowListMatch {
-  const compiledAllowList = compileAllowlist(params.allowList);
-  if (compiledAllowList.set.size === 0) {
+  const allowList = params.allowList;
+  if (allowList.length === 0) {
     return { allowed: false };
   }
-  if (compiledAllowList.wildcard) {
+  if (allowList.includes("*")) {
     return { allowed: true, matchKey: "*", matchSource: "wildcard" };
   }
   const id = params.id?.toLowerCase();
@@ -79,10 +78,7 @@ export function resolveSlackAllowListMatch(params: {
         ] satisfies Array<{ value?: string; source: SlackAllowListSource }>)
       : []),
   ];
-  return resolveAllowlistCandidates({
-    compiledAllowlist: compiledAllowList,
-    candidates,
-  });
+  return resolveAllowlistMatchByCandidates({ allowList, candidates });
 }
 
 export function allowListMatches(params: {

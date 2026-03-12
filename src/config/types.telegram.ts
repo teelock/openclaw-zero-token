@@ -93,7 +93,7 @@ export type TelegramAccountConfig = {
   /** If false, do not start this Telegram account. Default: true. */
   enabled?: boolean;
   botToken?: string;
-  /** Path to a regular file containing the bot token; symlinks are rejected. */
+  /** Path to file containing bot token (for secret managers like agenix). */
   tokenFile?: string;
   /** Control reply threading when reply tags are present (off|first|all). */
   replyToMode?: ReplyToMode;

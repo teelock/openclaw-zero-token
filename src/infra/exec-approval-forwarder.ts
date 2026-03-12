@@ -16,7 +16,6 @@ import {
   normalizeMessageChannel,
   type DeliverableMessageChannel,
 } from "../utils/message-channel.js";
-import { resolveExecApprovalCommandDisplay } from "./exec-approval-command-display.js";
 import { buildExecApprovalPendingReplyPayload } from "./exec-approval-reply.js";
 import type {
   ExecApprovalDecision,
@@ -212,9 +211,7 @@ function formatApprovalCommand(command: string): { inline: boolean; text: string
 
 function buildRequestMessage(request: ExecApprovalRequest, nowMs: number) {
   const lines: string[] = ["🔒 Exec approval required", `ID: ${request.id}`];
-  const command = formatApprovalCommand(
-    resolveExecApprovalCommandDisplay(request.request).commandText,
-  );
+  const command = formatApprovalCommand(request.request.command);
   if (command.inline) {
     lines.push(`Command: ${command.text}`);
   } else {
@@ -378,7 +375,7 @@ function buildRequestPayloadForTarget(
       approvalId: request.id,
       approvalSlug: request.id.slice(0, 8),
       approvalCommandId: request.id,
-      command: resolveExecApprovalCommandDisplay(request.request).commandText,
+      command: request.request.command,
       cwd: request.request.cwd ?? undefined,
       host: request.request.host === "node" ? "node" : "gateway",
       nodeId: request.request.nodeId ?? undefined,

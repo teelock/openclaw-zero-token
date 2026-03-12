@@ -148,14 +148,9 @@ function resolveProviderApiSurface(
 function shouldPreserveExistingApiKey(params: {
   providerKey: string;
   existing: ExistingProviderConfig;
-  nextEntry: ProviderConfig;
   secretRefManagedProviders: ReadonlySet<string>;
 }): boolean {
-  const { providerKey, existing, nextEntry, secretRefManagedProviders } = params;
-  const nextApiKey = typeof nextEntry.apiKey === "string" ? nextEntry.apiKey : "";
-  if (nextApiKey && isNonSecretApiKeyMarker(nextApiKey)) {
-    return false;
-  }
+  const { providerKey, existing, secretRefManagedProviders } = params;
   return (
     !secretRefManagedProviders.has(providerKey) &&
     typeof existing.apiKey === "string" &&
@@ -203,14 +198,7 @@ export function mergeWithExistingProviderSecrets(params: {
       continue;
     }
     const preserved: Record<string, unknown> = {};
-    if (
-      shouldPreserveExistingApiKey({
-        providerKey: key,
-        existing,
-        nextEntry: newEntry,
-        secretRefManagedProviders,
-      })
-    ) {
+    if (shouldPreserveExistingApiKey({ providerKey: key, existing, secretRefManagedProviders })) {
       preserved.apiKey = existing.apiKey;
     }
     if (

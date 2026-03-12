@@ -442,17 +442,13 @@ export async function runOnboardingWizard(
       config: nextConfig,
       prompter,
       runtime,
-      setDefaultModel: !(authChoiceFromPrompt && authChoice === "ollama"),
+      setDefaultModel: true,
       opts: {
         tokenProvider: opts.tokenProvider,
         token: opts.authChoice === "apiKey" && opts.token ? opts.token : undefined,
       },
     });
     nextConfig = authResult.config;
-
-    if (authResult.agentModelOverride) {
-      nextConfig = applyPrimaryModel(nextConfig, authResult.agentModelOverride);
-    }
   }
 
   if (authChoiceFromPrompt && authChoice !== "custom-api-key") {
@@ -470,11 +466,6 @@ export async function runOnboardingWizard(
     if (modelSelection.model) {
       nextConfig = applyPrimaryModel(nextConfig, modelSelection.model);
     }
-  }
-
-  if (authChoice === "ollama") {
-    const { ensureOllamaModelPulled } = await import("../commands/ollama-setup.js");
-    await ensureOllamaModelPulled({ config: nextConfig, prompter });
   }
 
   await warnIfModelConfigLooksOff(nextConfig, prompter);

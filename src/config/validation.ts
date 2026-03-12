@@ -297,23 +297,17 @@ type ValidateConfigWithPluginsResult =
       warnings: ConfigValidationIssue[];
     };
 
-export function validateConfigObjectWithPlugins(
-  raw: unknown,
-  params?: { env?: NodeJS.ProcessEnv },
-): ValidateConfigWithPluginsResult {
-  return validateConfigObjectWithPluginsBase(raw, { applyDefaults: true, env: params?.env });
+export function validateConfigObjectWithPlugins(raw: unknown): ValidateConfigWithPluginsResult {
+  return validateConfigObjectWithPluginsBase(raw, { applyDefaults: true });
 }
 
-export function validateConfigObjectRawWithPlugins(
-  raw: unknown,
-  params?: { env?: NodeJS.ProcessEnv },
-): ValidateConfigWithPluginsResult {
-  return validateConfigObjectWithPluginsBase(raw, { applyDefaults: false, env: params?.env });
+export function validateConfigObjectRawWithPlugins(raw: unknown): ValidateConfigWithPluginsResult {
+  return validateConfigObjectWithPluginsBase(raw, { applyDefaults: false });
 }
 
 function validateConfigObjectWithPluginsBase(
   raw: unknown,
-  opts: { applyDefaults: boolean; env?: NodeJS.ProcessEnv },
+  opts: { applyDefaults: boolean },
 ): ValidateConfigWithPluginsResult {
   const base = opts.applyDefaults ? validateConfigObject(raw) : validateConfigObjectRaw(raw);
   if (!base.ok) {
@@ -351,7 +345,6 @@ function validateConfigObjectWithPluginsBase(
     const registry = loadPluginManifestRegistry({
       config,
       workspaceDir: workspaceDir ?? undefined,
-      env: opts.env,
     });
 
     for (const diag of registry.diagnostics) {

@@ -1,13 +1,11 @@
 import * as net from "node:net";
 import { Agent, EnvHttpProxyAgent, getGlobalDispatcher, setGlobalDispatcher } from "undici";
-import { hasEnvHttpProxyConfigured } from "./proxy-env.js";
 
 export const DEFAULT_UNDICI_STREAM_TIMEOUT_MS = 30 * 60 * 1000;
 
 const AUTO_SELECT_FAMILY_ATTEMPT_TIMEOUT_MS = 300;
 
-let lastAppliedTimeoutKey: string | null = null;
-let lastAppliedProxyBootstrap = false;
+let lastAppliedDispatcherKey: string | null = null;
 
 type DispatcherKind = "agent" | "env-proxy" | "unsupported";
 
@@ -61,59 +59,28 @@ function resolveDispatcherKey(params: {
   return `${params.kind}:${params.timeoutMs}:${autoSelectToken}`;
 }
 
-function resolveCurrentDispatcherKind(): DispatcherKind | null {
-  let dispatcher: unknown;
-  try {
-    dispatcher = getGlobalDispatcher();
-  } catch {
-    return null;
-  }
-
-  const currentKind = resolveDispatcherKind(dispatcher);
-  return currentKind === "unsupported" ? null : currentKind;
-}
-
-export function ensureGlobalUndiciEnvProxyDispatcher(): void {
-  const shouldUseEnvProxy = hasEnvHttpProxyConfigured("https");
-  if (!shouldUseEnvProxy) {
-    return;
-  }
-  if (lastAppliedProxyBootstrap) {
-    if (resolveCurrentDispatcherKind() === "env-proxy") {
-      return;
-    }
-    lastAppliedProxyBootstrap = false;
-  }
-  const currentKind = resolveCurrentDispatcherKind();
-  if (currentKind === null) {
-    return;
-  }
-  if (currentKind === "env-proxy") {
-    lastAppliedProxyBootstrap = true;
-    return;
-  }
-  try {
-    setGlobalDispatcher(new EnvHttpProxyAgent());
-    lastAppliedProxyBootstrap = true;
-  } catch {
-    // Best-effort bootstrap only.
-  }
-}
-
 export function ensureGlobalUndiciStreamTimeouts(opts?: { timeoutMs?: number }): void {
   const timeoutMsRaw = opts?.timeoutMs ?? DEFAULT_UNDICI_STREAM_TIMEOUT_MS;
   const timeoutMs = Math.max(1, Math.floor(timeoutMsRaw));
   if (!Number.isFinite(timeoutMsRaw)) {
     return;
   }
-  const kind = resolveCurrentDispatcherKind();
-  if (kind === null) {
+
+  let dispatcher: unknown;
+  try {
+    dispatcher = getGlobalDispatcher();
+  } catch {
+    return;
+  }
+
+  const kind = resolveDispatcherKind(dispatcher);
+  if (kind === "unsupported") {
     return;
   }
 
   const autoSelectFamily = resolveAutoSelectFamily();
   const nextKey = resolveDispatcherKey({ kind, timeoutMs, autoSelectFamily });
-  if (lastAppliedTimeoutKey === nextKey) {
+  if (lastAppliedDispatcherKey === nextKey) {
     return;
   }
 
@@ -135,13 +102,12 @@ export function ensureGlobalUndiciStreamTimeouts(opts?: { timeoutMs?: number }):
         }),
       );
     }
-    lastAppliedTimeoutKey = nextKey;
+    lastAppliedDispatcherKey = nextKey;
   } catch {
     // Best-effort hardening only.
   }
 }
 
 export function resetGlobalUndiciStreamTimeoutsForTests(): void {
-  lastAppliedTimeoutKey = null;
-  lastAppliedProxyBootstrap = false;
+  lastAppliedDispatcherKey = null;
 }

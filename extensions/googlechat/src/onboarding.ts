@@ -1,7 +1,5 @@
 import type { OpenClawConfig, DmPolicy } from "openclaw/plugin-sdk/googlechat";
 import {
-  DEFAULT_ACCOUNT_ID,
-  applySetupAccountConfigPatch,
   addWildcardAllowFrom,
   formatDocsLink,
   mergeAllowFromEntries,
@@ -10,6 +8,7 @@ import {
   type ChannelOnboardingAdapter,
   type ChannelOnboardingDmPolicy,
   type WizardPrompter,
+  DEFAULT_ACCOUNT_ID,
   migrateBaseNameToDefaultAccount,
 } from "openclaw/plugin-sdk/googlechat";
 import {
@@ -84,6 +83,45 @@ const dmPolicy: ChannelOnboardingDmPolicy = {
   promptAllowFrom,
 };
 
+function applyAccountConfig(params: {
+  cfg: OpenClawConfig;
+  accountId: string;
+  patch: Record<string, unknown>;
+}): OpenClawConfig {
+  const { cfg, accountId, patch } = params;
+  if (accountId === DEFAULT_ACCOUNT_ID) {
+    return {
+      ...cfg,
+      channels: {
+        ...cfg.channels,
+        googlechat: {
+          ...cfg.channels?.["googlechat"],
+          enabled: true,
+          ...patch,
+        },
+      },
+    };
+  }
+  return {
+    ...cfg,
+    channels: {
+      ...cfg.channels,
+      googlechat: {
+        ...cfg.channels?.["googlechat"],
+        enabled: true,
+        accounts: {
+          ...cfg.channels?.["googlechat"]?.accounts,
+          [accountId]: {
+            ...cfg.channels?.["googlechat"]?.accounts?.[accountId],
+            enabled: true,
+            ...patch,
+          },
+        },
+      },
+    },
+  };
+}
+
 async function promptCredentials(params: {
   cfg: OpenClawConfig;
   prompter: WizardPrompter;
@@ -99,7 +137,7 @@ async function promptCredentials(params: {
       initialValue: true,
     });
     if (useEnv) {
-      return applySetupAccountConfigPatch({ cfg, channelKey: channel, accountId, patch: {} });
+      return applyAccountConfig({ cfg, accountId, patch: {} });
     }
   }
 
@@ -118,9 +156,8 @@ async function promptCredentials(params: {
       placeholder: "/path/to/service-account.json",
       validate: (value) => (String(value ?? "").trim() ? undefined : "Required"),
     });
-    return applySetupAccountConfigPatch({
+    return applyAccountConfig({
       cfg,
-      channelKey: channel,
       accountId,
       patch: { serviceAccountFile: String(path).trim() },
     });
@@ -131,9 +168,8 @@ async function promptCredentials(params: {
     placeholder: '{"type":"service_account", ... }',
     validate: (value) => (String(value ?? "").trim() ? undefined : "Required"),
   });
-  return applySetupAccountConfigPatch({
+  return applyAccountConfig({
     cfg,
-    channelKey: channel,
     accountId,
     patch: { serviceAccount: String(json).trim() },
   });
@@ -164,9 +200,8 @@ async function promptAudience(params: {
     initialValue: currentAudience || undefined,
     validate: (value) => (String(value ?? "").trim() ? undefined : "Required"),
   });
-  return applySetupAccountConfigPatch({
+  return applyAccountConfig({
     cfg: params.cfg,
-    channelKey: channel,
     accountId: params.accountId,
     patch: { audienceType, audience: String(audience).trim() },
   });

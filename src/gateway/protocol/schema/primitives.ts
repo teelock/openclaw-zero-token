@@ -1,11 +1,4 @@
 import { Type } from "@sinclair/typebox";
-import { ENV_SECRET_REF_ID_RE } from "../../../config/types.secrets.js";
-import {
-  EXEC_SECRET_REF_ID_JSON_SCHEMA_PATTERN,
-  FILE_SECRET_REF_ID_PATTERN,
-  SECRET_PROVIDER_ALIAS_PATTERN,
-} from "../../../secrets/ref-contract.js";
-import { INPUT_PROVENANCE_KIND_VALUES } from "../../../sessions/input-provenance.js";
 import { SESSION_LABEL_MAX_LENGTH } from "../../../sessions/session-label.js";
 import { GATEWAY_CLIENT_IDS, GATEWAY_CLIENT_MODES } from "../client-info.js";
 
@@ -19,16 +12,6 @@ export const SessionLabelString = Type.String({
   minLength: 1,
   maxLength: SESSION_LABEL_MAX_LENGTH,
 });
-export const InputProvenanceSchema = Type.Object(
-  {
-    kind: Type.String({ enum: [...INPUT_PROVENANCE_KIND_VALUES] }),
-    originSessionId: Type.Optional(Type.String()),
-    sourceSessionKey: Type.Optional(Type.String()),
-    sourceChannel: Type.Optional(Type.String()),
-    sourceTool: Type.Optional(Type.String()),
-  },
-  { additionalProperties: false },
-);
 
 export const GatewayClientIdSchema = Type.Union(
   Object.values(GATEWAY_CLIENT_IDS).map((value) => Type.Literal(value)),
@@ -44,41 +27,13 @@ export const SecretRefSourceSchema = Type.Union([
   Type.Literal("exec"),
 ]);
 
-const SecretProviderAliasString = Type.String({
-  pattern: SECRET_PROVIDER_ALIAS_PATTERN.source,
-});
-
-const EnvSecretRefSchema = Type.Object(
+export const SecretRefSchema = Type.Object(
   {
-    source: Type.Literal("env"),
-    provider: SecretProviderAliasString,
-    id: Type.String({ pattern: ENV_SECRET_REF_ID_RE.source }),
+    source: SecretRefSourceSchema,
+    provider: NonEmptyString,
+    id: NonEmptyString,
   },
   { additionalProperties: false },
 );
-
-const FileSecretRefSchema = Type.Object(
-  {
-    source: Type.Literal("file"),
-    provider: SecretProviderAliasString,
-    id: Type.String({ pattern: FILE_SECRET_REF_ID_PATTERN.source }),
-  },
-  { additionalProperties: false },
-);
-
-const ExecSecretRefSchema = Type.Object(
-  {
-    source: Type.Literal("exec"),
-    provider: SecretProviderAliasString,
-    id: Type.String({ pattern: EXEC_SECRET_REF_ID_JSON_SCHEMA_PATTERN }),
-  },
-  { additionalProperties: false },
-);
-
-export const SecretRefSchema = Type.Union([
-  EnvSecretRefSchema,
-  FileSecretRefSchema,
-  ExecSecretRefSchema,
-]);
 
 export const SecretInputSchema = Type.Union([Type.String(), SecretRefSchema]);

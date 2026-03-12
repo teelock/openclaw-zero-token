@@ -1,13 +1,19 @@
+import { abortEmbeddedPiRun } from "../../../agents/pi-embedded.js";
+import { markSubagentRunTerminated } from "../../../agents/subagent-registry.js";
 import {
-  killAllControlledSubagentRuns,
-  killControlledSubagentRun,
-} from "../../../agents/subagent-control.js";
+  loadSessionStore,
+  resolveStorePath,
+  updateSessionStore,
+} from "../../../config/sessions.js";
+import { logVerbose } from "../../../globals.js";
+import { stopSubagentsForRequester } from "../abort.js";
 import type { CommandHandlerResult } from "../commands-types.js";
+import { clearSessionQueues } from "../queue.js";
 import { formatRunLabel } from "../subagents-utils.js";
 import {
   type SubagentsCommandContext,
   COMMAND,
-  resolveCommandSubagentController,
+  loadSubagentSessionEntry,
   resolveSubagentEntryForToken,
   stopWithText,
 } from "./shared.js";
@@ -24,18 +30,10 @@ export async function handleSubagentsKillAction(
   }
 
   if (target === "all" || target === "*") {
-    const controller = resolveCommandSubagentController(params, requesterKey);
-    const result = await killAllControlledSubagentRuns({
+    stopSubagentsForRequester({
       cfg: params.cfg,
-      controller,
-      runs,
+      requesterSessionKey: requesterKey,
     });
-    if (result.status === "forbidden") {
-      return stopWithText(`⚠️ ${result.error}`);
-    }
-    if (result.killed > 0) {
-      return { shouldContinue: false };
-    }
     return { shouldContinue: false };
   }
 
@@ -47,17 +45,42 @@ export async function handleSubagentsKillAction(
     return stopWithText(`${formatRunLabel(targetResolution.entry)} is already finished.`);
   }
 
-  const controller = resolveCommandSubagentController(params, requesterKey);
-  const result = await killControlledSubagentRun({
-    cfg: params.cfg,
-    controller,
-    entry: targetResolution.entry,
+  const childKey = targetResolution.entry.childSessionKey;
+  const { storePath, store, entry } = loadSubagentSessionEntry(params, childKey, {
+    loadSessionStore,
+    resolveStorePath,
   });
-  if (result.status === "forbidden") {
-    return stopWithText(`⚠️ ${result.error}`);
+  const sessionId = entry?.sessionId;
+  if (sessionId) {
+    abortEmbeddedPiRun(sessionId);
   }
-  if (result.status === "done") {
-    return stopWithText(result.text);
+
+  const cleared = clearSessionQueues([childKey, sessionId]);
+  if (cleared.followupCleared > 0 || cleared.laneCleared > 0) {
+    logVerbose(
+      `subagents kill: cleared followups=${cleared.followupCleared} lane=${cleared.laneCleared} keys=${cleared.keys.join(",")}`,
+    );
   }
+
+  if (entry) {
+    entry.abortedLastRun = true;
+    entry.updatedAt = Date.now();
+    store[childKey] = entry;
+    await updateSessionStore(storePath, (nextStore) => {
+      nextStore[childKey] = entry;
+    });
+  }
+
+  markSubagentRunTerminated({
+    runId: targetResolution.entry.runId,
+    childSessionKey: childKey,
+    reason: "killed",
+  });
+
+  stopSubagentsForRequester({
+    cfg: params.cfg,
+    requesterSessionKey: childKey,
+  });
+
   return { shouldContinue: false };
 }

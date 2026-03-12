@@ -6,7 +6,7 @@ import { log } from "./logger.js";
 type OpenAIServiceTier = "auto" | "default" | "flex" | "priority";
 
 const OPENAI_RESPONSES_APIS = new Set(["openai-responses"]);
-const OPENAI_RESPONSES_PROVIDERS = new Set(["openai", "azure-openai", "azure-openai-responses"]);
+const OPENAI_RESPONSES_PROVIDERS = new Set(["openai", "azure-openai-responses"]);
 
 function isDirectOpenAIBaseUrl(baseUrl: unknown): boolean {
   if (typeof baseUrl !== "string" || !baseUrl.trim()) {
@@ -187,7 +187,7 @@ export function createOpenAIResponsesContextManagementWrapper(
     const originalOnPayload = options?.onPayload;
     return underlying(model, context, {
       ...options,
-      onPayload: (payload) => {
+      onPayload: (payload, payloadModel) => {
         if (payload && typeof payload === "object") {
           applyOpenAIResponsesPayloadOverrides({
             payloadObj: payload as Record<string, unknown>,
@@ -197,7 +197,7 @@ export function createOpenAIResponsesContextManagementWrapper(
             compactThreshold,
           });
         }
-        return originalOnPayload?.(payload, model);
+        return originalOnPayload?.(payload, payloadModel);
       },
     });
   };
@@ -219,14 +219,14 @@ export function createOpenAIServiceTierWrapper(
     const originalOnPayload = options?.onPayload;
     return underlying(model, context, {
       ...options,
-      onPayload: (payload) => {
+      onPayload: (payload, payloadModel) => {
         if (payload && typeof payload === "object") {
           const payloadObj = payload as Record<string, unknown>;
           if (payloadObj.service_tier === undefined) {
             payloadObj.service_tier = serviceTier;
           }
         }
-        return originalOnPayload?.(payload, model);
+        return originalOnPayload?.(payload, payloadModel);
       },
     });
   };
@@ -250,7 +250,7 @@ export function createOpenAIDefaultTransportWrapper(baseStreamFn: StreamFn | und
     const mergedOptions = {
       ...options,
       transport: options?.transport ?? "auto",
-      openaiWsWarmup: typedOptions?.openaiWsWarmup ?? false,
+      openaiWsWarmup: typedOptions?.openaiWsWarmup ?? true,
     } as SimpleStreamOptions;
     return underlying(model, context, mergedOptions);
   };

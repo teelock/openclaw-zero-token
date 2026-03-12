@@ -19,7 +19,6 @@ import {
 import {
   buildAgentMainSessionKey,
   DEFAULT_AGENT_ID,
-  parseAgentSessionKey,
   resolveAgentIdFromSessionKey,
 } from "../../routing/session-key.js";
 import { applyModelOverrideToSessionEntry } from "../../sessions/model-overrides.js";
@@ -37,12 +36,10 @@ import {
 import type { AnyAgentTool } from "./common.js";
 import { readStringParam } from "./common.js";
 import {
-  createSessionVisibilityGuard,
   shouldResolveSessionIdInput,
-  createAgentToAgentPolicy,
-  resolveEffectiveSessionToolsVisibility,
   resolveInternalSessionKey,
-  resolveSandboxedSessionToolContext,
+  resolveMainSessionAlias,
+  createAgentToAgentPolicy,
 } from "./sessions-helpers.js";
 
 const SessionStatusToolSchema = Type.Object({
@@ -178,7 +175,6 @@ async function resolveModelOverride(params: {
 export function createSessionStatusTool(opts?: {
   agentSessionKey?: string;
   config?: OpenClawConfig;
-  sandboxed?: boolean;
 }): AnyAgentTool {
   return {
     label: "Session Status",
@@ -189,70 +185,18 @@ export function createSessionStatusTool(opts?: {
     execute: async (_toolCallId, args) => {
       const params = args as Record<string, unknown>;
       const cfg = opts?.config ?? loadConfig();
-      const { mainKey, alias, effectiveRequesterKey } = resolveSandboxedSessionToolContext({
-        cfg,
-        agentSessionKey: opts?.agentSessionKey,
-        sandboxed: opts?.sandboxed,
-      });
+      const { mainKey, alias } = resolveMainSessionAlias(cfg);
       const a2aPolicy = createAgentToAgentPolicy(cfg);
-      const requesterAgentId = resolveAgentIdFromSessionKey(
-        opts?.agentSessionKey ?? effectiveRequesterKey,
-      );
-      const visibilityRequesterKey = effectiveRequesterKey.trim();
-      const usesLegacyMainAlias = alias === mainKey;
-      const isLegacyMainVisibilityKey = (sessionKey: string) => {
-        const trimmed = sessionKey.trim();
-        return usesLegacyMainAlias && (trimmed === "main" || trimmed === mainKey);
-      };
-      const resolveVisibilityMainSessionKey = (sessionAgentId: string) => {
-        const requesterParsed = parseAgentSessionKey(visibilityRequesterKey);
-        if (
-          resolveAgentIdFromSessionKey(visibilityRequesterKey) === sessionAgentId &&
-          (requesterParsed?.rest === mainKey || isLegacyMainVisibilityKey(visibilityRequesterKey))
-        ) {
-          return visibilityRequesterKey;
-        }
-        return buildAgentMainSessionKey({
-          agentId: sessionAgentId,
-          mainKey,
-        });
-      };
-      const normalizeVisibilityTargetSessionKey = (sessionKey: string, sessionAgentId: string) => {
-        const trimmed = sessionKey.trim();
-        if (!trimmed) {
-          return trimmed;
-        }
-        if (trimmed.startsWith("agent:")) {
-          const parsed = parseAgentSessionKey(trimmed);
-          if (parsed?.rest === mainKey) {
-            return resolveVisibilityMainSessionKey(sessionAgentId);
-          }
-          return trimmed;
-        }
-        // Preserve legacy bare main keys for requester tree checks.
-        if (isLegacyMainVisibilityKey(trimmed)) {
-          return resolveVisibilityMainSessionKey(sessionAgentId);
-        }
-        return trimmed;
-      };
-      const visibilityGuard =
-        opts?.sandboxed === true
-          ? await createSessionVisibilityGuard({
-              action: "status",
-              requesterSessionKey: visibilityRequesterKey,
-              visibility: resolveEffectiveSessionToolsVisibility({
-                cfg,
-                sandboxed: true,
-              }),
-              a2aPolicy,
-            })
-          : null;
 
       const requestedKeyParam = readStringParam(params, "sessionKey");
       let requestedKeyRaw = requestedKeyParam ?? opts?.agentSessionKey;
       if (!requestedKeyRaw?.trim()) {
         throw new Error("sessionKey required");
       }
+
+      const requesterAgentId = resolveAgentIdFromSessionKey(
+        opts?.agentSessionKey ?? requestedKeyRaw,
+      );
       const ensureAgentAccess = (targetAgentId: string) => {
         if (targetAgentId === requesterAgentId) {
           return;
@@ -269,14 +213,7 @@ export function createSessionStatusTool(opts?: {
       };
 
       if (requestedKeyRaw.startsWith("agent:")) {
-        const requestedAgentId = resolveAgentIdFromSessionKey(requestedKeyRaw);
-        ensureAgentAccess(requestedAgentId);
-        const access = visibilityGuard?.check(
-          normalizeVisibilityTargetSessionKey(requestedKeyRaw, requestedAgentId),
-        );
-        if (access && !access.allowed) {
-          throw new Error(access.error);
-        }
+        ensureAgentAccess(resolveAgentIdFromSessionKey(requestedKeyRaw));
       }
 
       const isExplicitAgentKey = requestedKeyRaw.startsWith("agent:");
@@ -319,15 +256,6 @@ export function createSessionStatusTool(opts?: {
       if (!resolved) {
         const kind = shouldResolveSessionIdInput(requestedKeyRaw) ? "sessionId" : "sessionKey";
         throw new Error(`Unknown ${kind}: ${requestedKeyRaw}`);
-      }
-
-      if (visibilityGuard && !requestedKeyRaw.startsWith("agent:")) {
-        const access = visibilityGuard.check(
-          normalizeVisibilityTargetSessionKey(resolved.key, agentId),
-        );
-        if (!access.allowed) {
-          throw new Error(access.error);
-        }
       }
 
       const configured = resolveDefaultModelForAgent({ cfg, agentId });

@@ -1,5 +1,5 @@
+import { readFileSync } from "node:fs";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
-import { tryReadSecretFileSync } from "openclaw/plugin-sdk/core";
 import {
   createAccountListHelpers,
   normalizeResolvedSecretInputString,
@@ -100,11 +100,13 @@ function resolvePassword(accountId: string, merged: IrcAccountConfig) {
   }
 
   if (merged.passwordFile?.trim()) {
-    const filePassword = tryReadSecretFileSync(merged.passwordFile, "IRC password file", {
-      rejectSymlink: true,
-    });
-    if (filePassword) {
-      return { password: filePassword, source: "passwordFile" as const };
+    try {
+      const filePassword = readFileSync(merged.passwordFile.trim(), "utf-8").trim();
+      if (filePassword) {
+        return { password: filePassword, source: "passwordFile" as const };
+      }
+    } catch {
+      // Ignore unreadable files here; status will still surface missing configuration.
     }
   }
 
@@ -135,10 +137,11 @@ function resolveNickServConfig(accountId: string, nickserv?: IrcNickServConfig):
     envPassword ||
     "";
   if (!resolvedPassword && passwordFile) {
-    resolvedPassword =
-      tryReadSecretFileSync(passwordFile, "IRC NickServ password file", {
-        rejectSymlink: true,
-      }) ?? "";
+    try {
+      resolvedPassword = readFileSync(passwordFile, "utf-8").trim();
+    } catch {
+      // Ignore unreadable files; monitor/probe status will surface failures.
+    }
   }
 
   const merged: IrcNickServConfig = {

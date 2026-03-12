@@ -20,7 +20,6 @@ final class ScreenController {
     private var debugStatusEnabled: Bool = false
     private var debugStatusTitle: String?
     private var debugStatusSubtitle: String?
-    private var homeCanvasStateJSON: String?
 
     init() {
         self.reload()
@@ -93,26 +92,6 @@ final class ScreenController {
             enabled: self.debugStatusEnabled,
             title: self.debugStatusTitle,
             subtitle: self.debugStatusSubtitle)
-    }
-
-    func updateHomeCanvasState(json: String?) {
-        self.homeCanvasStateJSON = json
-        self.applyHomeCanvasStateIfNeeded()
-    }
-
-    func applyHomeCanvasStateIfNeeded() {
-        guard let webView = self.activeWebView else { return }
-        let payload = self.homeCanvasStateJSON ?? "null"
-        let js = """
-        (() => {
-          try {
-            const api = globalThis.__openclaw;
-            if (!api || typeof api.renderHome !== 'function') return;
-            api.renderHome(\(payload));
-          } catch (_) {}
-        })()
-        """
-        webView.evaluateJavaScript(js) { _, _ in }
     }
 
     func waitForA2UIReady(timeoutMs: Int) async -> Bool {
@@ -212,7 +191,6 @@ final class ScreenController {
         self.activeWebView = webView
         self.reload()
         self.applyDebugStatusIfNeeded()
-        self.applyHomeCanvasStateIfNeeded()
     }
 
     func detachWebView(_ webView: WKWebView) {

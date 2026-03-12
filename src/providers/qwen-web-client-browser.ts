@@ -78,7 +78,7 @@ export class QwenWebClientBrowser {
         headers: getHeadersWithAuth(wsUrl),
       })).contexts()[0]!;
 
-      const pages = this.browser.pages();
+      const pages = this.browser!.pages();
       let qwenPage = pages.find(p => p.url().includes('qwen.ai'));
       
       if (qwenPage) {
@@ -113,7 +113,7 @@ export class QwenWebClientBrowser {
         headers: getHeadersWithAuth(wsUrl),
       })).contexts()[0]!;
 
-      this.page = this.browser.pages()[0] || (await this.browser.newPage());
+      this.page = this.browser!.pages()[0] || (await this.browser!.newPage());
     }
 
     const cookies = this.cookie.split(";").map((c) => {
@@ -126,7 +126,7 @@ export class QwenWebClientBrowser {
       };
     });
 
-    await this.browser.addCookies(cookies);
+    await this.browser!.addCookies(cookies);
 
     return { browser: this.browser, page: this.page };
   }
@@ -186,7 +186,7 @@ export class QwenWebClientBrowser {
           console.log(`[Browser] Chat created, chat ID:`, chatId);
           return { ok: true, chatId, fullData: data };
         } catch (err) {
-          if (typeof timer !== "undefined") {clearTimeout(timer);}
+          if (typeof timer !== "undefined") clearTimeout(timer);
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
             return { ok: false, status: 408, error: `Create chat timed out after ${timeoutMs}ms` };
@@ -280,7 +280,7 @@ export class QwenWebClientBrowser {
 
           while (true) {
             const { done, value } = await reader.read();
-            if (done) {break;}
+            if (done) break;
             const chunk = decoder.decode(value, { stream: true });
             fullText += chunk;
             chunkCount++;
@@ -292,7 +292,7 @@ export class QwenWebClientBrowser {
           console.log(`[Browser] Total chunks: ${chunkCount}, Total length: ${fullText.length}`);
           return { ok: true, data: fullText };
         } catch (err) {
-          if (typeof timer !== "undefined") {clearTimeout(timer);}
+          if (typeof timer !== "undefined") clearTimeout(timer);
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
             return { ok: false, status: 408, error: `Qwen API request timed out after ${timeoutMs}ms` };

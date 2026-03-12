@@ -83,16 +83,16 @@ private final class MockWatchMessagingService: @preconcurrency WatchMessagingSer
         #expect(json.contains("\"value\""))
     }
 
-    @Test @MainActor func chatSessionKeyDefaultsToMainBase() {
+    @Test @MainActor func chatSessionKeyDefaultsToIOSBase() {
         let appModel = NodeAppModel()
-        #expect(appModel.chatSessionKey == "main")
+        #expect(appModel.chatSessionKey == "ios")
     }
 
     @Test @MainActor func chatSessionKeyUsesAgentScopedKeyForNonDefaultAgent() {
         let appModel = NodeAppModel()
         appModel.gatewayDefaultAgentId = "main"
         appModel.setSelectedAgentId("agent-123")
-        #expect(appModel.chatSessionKey == SessionKey.makeAgentSessionKey(agentId: "agent-123", baseKey: "main"))
+        #expect(appModel.chatSessionKey == SessionKey.makeAgentSessionKey(agentId: "agent-123", baseKey: "ios"))
         #expect(appModel.mainSessionKey == "agent:agent-123:main")
     }
 

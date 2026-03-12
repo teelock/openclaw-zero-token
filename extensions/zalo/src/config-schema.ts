@@ -1,8 +1,6 @@
 import {
-  AllowFromListSchema,
+  AllowFromEntrySchema,
   buildCatchallMultiAccountChannelSchema,
-  DmPolicySchema,
-  GroupPolicySchema,
 } from "openclaw/plugin-sdk/compat";
 import { MarkdownConfigSchema } from "openclaw/plugin-sdk/zalo";
 import { z } from "zod";
@@ -17,10 +15,10 @@ const zaloAccountSchema = z.object({
   webhookUrl: z.string().optional(),
   webhookSecret: buildSecretInputSchema().optional(),
   webhookPath: z.string().optional(),
-  dmPolicy: DmPolicySchema.optional(),
-  allowFrom: AllowFromListSchema,
-  groupPolicy: GroupPolicySchema.optional(),
-  groupAllowFrom: AllowFromListSchema,
+  dmPolicy: z.enum(["pairing", "allowlist", "open", "disabled"]).optional(),
+  allowFrom: z.array(AllowFromEntrySchema).optional(),
+  groupPolicy: z.enum(["disabled", "allowlist", "open"]).optional(),
+  groupAllowFrom: z.array(AllowFromEntrySchema).optional(),
   mediaMaxMb: z.number().optional(),
   proxy: z.string().optional(),
   responsePrefix: z.string().optional(),

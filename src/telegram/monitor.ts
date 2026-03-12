@@ -9,10 +9,7 @@ import type { RuntimeEnv } from "../runtime.js";
 import { resolveTelegramAccount } from "./accounts.js";
 import { resolveTelegramAllowedUpdates } from "./allowed-updates.js";
 import { TelegramExecApprovalHandler } from "./exec-approvals-handler.js";
-import {
-  isRecoverableTelegramNetworkError,
-  isTelegramPollingNetworkError,
-} from "./network-errors.js";
+import { isRecoverableTelegramNetworkError } from "./network-errors.js";
 import { TelegramPollingSession } from "./polling-session.js";
 import { makeProxyFetch } from "./proxy.js";
 import { readTelegramUpdateOffset, writeTelegramUpdateOffset } from "./update-offset-store.js";
@@ -81,14 +78,13 @@ export async function monitorTelegramProvider(opts: MonitorTelegramOpts = {}) {
 
   const unregisterHandler = registerUnhandledRejectionHandler((err) => {
     const isNetworkError = isRecoverableTelegramNetworkError(err, { context: "polling" });
-    const isTelegramPollingError = isTelegramPollingNetworkError(err);
-    if (isGrammyHttpError(err) && isNetworkError && isTelegramPollingError) {
+    if (isGrammyHttpError(err) && isNetworkError) {
       log(`[telegram] Suppressed network error: ${formatErrorMessage(err)}`);
       return true;
     }
 
     const activeRunner = pollingSession?.activeRunner;
-    if (isNetworkError && isTelegramPollingError && activeRunner && activeRunner.isRunning()) {
+    if (isNetworkError && activeRunner && activeRunner.isRunning()) {
       pollingSession?.markForceRestarted();
       pollingSession?.abortActiveFetch();
       void activeRunner.stop().catch(() => {});

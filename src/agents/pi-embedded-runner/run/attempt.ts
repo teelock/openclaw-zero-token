@@ -11,10 +11,7 @@ import { resolveHeartbeatPrompt } from "../../../auto-reply/heartbeat.js";
 import { resolveChannelCapabilities } from "../../../config/channel-capabilities.js";
 import type { OpenClawConfig } from "../../../config/config.js";
 import { getMachineDisplayName } from "../../../infra/machine-name.js";
-import {
-  ensureGlobalUndiciEnvProxyDispatcher,
-  ensureGlobalUndiciStreamTimeouts,
-} from "../../../infra/net/undici-global-dispatcher.js";
+import { ensureGlobalUndiciStreamTimeouts } from "../../../infra/net/undici-global-dispatcher.js";
 import { MAX_IMAGE_BYTES } from "../../../media/constants.js";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import type {
@@ -55,6 +52,16 @@ import { resolveModelAuthMode } from "../../model-auth.js";
 import { normalizeProviderId, resolveDefaultModelForAgent } from "../../model-selection.js";
 import { supportsModelTools } from "../../model-tool-support.js";
 import { createConfiguredOllamaStreamFn } from "../../ollama-stream.js";
+import { createDeepseekWebStreamFn } from "../../deepseek-web-stream.js";
+import { createClaudeWebStreamFn } from "../../claude-web-stream.js";
+import { createDoubaoWebStreamFn } from "../../doubao-web-stream.js";
+import { createChatGPTWebStreamFn } from "../../chatgpt-web-stream.js";
+import { createQwenWebStreamFn } from "../../qwen-web-stream.js";
+import { createKimiWebStreamFn } from "../../kimi-web-stream.js";
+import { createGeminiWebStreamFn } from "../../gemini-web-stream.js";
+import { createGrokWebStreamFn } from "../../grok-web-stream.js";
+import { createGlmWebStreamFn } from "../../glm-web-stream.js";
+import { createGlmIntlWebStreamFn } from "../../glm-intl-web-stream.js";
 import { createOpenAIWebSocketStreamFn, releaseWsSession } from "../../openai-ws-stream.js";
 import { resolveOwnerDisplaySetting } from "../../owner-display.js";
 import {
@@ -231,16 +238,16 @@ export function wrapOllamaCompatNumCtx(baseFn: StreamFn | undefined, numCtx: num
   return (model, context, options) =>
     streamFn(model, context, {
       ...options,
-      onPayload: (payload: unknown) => {
+      onPayload: (payload: unknown, payloadModel) => {
         if (!payload || typeof payload !== "object") {
-          return options?.onPayload?.(payload, model);
+          return options?.onPayload?.(payload, payloadModel);
         }
         const payloadRecord = payload as Record<string, unknown>;
         if (!payloadRecord.options || typeof payloadRecord.options !== "object") {
           payloadRecord.options = {};
         }
         (payloadRecord.options as Record<string, unknown>).num_ctx = numCtx;
-        return options?.onPayload?.(payload, model);
+        return options?.onPayload?.(payload, payloadModel);
       },
     });
 }
@@ -434,281 +441,6 @@ export function wrapStreamFnTrimToolCallNames(
     }
     return wrapStreamTrimToolCallNames(maybeStream, allowedToolNames);
   };
-}
-
-function extractBalancedJsonPrefix(raw: string): string | null {
-  let start = 0;
-  while (start < raw.length && /\s/.test(raw[start] ?? "")) {
-    start += 1;
-  }
-  const startChar = raw[start];
-  if (startChar !== "{" && startChar !== "[") {
-    return null;
-  }
-
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let i = start; i < raw.length; i += 1) {
-    const char = raw[i];
-    if (char === undefined) {
-      break;
-    }
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (char === "\\") {
-        escaped = true;
-      } else if (char === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (char === '"') {
-      inString = true;
-      continue;
-    }
-    if (char === "{" || char === "[") {
-      depth += 1;
-      continue;
-    }
-    if (char === "}" || char === "]") {
-      depth -= 1;
-      if (depth === 0) {
-        return raw.slice(start, i + 1);
-      }
-    }
-  }
-  return null;
-}
-
-const MAX_TOOLCALL_REPAIR_BUFFER_CHARS = 64_000;
-const MAX_TOOLCALL_REPAIR_TRAILING_CHARS = 3;
-const TOOLCALL_REPAIR_ALLOWED_TRAILING_RE = /^[^\s{}[\]":,\\]{1,3}$/;
-
-function shouldAttemptMalformedToolCallRepair(partialJson: string, delta: string): boolean {
-  if (/[}\]]/.test(delta)) {
-    return true;
-  }
-  const trimmedDelta = delta.trim();
-  return (
-    trimmedDelta.length > 0 &&
-    trimmedDelta.length <= MAX_TOOLCALL_REPAIR_TRAILING_CHARS &&
-    /[}\]]/.test(partialJson)
-  );
-}
-
-type ToolCallArgumentRepair = {
-  args: Record<string, unknown>;
-  trailingSuffix: string;
-};
-
-function tryParseMalformedToolCallArguments(raw: string): ToolCallArgumentRepair | undefined {
-  if (!raw.trim()) {
-    return undefined;
-  }
-  try {
-    JSON.parse(raw);
-    return undefined;
-  } catch {
-    const jsonPrefix = extractBalancedJsonPrefix(raw);
-    if (!jsonPrefix) {
-      return undefined;
-    }
-    const suffix = raw.slice(raw.indexOf(jsonPrefix) + jsonPrefix.length).trim();
-    if (
-      suffix.length === 0 ||
-      suffix.length > MAX_TOOLCALL_REPAIR_TRAILING_CHARS ||
-      !TOOLCALL_REPAIR_ALLOWED_TRAILING_RE.test(suffix)
-    ) {
-      return undefined;
-    }
-    try {
-      const parsed = JSON.parse(jsonPrefix) as unknown;
-      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
-        ? { args: parsed as Record<string, unknown>, trailingSuffix: suffix }
-        : undefined;
-    } catch {
-      return undefined;
-    }
-  }
-}
-
-function repairToolCallArgumentsInMessage(
-  message: unknown,
-  contentIndex: number,
-  repairedArgs: Record<string, unknown>,
-): void {
-  if (!message || typeof message !== "object") {
-    return;
-  }
-  const content = (message as { content?: unknown }).content;
-  if (!Array.isArray(content)) {
-    return;
-  }
-  const block = content[contentIndex];
-  if (!block || typeof block !== "object") {
-    return;
-  }
-  const typedBlock = block as { type?: unknown; arguments?: unknown };
-  if (!isToolCallBlockType(typedBlock.type)) {
-    return;
-  }
-  typedBlock.arguments = repairedArgs;
-}
-
-function clearToolCallArgumentsInMessage(message: unknown, contentIndex: number): void {
-  if (!message || typeof message !== "object") {
-    return;
-  }
-  const content = (message as { content?: unknown }).content;
-  if (!Array.isArray(content)) {
-    return;
-  }
-  const block = content[contentIndex];
-  if (!block || typeof block !== "object") {
-    return;
-  }
-  const typedBlock = block as { type?: unknown; arguments?: unknown };
-  if (!isToolCallBlockType(typedBlock.type)) {
-    return;
-  }
-  typedBlock.arguments = {};
-}
-
-function repairMalformedToolCallArgumentsInMessage(
-  message: unknown,
-  repairedArgsByIndex: Map<number, Record<string, unknown>>,
-): void {
-  if (!message || typeof message !== "object") {
-    return;
-  }
-  const content = (message as { content?: unknown }).content;
-  if (!Array.isArray(content)) {
-    return;
-  }
-  for (const [index, repairedArgs] of repairedArgsByIndex.entries()) {
-    repairToolCallArgumentsInMessage(message, index, repairedArgs);
-  }
-}
-
-function wrapStreamRepairMalformedToolCallArguments(
-  stream: ReturnType<typeof streamSimple>,
-): ReturnType<typeof streamSimple> {
-  const partialJsonByIndex = new Map<number, string>();
-  const repairedArgsByIndex = new Map<number, Record<string, unknown>>();
-  const disabledIndices = new Set<number>();
-  const loggedRepairIndices = new Set<number>();
-  const originalResult = stream.result.bind(stream);
-  stream.result = async () => {
-    const message = await originalResult();
-    repairMalformedToolCallArgumentsInMessage(message, repairedArgsByIndex);
-    partialJsonByIndex.clear();
-    repairedArgsByIndex.clear();
-    disabledIndices.clear();
-    loggedRepairIndices.clear();
-    return message;
-  };
-
-  const originalAsyncIterator = stream[Symbol.asyncIterator].bind(stream);
-  (stream as { [Symbol.asyncIterator]: typeof originalAsyncIterator })[Symbol.asyncIterator] =
-    function () {
-      const iterator = originalAsyncIterator();
-      return {
-        async next() {
-          const result = await iterator.next();
-          if (!result.done && result.value && typeof result.value === "object") {
-            const event = result.value as {
-              type?: unknown;
-              contentIndex?: unknown;
-              delta?: unknown;
-              partial?: unknown;
-              message?: unknown;
-              toolCall?: unknown;
-            };
-            if (
-              typeof event.contentIndex === "number" &&
-              Number.isInteger(event.contentIndex) &&
-              event.type === "toolcall_delta" &&
-              typeof event.delta === "string"
-            ) {
-              if (disabledIndices.has(event.contentIndex)) {
-                return result;
-              }
-              const nextPartialJson =
-                (partialJsonByIndex.get(event.contentIndex) ?? "") + event.delta;
-              if (nextPartialJson.length > MAX_TOOLCALL_REPAIR_BUFFER_CHARS) {
-                partialJsonByIndex.delete(event.contentIndex);
-                repairedArgsByIndex.delete(event.contentIndex);
-                disabledIndices.add(event.contentIndex);
-                return result;
-              }
-              partialJsonByIndex.set(event.contentIndex, nextPartialJson);
-              if (shouldAttemptMalformedToolCallRepair(nextPartialJson, event.delta)) {
-                const repair = tryParseMalformedToolCallArguments(nextPartialJson);
-                if (repair) {
-                  repairedArgsByIndex.set(event.contentIndex, repair.args);
-                  repairToolCallArgumentsInMessage(event.partial, event.contentIndex, repair.args);
-                  repairToolCallArgumentsInMessage(event.message, event.contentIndex, repair.args);
-                  if (!loggedRepairIndices.has(event.contentIndex)) {
-                    loggedRepairIndices.add(event.contentIndex);
-                    log.warn(
-                      `repairing kimi-coding tool call arguments after ${repair.trailingSuffix.length} trailing chars`,
-                    );
-                  }
-                } else {
-                  repairedArgsByIndex.delete(event.contentIndex);
-                  clearToolCallArgumentsInMessage(event.partial, event.contentIndex);
-                  clearToolCallArgumentsInMessage(event.message, event.contentIndex);
-                }
-              }
-            }
-            if (
-              typeof event.contentIndex === "number" &&
-              Number.isInteger(event.contentIndex) &&
-              event.type === "toolcall_end"
-            ) {
-              const repairedArgs = repairedArgsByIndex.get(event.contentIndex);
-              if (repairedArgs) {
-                if (event.toolCall && typeof event.toolCall === "object") {
-                  (event.toolCall as { arguments?: unknown }).arguments = repairedArgs;
-                }
-                repairToolCallArgumentsInMessage(event.partial, event.contentIndex, repairedArgs);
-                repairToolCallArgumentsInMessage(event.message, event.contentIndex, repairedArgs);
-              }
-              partialJsonByIndex.delete(event.contentIndex);
-              disabledIndices.delete(event.contentIndex);
-              loggedRepairIndices.delete(event.contentIndex);
-            }
-          }
-          return result;
-        },
-        async return(value?: unknown) {
-          return iterator.return?.(value) ?? { done: true as const, value: undefined };
-        },
-        async throw(error?: unknown) {
-          return iterator.throw?.(error) ?? { done: true as const, value: undefined };
-        },
-      };
-    };
-
-  return stream;
-}
-
-export function wrapStreamFnRepairMalformedToolCallArguments(baseFn: StreamFn): StreamFn {
-  return (model, context, options) => {
-    const maybeStream = baseFn(model, context, options);
-    if (maybeStream && typeof maybeStream === "object" && "then" in maybeStream) {
-      return Promise.resolve(maybeStream).then((stream) =>
-        wrapStreamRepairMalformedToolCallArguments(stream),
-      );
-    }
-    return wrapStreamRepairMalformedToolCallArguments(maybeStream);
-  };
-}
-
-function shouldRepairMalformedAnthropicToolCallArguments(provider?: string): boolean {
-  return normalizeProviderId(provider ?? "") === "kimi-coding";
 }
 
 // ---------------------------------------------------------------------------
@@ -1027,9 +759,6 @@ export async function runEmbeddedAttempt(
   const resolvedWorkspace = resolveUserPath(params.workspaceDir);
   const prevCwd = process.cwd();
   const runAbortController = new AbortController();
-  // Proxy bootstrap must happen before timeout tuning so the timeouts wrap the
-  // active EnvHttpProxyAgent instead of being replaced by a bare proxy dispatcher.
-  ensureGlobalUndiciEnvProxyDispatcher();
   ensureGlobalUndiciStreamTimeouts();
 
   log.debug(
@@ -1150,7 +879,13 @@ export async function runEmbeddedAttempt(
           runId: params.runId,
           agentDir,
           workspaceDir: effectiveWorkspace,
+          // When sandboxing uses a copied workspace (`ro` or `none`), effectiveWorkspace points
+          // at the sandbox copy. Spawned subagents should inherit the real workspace instead.
+          spawnWorkspaceDir:
+            sandbox?.enabled && sandbox.workspaceAccess !== "rw" ? resolvedWorkspace : undefined,
           config: params.config,
+          trigger: params.trigger,
+          memoryFlushWritePath: params.memoryFlushWritePath,
           abortSignal: runAbortController.signal,
           modelProvider: params.model.provider,
           modelId: params.modelId,
@@ -1519,6 +1254,96 @@ export async function runEmbeddedAttempt(
         });
         activeSession.agent.streamFn = ollamaStreamFn;
         ensureCustomApiRegistered(params.model.api, ollamaStreamFn);
+      } else if (params.model.api === "deepseek-web") {
+        const cookie = (await params.authStorage.getApiKey("deepseek-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createDeepseekWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for deepseek-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "claude-web") {
+        const cookie = (await params.authStorage.getApiKey("claude-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createClaudeWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for claude-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "doubao-web") {
+        const cookie = (await params.authStorage.getApiKey("doubao-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createDoubaoWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for doubao-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "chatgpt-web") {
+        const cookie = (await params.authStorage.getApiKey("chatgpt-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createChatGPTWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for chatgpt-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "qwen-web") {
+        const cookie = (await params.authStorage.getApiKey("qwen-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createQwenWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for qwen-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "kimi-web") {
+        const cookie = (await params.authStorage.getApiKey("kimi-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createKimiWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for kimi-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "gemini-web") {
+        const cookie = (await params.authStorage.getApiKey("gemini-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createGeminiWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for gemini-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "grok-web") {
+        const cookie = (await params.authStorage.getApiKey("grok-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createGrokWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for grok-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "glm-web") {
+        const cookie = (await params.authStorage.getApiKey("glm-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createGlmWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for glm-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
+      } else if (params.model.api === "glm-intl-web") {
+        const cookie = (await params.authStorage.getApiKey("glm-intl-web")) || "";
+        if (cookie) {
+          activeSession.agent.streamFn = createGlmIntlWebStreamFn(cookie) as StreamFn;
+          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+        } else {
+          log.warn(`[web-stream] no API key for glm-intl-web`);
+          activeSession.agent.streamFn = streamSimple;
+        }
       } else if (params.model.api === "openai-responses" && params.provider === "openai") {
         const wsApiKey = await params.authStorage.getApiKey(params.provider);
         if (wsApiKey) {
@@ -1653,15 +1478,6 @@ export async function runEmbeddedAttempt(
         activeSession.agent.streamFn,
         allowedToolNames,
       );
-
-      if (
-        params.model.api === "anthropic-messages" &&
-        shouldRepairMalformedAnthropicToolCallArguments(params.provider)
-      ) {
-        activeSession.agent.streamFn = wrapStreamFnRepairMalformedToolCallArguments(
-          activeSession.agent.streamFn,
-        );
-      }
 
       if (isXaiProvider(params.provider, params.modelId)) {
         activeSession.agent.streamFn = wrapStreamFnDecodeXaiToolCallArguments(
@@ -1834,6 +1650,7 @@ export async function runEmbeddedAttempt(
         getMessagingToolSentTargets,
         getSuccessfulCronAdds,
         didSendViaMessagingTool,
+        didSendDeterministicApprovalPrompt,
         getLastToolError,
         getUsageTotals,
         getCompactionCount,
@@ -2058,8 +1875,6 @@ export async function runEmbeddedAttempt(
                   sessionId: params.sessionId,
                   workspaceDir: params.workspaceDir,
                   messageProvider: params.messageProvider ?? undefined,
-                  trigger: params.trigger,
-                  channelId: params.messageChannel ?? params.messageProvider ?? undefined,
                 },
               )
               .catch((err) => {
@@ -2268,8 +2083,6 @@ export async function runEmbeddedAttempt(
                 sessionId: params.sessionId,
                 workspaceDir: params.workspaceDir,
                 messageProvider: params.messageProvider ?? undefined,
-                trigger: params.trigger,
-                channelId: params.messageChannel ?? params.messageProvider ?? undefined,
               },
             )
             .catch((err) => {
@@ -2330,8 +2143,6 @@ export async function runEmbeddedAttempt(
               sessionId: params.sessionId,
               workspaceDir: params.workspaceDir,
               messageProvider: params.messageProvider ?? undefined,
-              trigger: params.trigger,
-              channelId: params.messageChannel ?? params.messageProvider ?? undefined,
             },
           )
           .catch((err) => {
@@ -2354,6 +2165,7 @@ export async function runEmbeddedAttempt(
         lastAssistant,
         lastToolError: getLastToolError?.(),
         didSendViaMessagingTool: didSendViaMessagingTool(),
+        didSendDeterministicApprovalPrompt: didSendDeterministicApprovalPrompt(),
         messagingToolSentTexts: getMessagingToolSentTexts(),
         messagingToolSentMediaUrls: getMessagingToolSentMediaUrls(),
         messagingToolSentTargets: getMessagingToolSentTargets(),

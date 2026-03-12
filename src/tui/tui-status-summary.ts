@@ -6,9 +6,6 @@ import type { GatewayStatusSummary } from "./tui-types.js";
 export function formatStatusSummary(summary: GatewayStatusSummary) {
   const lines: string[] = [];
   lines.push("Gateway status");
-  if (summary.runtimeVersion) {
-    lines.push(`Version: ${summary.runtimeVersion}`);
-  }
 
   if (!summary.linkChannel) {
     lines.push("Link channel: unknown");

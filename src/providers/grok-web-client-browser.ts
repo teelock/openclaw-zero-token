@@ -57,7 +57,7 @@ export class GrokWebClientBrowser {
       console.log(`[Grok Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -71,7 +71,7 @@ export class GrokWebClientBrowser {
       const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -115,7 +115,7 @@ export class GrokWebClientBrowser {
     message: string;
     signal?: AbortSignal;
   }): Promise<ReadableStream<Uint8Array>> {
-    if (!this.page) {throw new Error("GrokWebClientBrowser not initialized");}
+    if (!this.page) throw new Error("GrokWebClientBrowser not initialized");
 
     const sent = await this.page.evaluate(
       (msg: string) => {
@@ -129,18 +129,18 @@ export class GrokWebClientBrowser {
         let inputEl: HTMLElement | null = null;
         for (const sel of inputSelectors) {
           inputEl = document.querySelector(sel);
-          if (inputEl && inputEl.offsetParent !== null) {break;}
+          if (inputEl && inputEl.offsetParent !== null) break;
         }
-        if (!inputEl) {return { ok: false, error: "找不到输入框" };}
+        if (!inputEl) return { ok: false, error: "找不到输入框" };
 
         inputEl.focus();
         if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
           (inputEl as HTMLTextAreaElement).value = msg;
           (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
         } else {
-          (inputEl).innerText = msg;
-          (inputEl).dispatchEvent(new Event("input", { bubbles: true }));
-          (inputEl).dispatchEvent(new Event("change", { bubbles: true }));
+          (inputEl as HTMLElement).innerText = msg;
+          (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
+          (inputEl as HTMLElement).dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         const sendSelectors = [
@@ -156,10 +156,10 @@ export class GrokWebClientBrowser {
         let sendBtn: HTMLElement | null = null;
         for (const sel of sendSelectors) {
           sendBtn = document.querySelector(sel);
-          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {break;}
+          if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) break;
         }
         if (sendBtn) {
-          (sendBtn).click();
+          (sendBtn as HTMLElement).click();
           return { ok: true };
         }
         const textarea = inputEl.closest("form")?.querySelector("button[type=submit]");
@@ -193,7 +193,7 @@ export class GrokWebClientBrowser {
     const signal = params.signal;
 
     for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollIntervalMs) {
-      if (signal?.aborted) {throw new Error("Grok 请求已取消");}
+      if (signal?.aborted) throw new Error("Grok 请求已取消");
 
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
@@ -315,7 +315,7 @@ export class GrokWebClientBrowser {
             if (listRes.ok) {
               const list = await listRes.json();
               convId = list?.conversations?.[0]?.conversationId ?? null;
-              if (convId) {break;}
+              if (convId) break;
             }
           }
         }
@@ -399,12 +399,12 @@ export class GrokWebClientBrowser {
         }
 
         const reader = response.body?.getReader();
-        if (!reader) {throw new Error("No response body");}
+        if (!reader) throw new Error("No response body");
 
         const chunks: number[][] = [];
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {break;}
+          if (done) break;
           chunks.push(Array.from(value));
         }
 
@@ -437,7 +437,7 @@ export class GrokWebClientBrowser {
       throw err;
     });
 
-    if (result instanceof ReadableStream) {return result;}
+    if (result instanceof ReadableStream) return result;
 
     const apiResult = result as { chunks: number[][]; conversationId?: string };
     this.lastConversationId = apiResult.conversationId ?? undefined;

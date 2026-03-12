@@ -1,0 +1,12 @@
+{
+  "name": "@openclaw/web-models",
+  "version": "2026.3.12",
+  "private": true,
+  "description": "OpenClaw Web Models provider plugin",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

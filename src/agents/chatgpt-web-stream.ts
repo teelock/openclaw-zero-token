@@ -18,7 +18,7 @@ function stripForWebProvider(prompt: string): string {
 
 // Helper to build XML tool prompt section
 function buildXmlToolPromptSection(tools: unknown[]): string {
-  if (!tools || tools.length === 0) {return "";}
+  if (!tools || tools.length === 0) return "";
   return "\n## Tool Use Instructions\n";
 }
 
@@ -88,9 +88,9 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (Array.isArray(m.content)) {
                 for (const part of m.content) {
                   if (part.type === "text") {
-                    content += (part).text;
+                    content += (part as TextContent).text;
                   } else if (part.type === "toolCall") {
-                    const tc = part;
+                    const tc = part as ToolCall;
                     content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;
                   }
                 }

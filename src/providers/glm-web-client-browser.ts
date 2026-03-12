@@ -106,7 +106,7 @@ export class ZWebClientBrowser {
       console.log(`[Z Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -120,7 +120,7 @@ export class ZWebClientBrowser {
       const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -341,7 +341,7 @@ export class ZWebClientBrowser {
 
           while (true) {
             const { done, value } = await reader.read();
-            if (done) {break;}
+            if (done) break;
             const chunk = decoder.decode(value, { stream: true });
             fullText += chunk;
             chunkCount++;
@@ -349,7 +349,7 @@ export class ZWebClientBrowser {
 
           return { ok: true, data: fullText, chunkCount };
         } catch (err) {
-          if (timer) {clearTimeout(timer);}
+          if (timer) clearTimeout(timer);
           const msg = String(err);
           if (msg.includes("aborted") || msg.includes("signal")) {
             return { ok: false, status: 408, error: `ChatGLM API request timed out after ${timeoutMs}ms` };

@@ -34,11 +34,18 @@ extension NodeAppModel {
     }
 
     func showA2UIOnConnectIfNeeded() async {
-        await MainActor.run {
-            // Keep the bundled home canvas as the default connected view.
-            // Agents can still explicitly present a remote or local canvas later.
-            self.lastAutoA2uiURL = nil
-            self.screen.showDefaultCanvas()
+        let current = self.screen.urlString.trimmingCharacters(in: .whitespacesAndNewlines)
+        if current.isEmpty || current == self.lastAutoA2uiURL {
+            if let canvasUrl = await self.resolveCanvasHostURLWithCapabilityRefresh(),
+               let url = URL(string: canvasUrl),
+               await Self.probeTCP(url: url, timeoutSeconds: 2.5)
+            {
+                self.screen.navigate(to: canvasUrl)
+                self.lastAutoA2uiURL = canvasUrl
+            } else {
+                self.lastAutoA2uiURL = nil
+                self.screen.showDefaultCanvas()
+            }
         }
     }
 

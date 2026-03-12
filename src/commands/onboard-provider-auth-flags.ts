@@ -20,12 +20,9 @@ type OnboardProviderAuthOptionKey = keyof Pick<
   | "togetherApiKey"
   | "huggingfaceApiKey"
   | "opencodeZenApiKey"
-  | "opencodeGoApiKey"
   | "xaiApiKey"
   | "litellmApiKey"
   | "qianfanApiKey"
-  | "modelstudioApiKeyCn"
-  | "modelstudioApiKey"
   | "volcengineApiKey"
   | "byteplusApiKey"
 >;
@@ -164,14 +161,7 @@ export const ONBOARD_PROVIDER_AUTH_FLAGS: ReadonlyArray<OnboardProviderAuthFlag>
     authChoice: "opencode-zen",
     cliFlag: "--opencode-zen-api-key",
     cliOption: "--opencode-zen-api-key <key>",
-    description: "OpenCode API key (Zen catalog)",
-  },
-  {
-    optionKey: "opencodeGoApiKey",
-    authChoice: "opencode-go",
-    cliFlag: "--opencode-go-api-key",
-    cliOption: "--opencode-go-api-key <key>",
-    description: "OpenCode API key (Go catalog)",
+    description: "OpenCode Zen API key",
   },
   {
     optionKey: "xaiApiKey",
@@ -193,20 +183,6 @@ export const ONBOARD_PROVIDER_AUTH_FLAGS: ReadonlyArray<OnboardProviderAuthFlag>
     cliFlag: "--qianfan-api-key",
     cliOption: "--qianfan-api-key <key>",
     description: "QIANFAN API key",
-  },
-  {
-    optionKey: "modelstudioApiKeyCn",
-    authChoice: "modelstudio-api-key-cn",
-    cliFlag: "--modelstudio-api-key-cn",
-    cliOption: "--modelstudio-api-key-cn <key>",
-    description: "Alibaba Cloud Model Studio Coding Plan API key (China)",
-  },
-  {
-    optionKey: "modelstudioApiKey",
-    authChoice: "modelstudio-api-key",
-    cliFlag: "--modelstudio-api-key",
-    cliOption: "--modelstudio-api-key <key>",
-    description: "Alibaba Cloud Model Studio Coding Plan API key (Global/Intl)",
   },
   {
     optionKey: "volcengineApiKey",

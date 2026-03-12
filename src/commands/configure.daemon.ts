@@ -1,6 +1,6 @@
 import { withProgress } from "../cli/progress.js";
 import { loadConfig } from "../config/config.js";
-import { describeGatewayServiceRestart, resolveGatewayService } from "../daemon/service.js";
+import { resolveGatewayService } from "../daemon/service.js";
 import { isNonFatalSystemdInstallProbeError } from "../daemon/systemd.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { note } from "../terminal/note.js";
@@ -50,13 +50,11 @@ export async function maybeInstallDaemon(params: {
         { label: "Gateway service", indeterminate: true, delayMs: 0 },
         async (progress) => {
           progress.setLabel("Restarting Gateway service…");
-          const restartResult = await service.restart({
+          await service.restart({
             env: process.env,
             stdout: process.stdout,
           });
-          progress.setLabel(
-            describeGatewayServiceRestart("Gateway", restartResult).progressMessage,
-          );
+          progress.setLabel("Gateway service restarted.");
         },
       );
       shouldCheckLinger = true;

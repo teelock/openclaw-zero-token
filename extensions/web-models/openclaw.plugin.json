@@ -1,0 +1,24 @@
+{
+  "id": "web-models",
+  "name": "Web Models",
+  "description": "Web-based AI model providers (ChatGPT Web, Claude Web, DeepSeek Web, etc.)",
+  "providers": [
+    "chatgpt-web",
+    "claude-web",
+    "deepseek-web",
+    "doubao-web",
+    "gemini-web",
+    "glm-web",
+    "glm-intl-web",
+    "grok-web",
+    "kimi-web",
+    "qwen-web",
+    "qwen-cn-web",
+    "manus-api"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

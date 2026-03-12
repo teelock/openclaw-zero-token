@@ -583,12 +583,7 @@ function resolveMattermostSession(
   }
   trimmed = trimmed.replace(/^mattermost:/i, "").trim();
   const lower = trimmed.toLowerCase();
-  const resolvedKind = params.resolvedTarget?.kind;
-  const isUser =
-    resolvedKind === "user" ||
-    (resolvedKind !== "channel" &&
-      resolvedKind !== "group" &&
-      (lower.startsWith("user:") || trimmed.startsWith("@")));
+  const isUser = lower.startsWith("user:") || trimmed.startsWith("@");
   if (trimmed.startsWith("@")) {
     trimmed = trimmed.slice(1).trim();
   }

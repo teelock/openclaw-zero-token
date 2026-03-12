@@ -16,7 +16,7 @@ import {
 } from "../memory/status-format.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { runSecurityAudit } from "../security/audit.js";
-import { getTerminalTableWidth, renderTable } from "../terminal/table.js";
+import { renderTable } from "../terminal/table.js";
 import { theme } from "../terminal/theme.js";
 import { formatHealthChannelLines, type HealthSummary } from "./health.js";
 import { resolveControlUiLinks } from "./onboard-helpers.js";
@@ -229,7 +229,7 @@ export async function statusCommand(
     runtime.log("");
   }
 
-  const tableWidth = getTerminalTableWidth();
+  const tableWidth = Math.max(60, (process.stdout.columns ?? 120) - 1);
 
   if (secretDiagnostics.length > 0) {
     runtime.log(theme.warn("Secret diagnostics:"));

@@ -1,9 +1,7 @@
 import { MarkdownConfigSchema, ToolPolicySchema } from "openclaw/plugin-sdk/bluebubbles";
 import {
-  AllowFromListSchema,
+  AllowFromEntrySchema,
   buildCatchallMultiAccountChannelSchema,
-  DmPolicySchema,
-  GroupPolicySchema,
 } from "openclaw/plugin-sdk/compat";
 import { z } from "zod";
 import { buildSecretInputSchema, hasConfiguredSecretInput } from "./secret-input.js";
@@ -37,10 +35,10 @@ const bluebubblesAccountSchema = z
     serverUrl: z.string().optional(),
     password: buildSecretInputSchema().optional(),
     webhookPath: z.string().optional(),
-    dmPolicy: DmPolicySchema.optional(),
-    allowFrom: AllowFromListSchema,
-    groupAllowFrom: AllowFromListSchema,
-    groupPolicy: GroupPolicySchema.optional(),
+    dmPolicy: z.enum(["pairing", "allowlist", "open", "disabled"]).optional(),
+    allowFrom: z.array(AllowFromEntrySchema).optional(),
+    groupAllowFrom: z.array(AllowFromEntrySchema).optional(),
+    groupPolicy: z.enum(["open", "disabled", "allowlist"]).optional(),
     historyLimit: z.number().int().min(0).optional(),
     dmHistoryLimit: z.number().int().min(0).optional(),
     textChunkLimit: z.number().int().positive().optional(),

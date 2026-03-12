@@ -136,7 +136,7 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (Array.isArray(lastUserMessage.content)) {
                 prompt = lastUserMessage.content
                   .filter((part) => part.type === "text")
-                  .map((part) => (part).text)
+                  .map((part) => (part as TextContent).text)
                   .join("");
               }
             }
@@ -461,7 +461,7 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
                       }
                     }
                   }
-                  if (delta) {break;}
+                  if (delta) break;
                 }
               }
             }

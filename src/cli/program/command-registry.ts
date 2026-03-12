@@ -64,6 +64,7 @@ const coreEntries: CoreCliEntry[] = [
       mod.registerOnboardCommand(program);
     },
   },
+  // Web Auth 子命令 - 独立的 Web 模型授权
   {
     commands: [
       {

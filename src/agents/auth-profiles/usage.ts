@@ -110,11 +110,7 @@ export function resolveProfilesUnavailableReason(params: {
       recordedReason = true;
     }
     if (!recordedReason) {
-      // No failure counts recorded for this cooldown window. Previously this
-      // defaulted to "rate_limit", which caused false "rate limit reached"
-      // warnings when the actual reason was unknown (e.g. transient network
-      // blip or server error without a classified failure count).
-      addScore("unknown", 1);
+      addScore("rate_limit", 1);
     }
   }
 

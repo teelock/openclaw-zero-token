@@ -128,3 +128,4 @@ dist/protocol.schema.json
 .openclaw-upstream-state/
 .openclaw-zero-state/
 dev-debug.sh
+.gateway.pid

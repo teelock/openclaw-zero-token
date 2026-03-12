@@ -10,6 +10,26 @@ import {
   buildXiaomiProvider,
   QIANFAN_DEFAULT_MODEL_ID,
   XIAOMI_DEFAULT_MODEL_ID,
+  DEEPSEEK_WEB_BASE_URL,
+  DEEPSEEK_WEB_DEFAULT_MODEL_ID,
+  DOUBAO_WEB_BASE_URL,
+  DOUBAO_WEB_DEFAULT_MODEL_ID,
+  CLAUDE_WEB_BASE_URL,
+  CLAUDE_WEB_DEFAULT_MODEL_ID,
+  CHATGPT_WEB_BASE_URL,
+  CHATGPT_WEB_DEFAULT_MODEL_ID,
+  QWEN_WEB_BASE_URL,
+  QWEN_WEB_DEFAULT_MODEL_ID,
+  KIMI_WEB_BASE_URL,
+  KIMI_WEB_DEFAULT_MODEL_ID,
+  GEMINI_WEB_BASE_URL,
+  GEMINI_WEB_DEFAULT_MODEL_ID,
+  GROK_WEB_BASE_URL,
+  GROK_WEB_DEFAULT_MODEL_ID,
+  Z_WEB_BASE_URL,
+  Z_WEB_DEFAULT_MODEL_ID,
+  GLM_INTL_WEB_BASE_URL,
+  GLM_INTL_WEB_DEFAULT_MODEL_ID,
 } from "../agents/models-config.providers.js";
 import {
   buildSyntheticModelDefinition,
@@ -65,7 +85,6 @@ import {
   buildZaiModelDefinition,
   buildMoonshotModelDefinition,
   buildXaiModelDefinition,
-  buildModelStudioModelDefinition,
   MISTRAL_BASE_URL,
   MISTRAL_DEFAULT_MODEL_ID,
   QIANFAN_BASE_URL,
@@ -80,9 +99,6 @@ import {
   resolveZaiBaseUrl,
   XAI_BASE_URL,
   XAI_DEFAULT_MODEL_ID,
-  MODELSTUDIO_CN_BASE_URL,
-  MODELSTUDIO_GLOBAL_BASE_URL,
-  MODELSTUDIO_DEFAULT_MODEL_REF,
 } from "./onboard-auth.models.js";
 
 export function applyZaiProviderConfig(
@@ -578,91 +594,294 @@ export function applyQianfanConfig(cfg: OpenClawConfig): OpenClawConfig {
   return applyAgentDefaultModelPrimary(next, QIANFAN_DEFAULT_MODEL_REF);
 }
 
-// Alibaba Cloud Model Studio Coding Plan
+// Web Model Configs
 
-function applyModelStudioProviderConfigWithBaseUrl(
-  cfg: OpenClawConfig,
-  baseUrl: string,
-): OpenClawConfig {
+export function applyDeepseekWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
   const models = { ...cfg.agents?.defaults?.models };
-
-  const modelStudioModelIds = [
-    "qwen3.5-plus",
-    "qwen3-max-2026-01-23",
-    "qwen3-coder-next",
-    "qwen3-coder-plus",
-    "MiniMax-M2.5",
-    "glm-5",
-    "glm-4.7",
-    "kimi-k2.5",
-  ];
-  for (const modelId of modelStudioModelIds) {
-    const modelRef = `modelstudio/${modelId}`;
-    if (!models[modelRef]) {
-      models[modelRef] = {};
-    }
-  }
-  models[MODELSTUDIO_DEFAULT_MODEL_REF] = {
-    ...models[MODELSTUDIO_DEFAULT_MODEL_REF],
-    alias: models[MODELSTUDIO_DEFAULT_MODEL_REF]?.alias ?? "Qwen",
+  models[`deepseek-web/${DEEPSEEK_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`deepseek-web/${DEEPSEEK_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`deepseek-web/${DEEPSEEK_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "DeepSeek Browser",
   };
 
-  const providers = { ...cfg.models?.providers };
-  const existingProvider = providers.modelstudio;
-  const existingModels = Array.isArray(existingProvider?.models) ? existingProvider.models : [];
+  const existingProvider = cfg.models?.providers?.["deepseek-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || DEEPSEEK_WEB_BASE_URL;
 
-  const defaultModels = [
-    buildModelStudioModelDefinition({ id: "qwen3.5-plus" }),
-    buildModelStudioModelDefinition({ id: "qwen3-max-2026-01-23" }),
-    buildModelStudioModelDefinition({ id: "qwen3-coder-next" }),
-    buildModelStudioModelDefinition({ id: "qwen3-coder-plus" }),
-    buildModelStudioModelDefinition({ id: "MiniMax-M2.5" }),
-    buildModelStudioModelDefinition({ id: "glm-5" }),
-    buildModelStudioModelDefinition({ id: "glm-4.7" }),
-    buildModelStudioModelDefinition({ id: "kimi-k2.5" }),
-  ];
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "deepseek-web",
+    api: "deepseek-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: DEEPSEEK_WEB_DEFAULT_MODEL_ID,
+  });
+}
 
-  const mergedModels = [...existingModels];
-  const seen = new Set(existingModels.map((m) => m.id));
-  for (const model of defaultModels) {
-    if (!seen.has(model.id)) {
-      mergedModels.push(model);
-      seen.add(model.id);
-    }
-  }
+export function applyDeepseekWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyDeepseekWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `deepseek-web/${DEEPSEEK_WEB_DEFAULT_MODEL_ID}`);
+}
 
-  const { apiKey: existingApiKey, ...existingProviderRest } = (existingProvider ?? {}) as Record<
-    string,
-    unknown
-  > as { apiKey?: string };
-  const resolvedApiKey = typeof existingApiKey === "string" ? existingApiKey : undefined;
-  const normalizedApiKey = resolvedApiKey?.trim();
-
-  providers.modelstudio = {
-    ...existingProviderRest,
-    baseUrl,
-    api: "openai-completions",
-    ...(normalizedApiKey ? { apiKey: normalizedApiKey } : {}),
-    models: mergedModels.length > 0 ? mergedModels : defaultModels,
+export function applyDoubaoWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`doubao-web/${DOUBAO_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`doubao-web/${DOUBAO_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`doubao-web/${DOUBAO_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Doubao Browser",
   };
 
-  return applyOnboardAuthAgentModelsAndProviders(cfg, { agentModels: models, providers });
+  const existingProvider = cfg.models?.providers?.["doubao-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || DOUBAO_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "doubao-web",
+    api: "doubao-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: DOUBAO_WEB_DEFAULT_MODEL_ID,
+  });
 }
 
-export function applyModelStudioProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
-  return applyModelStudioProviderConfigWithBaseUrl(cfg, MODELSTUDIO_GLOBAL_BASE_URL);
+export function applyDoubaoWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyDoubaoWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `doubao-web/${DOUBAO_WEB_DEFAULT_MODEL_ID}`);
 }
 
-export function applyModelStudioProviderConfigCn(cfg: OpenClawConfig): OpenClawConfig {
-  return applyModelStudioProviderConfigWithBaseUrl(cfg, MODELSTUDIO_CN_BASE_URL);
+export function applyClaudeWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`claude-web/${CLAUDE_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`claude-web/${CLAUDE_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`claude-web/${CLAUDE_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Claude Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["claude-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || CLAUDE_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "claude-web",
+    api: "claude-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: CLAUDE_WEB_DEFAULT_MODEL_ID,
+  });
 }
 
-export function applyModelStudioConfig(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applyModelStudioProviderConfig(cfg);
-  return applyAgentDefaultModelPrimary(next, MODELSTUDIO_DEFAULT_MODEL_REF);
+export function applyClaudeWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyClaudeWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `claude-web/${CLAUDE_WEB_DEFAULT_MODEL_ID}`);
 }
 
-export function applyModelStudioConfigCn(cfg: OpenClawConfig): OpenClawConfig {
-  const next = applyModelStudioProviderConfigCn(cfg);
-  return applyAgentDefaultModelPrimary(next, MODELSTUDIO_DEFAULT_MODEL_REF);
+export function applyChatGPTWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`chatgpt-web/${CHATGPT_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`chatgpt-web/${CHATGPT_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`chatgpt-web/${CHATGPT_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "ChatGPT Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["chatgpt-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || CHATGPT_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "chatgpt-web",
+    api: "chatgpt-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: CHATGPT_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyChatGPTWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyChatGPTWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `chatgpt-web/${CHATGPT_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyQwenWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`qwen-web/${QWEN_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`qwen-web/${QWEN_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`qwen-web/${QWEN_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Qwen Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["qwen-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || QWEN_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "qwen-web",
+    api: "qwen-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: QWEN_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyQwenWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyQwenWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `qwen-web/${QWEN_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyKimiWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`kimi-web/${KIMI_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`kimi-web/${KIMI_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`kimi-web/${KIMI_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Kimi Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["kimi-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || KIMI_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "kimi-web",
+    api: "kimi-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: KIMI_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyKimiWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyKimiWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `kimi-web/${KIMI_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyGeminiWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`gemini-web/${GEMINI_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`gemini-web/${GEMINI_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`gemini-web/${GEMINI_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Gemini Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["gemini-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || GEMINI_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "gemini-web",
+    api: "gemini-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: GEMINI_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyGeminiWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyGeminiWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `gemini-web/${GEMINI_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyGrokWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`grok-web/${GROK_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`grok-web/${GROK_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`grok-web/${GROK_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Grok Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["grok-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || GROK_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "grok-web",
+    api: "grok-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: GROK_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyGrokWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyGrokWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `grok-web/${GROK_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyGlmWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`glm-web/${Z_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`glm-web/${Z_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`glm-web/${Z_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "GLM Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["glm-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || Z_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "glm-web",
+    api: "glm-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: Z_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyGlmWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyGlmWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `glm-web/${Z_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyGlmIntlWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`glm-intl-web/${GLM_INTL_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`glm-intl-web/${GLM_INTL_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`glm-intl-web/${GLM_INTL_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "GLM International",
+  };
+
+  const existingProvider = cfg.models?.providers?.["glm-intl-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || GLM_INTL_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "glm-intl-web",
+    api: "glm-intl-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: existingProvider?.models as any[] || [],
+    defaultModelId: GLM_INTL_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyGlmIntlWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyGlmIntlWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `glm-intl-web/${GLM_INTL_WEB_DEFAULT_MODEL_ID}`);
 }

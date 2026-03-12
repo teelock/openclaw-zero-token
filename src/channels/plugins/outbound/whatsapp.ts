@@ -5,10 +5,6 @@ import { resolveWhatsAppOutboundTarget } from "../../../whatsapp/resolve-outboun
 import type { ChannelOutboundAdapter } from "../types.js";
 import { sendTextMediaPayload } from "./direct-text-media.js";
 
-function trimLeadingWhitespace(text: string | undefined): string {
-  return text?.trimStart() ?? "";
-}
-
 export const whatsappOutbound: ChannelOutboundAdapter = {
   deliveryMode: "gateway",
   chunker: chunkText,
@@ -17,32 +13,12 @@ export const whatsappOutbound: ChannelOutboundAdapter = {
   pollMaxOptions: 12,
   resolveTarget: ({ to, allowFrom, mode }) =>
     resolveWhatsAppOutboundTarget({ to, allowFrom, mode }),
-  sendPayload: async (ctx) => {
-    const text = trimLeadingWhitespace(ctx.payload.text);
-    const hasMedia = Boolean(ctx.payload.mediaUrl) || (ctx.payload.mediaUrls?.length ?? 0) > 0;
-    if (!text && !hasMedia) {
-      return { channel: "whatsapp", messageId: "" };
-    }
-    return await sendTextMediaPayload({
-      channel: "whatsapp",
-      ctx: {
-        ...ctx,
-        payload: {
-          ...ctx.payload,
-          text,
-        },
-      },
-      adapter: whatsappOutbound,
-    });
-  },
+  sendPayload: async (ctx) =>
+    await sendTextMediaPayload({ channel: "whatsapp", ctx, adapter: whatsappOutbound }),
   sendText: async ({ cfg, to, text, accountId, deps, gifPlayback }) => {
-    const normalizedText = trimLeadingWhitespace(text);
-    if (!normalizedText) {
-      return { channel: "whatsapp", messageId: "" };
-    }
     const send =
       deps?.sendWhatsApp ?? (await import("../../../web/outbound.js")).sendMessageWhatsApp;
-    const result = await send(to, normalizedText, {
+    const result = await send(to, text, {
       verbose: false,
       cfg,
       accountId: accountId ?? undefined,
@@ -51,10 +27,9 @@ export const whatsappOutbound: ChannelOutboundAdapter = {
     return { channel: "whatsapp", ...result };
   },
   sendMedia: async ({ cfg, to, text, mediaUrl, mediaLocalRoots, accountId, deps, gifPlayback }) => {
-    const normalizedText = trimLeadingWhitespace(text);
     const send =
       deps?.sendWhatsApp ?? (await import("../../../web/outbound.js")).sendMessageWhatsApp;
-    const result = await send(to, normalizedText, {
+    const result = await send(to, text, {
       verbose: false,
       cfg,
       mediaUrl,

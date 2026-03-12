@@ -102,7 +102,6 @@ export async function checkAcpxVersion(params: {
   command: string;
   cwd?: string;
   expectedVersion?: string;
-  stripProviderAuthEnvVars?: boolean;
   spawnOptions?: SpawnCommandOptions;
 }): Promise<AcpxVersionCheckResult> {
   const expectedVersion = params.expectedVersion?.trim() || undefined;
@@ -114,7 +113,6 @@ export async function checkAcpxVersion(params: {
     command: params.command,
     args: probeArgs,
     cwd,
-    stripProviderAuthEnvVars: params.stripProviderAuthEnvVars,
   };
   let result: Awaited<ReturnType<typeof spawnAndCollect>>;
   try {
@@ -200,7 +198,6 @@ export async function ensureAcpx(params: {
   pluginRoot?: string;
   expectedVersion?: string;
   allowInstall?: boolean;
-  stripProviderAuthEnvVars?: boolean;
   spawnOptions?: SpawnCommandOptions;
 }): Promise<void> {
   if (pendingEnsure) {
@@ -217,7 +214,6 @@ export async function ensureAcpx(params: {
       command: params.command,
       cwd: pluginRoot,
       expectedVersion,
-      stripProviderAuthEnvVars: params.stripProviderAuthEnvVars,
       spawnOptions: params.spawnOptions,
     });
     if (precheck.ok) {
@@ -235,7 +231,6 @@ export async function ensureAcpx(params: {
       command: "npm",
       args: ["install", "--omit=dev", "--no-save", `acpx@${installVersion}`],
       cwd: pluginRoot,
-      stripProviderAuthEnvVars: params.stripProviderAuthEnvVars,
     });
 
     if (install.error) {
@@ -257,7 +252,6 @@ export async function ensureAcpx(params: {
       command: params.command,
       cwd: pluginRoot,
       expectedVersion,
-      stripProviderAuthEnvVars: params.stripProviderAuthEnvVars,
       spawnOptions: params.spawnOptions,
     });
 

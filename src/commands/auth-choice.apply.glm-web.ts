@@ -35,7 +35,7 @@ export async function applyAuthChoiceZWeb(
         spin.stop("Automated login failed.");
         runtime.error(String(err));
         const retryManual = await prompter.confirm({ message: "Would you like to try manual paste instead?", initialValue: true });
-        if (!retryManual) {throw err;}
+        if (!retryManual) throw err;
       }
     }
 

@@ -1,5 +1,3 @@
-import type { Style } from "./zca-client.js";
-
 export type ZcaFriend = {
   userId: string;
   displayName: string;
@@ -61,10 +59,6 @@ export type ZaloSendOptions = {
   caption?: string;
   isGroup?: boolean;
   mediaLocalRoots?: readonly string[];
-  textMode?: "markdown" | "plain";
-  textChunkMode?: "length" | "newline";
-  textChunkLimit?: number;
-  textStyles?: Style[];
 };
 
 export type ZaloSendResult = {

@@ -66,11 +66,6 @@ const PROVIDER_CAPABILITIES: Record<string, Partial<ProviderCapabilities>> = {
     geminiThoughtSignatureSanitization: true,
     geminiThoughtSignatureModelHints: ["gemini"],
   },
-  "opencode-go": {
-    openAiCompatTurnValidation: false,
-    geminiThoughtSignatureSanitization: true,
-    geminiThoughtSignatureModelHints: ["gemini"],
-  },
   kilocode: {
     geminiThoughtSignatureSanitization: true,
     geminiThoughtSignatureModelHints: ["gemini"],

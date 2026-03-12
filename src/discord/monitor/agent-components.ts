@@ -1009,7 +1009,6 @@ async function dispatchDiscordComponentEvent(params: {
       deliver: async (payload) => {
         const replyToId = replyReference.use();
         await deliverDiscordReply({
-          cfg: ctx.cfg,
           replies: [payload],
           target: deliverTarget,
           token,

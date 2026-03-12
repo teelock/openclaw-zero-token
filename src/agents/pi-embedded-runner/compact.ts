@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import os from "node:os";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
+import type { AgentMessage, StreamFn } from "@mariozechner/pi-agent-core";
 import {
   createAgentSession,
   DefaultResourceLoader,
@@ -42,6 +42,16 @@ import { getApiKeyForModel, resolveModelAuthMode } from "../model-auth.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
 import { createConfiguredOllamaStreamFn } from "../ollama-stream.js";
+import { createDeepseekWebStreamFn } from "../deepseek-web-stream.js";
+import { createClaudeWebStreamFn } from "../claude-web-stream.js";
+import { createDoubaoWebStreamFn } from "../doubao-web-stream.js";
+import { createChatGPTWebStreamFn } from "../chatgpt-web-stream.js";
+import { createQwenWebStreamFn } from "../qwen-web-stream.js";
+import { createKimiWebStreamFn } from "../kimi-web-stream.js";
+import { createGeminiWebStreamFn } from "../gemini-web-stream.js";
+import { createGrokWebStreamFn } from "../grok-web-stream.js";
+import { createGlmWebStreamFn } from "../glm-web-stream.js";
+import { createGlmIntlWebStreamFn } from "../glm-intl-web-stream.js";
 import { resolveOwnerDisplaySetting } from "../owner-display.js";
 import {
   ensureSessionHeader,
@@ -326,6 +336,9 @@ export async function compactEmbeddedPiSessionDirect(
     const reason = error ?? `Unknown model: ${provider}/${modelId}`;
     return fail(reason);
   }
+
+  // Get API key for web models
+  let resolvedApiKey: string | undefined;
   try {
     const apiKeyInfo = await getApiKeyForModel({
       model,
@@ -334,6 +347,8 @@ export async function compactEmbeddedPiSessionDirect(
       agentDir,
     });
 
+    log.info(`[web-api] apiKeyInfo.mode=${apiKeyInfo.mode} apiKey=${apiKeyInfo.apiKey ? 'exists' : 'missing'}`);
+    log.info(`[web-api] model.provider=${model.provider} model.api=${model.api}`);
     if (!apiKeyInfo.apiKey) {
       if (apiKeyInfo.mode !== "aws-sdk") {
         throw new Error(
@@ -346,8 +361,10 @@ export async function compactEmbeddedPiSessionDirect(
         githubToken: apiKeyInfo.apiKey,
       });
       authStorage.setRuntimeApiKey(model.provider, copilotToken.token);
+      resolvedApiKey = copilotToken.token;
     } else {
       authStorage.setRuntimeApiKey(model.provider, apiKeyInfo.apiKey);
+      resolvedApiKey = apiKeyInfo.apiKey;
     }
   } catch (err) {
     const reason = describeUnknownError(err);
@@ -647,6 +664,39 @@ export async function compactEmbeddedPiSessionDirect(
         resourceLoader,
       });
       applySystemPromptOverrideToSession(session, systemPromptOverride());
+
+      // Register custom API providers for web-based models directly to session
+      log.info(`[web-api] resolvedApiKey=${resolvedApiKey ? 'exists' : 'missing'}, model.api=${model.api}`);
+      if (resolvedApiKey) {
+        let streamFn: StreamFn | undefined;
+        if (model.api === "deepseek-web") {
+          streamFn = createDeepseekWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "claude-web") {
+          streamFn = createClaudeWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "doubao-web") {
+          streamFn = createDoubaoWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "chatgpt-web") {
+          streamFn = createChatGPTWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "qwen-web") {
+          streamFn = createQwenWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "kimi-web") {
+          streamFn = createKimiWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "gemini-web") {
+          streamFn = createGeminiWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "grok-web") {
+          streamFn = createGrokWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "glm-web") {
+          streamFn = createGlmWebStreamFn(resolvedApiKey) as StreamFn;
+        } else if (model.api === "glm-intl-web") {
+          streamFn = createGlmIntlWebStreamFn(resolvedApiKey) as StreamFn;
+        }
+
+        if (streamFn) {
+          log.info(`[web-api] Setting session.agent.streamFn for ${model.api}`);
+          session.agent.streamFn = streamFn;
+        }
+      }
+
       if (model.api === "ollama") {
         const providerBaseUrl =
           typeof params.config?.models?.providers?.[model.provider]?.baseUrl === "string"
@@ -936,43 +986,6 @@ export async function compactEmbeddedPiSession(
           modelContextWindow: ceModel?.contextWindow,
           defaultTokens: DEFAULT_CONTEXT_TOKENS,
         });
-        // When the context engine owns compaction, its compact() implementation
-        // bypasses compactEmbeddedPiSessionDirect (which fires the hooks internally).
-        // Fire before_compaction / after_compaction hooks here so plugin subscribers
-        // are notified regardless of which engine is active.
-        const engineOwnsCompaction = contextEngine.info.ownsCompaction === true;
-        const hookRunner = engineOwnsCompaction ? getGlobalHookRunner() : null;
-        const hookSessionKey = params.sessionKey?.trim() || params.sessionId;
-        const { sessionAgentId } = resolveSessionAgentIds({
-          sessionKey: params.sessionKey,
-          config: params.config,
-        });
-        const resolvedMessageProvider = params.messageChannel ?? params.messageProvider;
-        const hookCtx = {
-          sessionId: params.sessionId,
-          agentId: sessionAgentId,
-          sessionKey: hookSessionKey,
-          workspaceDir: resolveUserPath(params.workspaceDir),
-          messageProvider: resolvedMessageProvider,
-        };
-        // Engine-owned compaction doesn't load the transcript at this level, so
-        // message counts are unavailable.  We pass sessionFile so hook subscribers
-        // can read the transcript themselves if they need exact counts.
-        if (hookRunner?.hasHooks("before_compaction")) {
-          try {
-            await hookRunner.runBeforeCompaction(
-              {
-                messageCount: -1,
-                sessionFile: params.sessionFile,
-              },
-              hookCtx,
-            );
-          } catch (err) {
-            log.warn("before_compaction hook failed", {
-              errorMessage: err instanceof Error ? err.message : String(err),
-            });
-          }
-        }
         const result = await contextEngine.compact({
           sessionId: params.sessionId,
           sessionFile: params.sessionFile,
@@ -981,23 +994,6 @@ export async function compactEmbeddedPiSession(
           force: params.trigger === "manual",
           runtimeContext: params as Record<string, unknown>,
         });
-        if (result.ok && result.compacted && hookRunner?.hasHooks("after_compaction")) {
-          try {
-            await hookRunner.runAfterCompaction(
-              {
-                messageCount: -1,
-                compactedCount: -1,
-                tokenCount: result.result?.tokensAfter,
-                sessionFile: params.sessionFile,
-              },
-              hookCtx,
-            );
-          } catch (err) {
-            log.warn("after_compaction hook failed", {
-              errorMessage: err instanceof Error ? err.message : String(err),
-            });
-          }
-        }
         return {
           ok: result.ok,
           compacted: result.compacted,

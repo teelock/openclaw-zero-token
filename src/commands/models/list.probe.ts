@@ -12,7 +12,8 @@ import {
   resolveAuthProfileOrder,
 } from "../../agents/auth-profiles.js";
 import { describeFailoverError } from "../../agents/failover-error.js";
-import { hasUsableCustomProviderApiKey, resolveEnvApiKey } from "../../agents/model-auth.js";
+import { isNonSecretApiKeyMarker } from "../../agents/model-auth-markers.js";
+import { getCustomProviderApiKey, resolveEnvApiKey } from "../../agents/model-auth.js";
 import { loadModelCatalog } from "../../agents/model-catalog.js";
 import {
   findNormalizedProviderValue,
@@ -372,7 +373,8 @@ export async function buildProbeTargets(params: {
     }
 
     const envKey = resolveEnvApiKey(providerKey);
-    const hasUsableModelsJsonKey = hasUsableCustomProviderApiKey(cfg, providerKey);
+    const customKey = getCustomProviderApiKey(cfg, providerKey);
+    const hasUsableModelsJsonKey = Boolean(customKey && !isNonSecretApiKeyMarker(customKey));
     if (!envKey && !hasUsableModelsJsonKey) {
       continue;
     }

@@ -1,9 +1,8 @@
 import {
   buildAccountScopedDmSecurityPolicy,
+  collectOpenProviderGroupPolicyWarnings,
   buildOpenGroupPolicyRestrictSendersWarning,
   buildOpenGroupPolicyWarning,
-  collectOpenProviderGroupPolicyWarnings,
-  createAccountStatusSink,
   mapAllowFromEntries,
 } from "openclaw/plugin-sdk/compat";
 import type {
@@ -358,10 +357,6 @@ export const zaloPlugin: ChannelPlugin<ResolvedZaloAccount> = {
           `[${account.accountId}] Zalo probe threw before provider start: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`,
         );
       }
-      const statusSink = createAccountStatusSink({
-        accountId: ctx.accountId,
-        setStatus: ctx.setStatus,
-      });
       ctx.log?.info(`[${account.accountId}] starting provider${zaloBotLabel} mode=${mode}`);
       const { monitorZaloProvider } = await import("./monitor.js");
       return monitorZaloProvider({
@@ -375,7 +370,7 @@ export const zaloPlugin: ChannelPlugin<ResolvedZaloAccount> = {
         webhookSecret: normalizeSecretInputString(account.config.webhookSecret),
         webhookPath: account.config.webhookPath,
         fetcher,
-        statusSink,
+        statusSink: (patch) => ctx.setStatus({ accountId: ctx.accountId, ...patch }),
       });
     },
   },

@@ -7,7 +7,6 @@ import { danger, shouldLogVerbose } from "../globals.js";
 import { markOpenClawExecEnv } from "../infra/openclaw-exec-env.js";
 import { logDebug, logError } from "../logger.js";
 import { resolveCommandStdio } from "./spawn-utils.js";
-import { resolveWindowsCommandShim } from "./windows-command.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -77,10 +76,19 @@ function resolveNpmArgvForWindows(argv: string[]): string[] | null {
  * are handled by resolveNpmArgvForWindows to avoid spawn EINVAL (no direct .cmd).
  */
 function resolveCommand(command: string): string {
-  return resolveWindowsCommandShim({
-    command,
-    cmdCommands: ["pnpm", "yarn"],
-  });
+  if (process.platform !== "win32") {
+    return command;
+  }
+  const basename = path.basename(command).toLowerCase();
+  const ext = path.extname(basename);
+  if (ext) {
+    return command;
+  }
+  const cmdCommands = ["pnpm", "yarn"];
+  if (cmdCommands.includes(basename)) {
+    return `${command}.cmd`;
+  }
+  return command;
 }
 
 export function shouldSpawnWithShell(params: {

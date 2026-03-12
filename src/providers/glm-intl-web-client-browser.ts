@@ -139,7 +139,7 @@ export class GlmIntlWebClientBrowser {
       console.log(`[GLM Intl Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -153,7 +153,7 @@ export class GlmIntlWebClientBrowser {
       const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) break;
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {

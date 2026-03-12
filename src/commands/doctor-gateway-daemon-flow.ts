@@ -12,7 +12,7 @@ import {
   launchAgentPlistExists,
   repairLaunchAgentBootstrap,
 } from "../daemon/launchd.js";
-import { describeGatewayServiceRestart, resolveGatewayService } from "../daemon/service.js";
+import { resolveGatewayService } from "../daemon/service.js";
 import { renderSystemdUnavailableHints } from "../daemon/systemd-hints.js";
 import { isSystemdUserServiceAvailable } from "../daemon/systemd.js";
 import { formatPortDiagnostics, inspectPortUsage } from "../infra/ports.js";
@@ -235,16 +235,11 @@ export async function maybeRepairGatewayDaemon(params: {
       initialValue: true,
     });
     if (start) {
-      const restartResult = await service.restart({
+      await service.restart({
         env: process.env,
         stdout: process.stdout,
       });
-      const restartStatus = describeGatewayServiceRestart("Gateway", restartResult);
-      if (!restartStatus.scheduled) {
-        await sleep(1500);
-      } else {
-        note(restartStatus.message, "Gateway");
-      }
+      await sleep(1500);
     }
   }
 
@@ -262,15 +257,10 @@ export async function maybeRepairGatewayDaemon(params: {
       initialValue: true,
     });
     if (restart) {
-      const restartResult = await service.restart({
+      await service.restart({
         env: process.env,
         stdout: process.stdout,
       });
-      const restartStatus = describeGatewayServiceRestart("Gateway", restartResult);
-      if (restartStatus.scheduled) {
-        note(restartStatus.message, "Gateway");
-        return;
-      }
       await sleep(1500);
       try {
         await healthCommand({ json: false, timeoutMs: 10_000 }, params.runtime);

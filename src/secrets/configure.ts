@@ -20,12 +20,7 @@ import {
 } from "./configure-plan.js";
 import type { SecretsApplyPlan } from "./plan.js";
 import { PROVIDER_ENV_VARS } from "./provider-env-vars.js";
-import {
-  formatExecSecretRefIdValidationMessage,
-  isValidExecSecretRefId,
-  isValidSecretProviderAlias,
-  resolveDefaultSecretProviderAlias,
-} from "./ref-contract.js";
+import { isValidSecretProviderAlias, resolveDefaultSecretProviderAlias } from "./ref-contract.js";
 import { resolveSecretRefValue } from "./resolve.js";
 import { assertExpectedResolvedSecretValue } from "./secret-value.js";
 import { isRecord } from "./shared.js";
@@ -922,16 +917,7 @@ export async function runSecretsConfigureInteractive(
         await text({
           message: "Secret id",
           initialValue: suggestedId,
-          validate: (value) => {
-            const trimmed = String(value ?? "").trim();
-            if (!trimmed) {
-              return "Required";
-            }
-            if (source === "exec" && !isValidExecSecretRefId(trimmed)) {
-              return formatExecSecretRefIdValidationMessage();
-            }
-            return undefined;
-          },
+          validate: (value) => (String(value ?? "").trim().length > 0 ? undefined : "Required"),
         }),
         "Secrets configure cancelled.",
       );

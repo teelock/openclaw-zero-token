@@ -120,26 +120,11 @@ export async function resolveMSTeamsChannelAllowlist(params: {
         return { input, resolved: false, note: "team not found" };
       }
       const teamMatch = teams[0];
-      const graphTeamId = teamMatch.id?.trim();
+      const teamId = teamMatch.id?.trim();
       const teamName = teamMatch.displayName?.trim() || team;
-      if (!graphTeamId) {
+      if (!teamId) {
         return { input, resolved: false, note: "team id missing" };
       }
-      // Bot Framework sends the General channel's conversation ID as
-      // channelData.team.id at runtime, NOT the Graph API group GUID.
-      // Fetch channels upfront so we can resolve the correct key format for
-      // runtime matching and reuse the list for channel lookups.
-      let teamChannels: Awaited<ReturnType<typeof listChannelsForTeam>> = [];
-      try {
-        teamChannels = await listChannelsForTeam(token, graphTeamId);
-      } catch {
-        // API failure (rate limit, network error) — fall back to Graph GUID as team key
-      }
-      const generalChannel = teamChannels.find((ch) => ch.displayName?.toLowerCase() === "general");
-      // Use the General channel's conversation ID as the team key — this
-      // matches what Bot Framework sends at runtime. Fall back to the Graph
-      // GUID if the General channel isn't found (renamed or deleted).
-      const teamId = generalChannel?.id?.trim() || graphTeamId;
       if (!channel) {
         return {
           input,
@@ -149,11 +134,11 @@ export async function resolveMSTeamsChannelAllowlist(params: {
           note: teams.length > 1 ? "multiple teams; chose first" : undefined,
         };
       }
-      // Reuse teamChannels — already fetched above
+      const channels = await listChannelsForTeam(token, teamId);
       const channelMatch =
-        teamChannels.find((item) => item.id === channel) ??
-        teamChannels.find((item) => item.displayName?.toLowerCase() === channel.toLowerCase()) ??
-        teamChannels.find((item) =>
+        channels.find((item) => item.id === channel) ??
+        channels.find((item) => item.displayName?.toLowerCase() === channel.toLowerCase()) ??
+        channels.find((item) =>
           item.displayName?.toLowerCase().includes(channel.toLowerCase() ?? ""),
         );
       if (!channelMatch?.id) {
@@ -166,7 +151,7 @@ export async function resolveMSTeamsChannelAllowlist(params: {
         teamName,
         channelId: channelMatch.id,
         channelName: channelMatch.displayName ?? channel,
-        note: teamChannels.length > 1 ? "multiple channels; chose first" : undefined,
+        note: channels.length > 1 ? "multiple channels; chose first" : undefined,
       };
     },
   });

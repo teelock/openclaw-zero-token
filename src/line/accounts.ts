@@ -1,5 +1,5 @@
+import fs from "node:fs";
 import type { OpenClawConfig } from "../config/config.js";
-import { tryReadSecretFileSync } from "../infra/secret-file.js";
 import {
   DEFAULT_ACCOUNT_ID,
   normalizeAccountId as normalizeSharedAccountId,
@@ -16,7 +16,14 @@ import type {
 export { DEFAULT_ACCOUNT_ID } from "../routing/account-id.js";
 
 function readFileIfExists(filePath: string | undefined): string | undefined {
-  return tryReadSecretFileSync(filePath, "LINE credential file", { rejectSymlink: true });
+  if (!filePath) {
+    return undefined;
+  }
+  try {
+    return fs.readFileSync(filePath, "utf-8").trim();
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveToken(params: {

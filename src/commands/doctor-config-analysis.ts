@@ -105,22 +105,18 @@ export function noteOpencodeProviderOverrides(cfg: OpenClawConfig): void {
   if (providers["opencode-zen"]) {
     overrides.push("opencode-zen");
   }
-  if (providers["opencode-go"]) {
-    overrides.push("opencode-go");
-  }
   if (overrides.length === 0) {
     return;
   }
 
   const lines = overrides.flatMap((id) => {
-    const providerLabel = id === "opencode-go" ? "OpenCode Go" : "OpenCode Zen";
     const providerEntry = providers[id];
     const api =
       isRecord(providerEntry) && typeof providerEntry.api === "string"
         ? providerEntry.api
         : undefined;
     return [
-      `- models.providers.${id} is set; this overrides the built-in ${providerLabel} catalog.`,
+      `- models.providers.${id} is set; this overrides the built-in OpenCode Zen catalog.`,
       api ? `- models.providers.${id}.api=${api}` : null,
     ].filter((line): line is string => Boolean(line));
   });
@@ -128,7 +124,7 @@ export function noteOpencodeProviderOverrides(cfg: OpenClawConfig): void {
   lines.push(
     "- Remove these entries to restore per-model API routing + costs (then re-run onboarding if needed).",
   );
-  note(lines.join("\n"), "OpenCode");
+  note(lines.join("\n"), "OpenCode Zen");
 }
 
 export function noteIncludeConfinementWarning(snapshot: {

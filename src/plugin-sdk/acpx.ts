@@ -32,7 +32,3 @@ export {
   materializeWindowsSpawnProgram,
   resolveWindowsSpawnProgramCandidate,
 } from "./windows-spawn.js";
-export {
-  listKnownProviderAuthEnvVarNames,
-  omitEnvKeysCaseInsensitive,
-} from "../secrets/provider-env-vars.js";

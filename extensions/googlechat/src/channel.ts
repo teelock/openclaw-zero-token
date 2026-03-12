@@ -1,9 +1,9 @@
 import { createScopedChannelConfigBase } from "openclaw/plugin-sdk/compat";
 import {
+  buildAccountScopedDmSecurityPolicy,
   buildOpenGroupPolicyConfigureRouteAllowlistWarning,
   collectAllowlistProviderGroupPolicyWarnings,
   createScopedAccountConfigAccessors,
-  createScopedDmSecurityResolver,
   formatNormalizedAllowFromEntries,
 } from "openclaw/plugin-sdk/compat";
 import {
@@ -12,7 +12,6 @@ import {
   buildComputedAccountStatusSnapshot,
   buildChannelConfigSchema,
   DEFAULT_ACCOUNT_ID,
-  createAccountStatusSink,
   getChatChannelMeta,
   listDirectoryGroupEntriesFromMapKeys,
   listDirectoryUserEntriesFromAllowFrom,
@@ -22,7 +21,6 @@ import {
   PAIRING_APPROVED_MESSAGE,
   resolveChannelMediaMaxBytes,
   resolveGoogleChatGroupRequireMention,
-  runPassiveAccountLifecycle,
   type ChannelDock,
   type ChannelMessageActionAdapter,
   type ChannelPlugin,
@@ -84,14 +82,6 @@ const googleChatConfigBase = createScopedChannelConfigBase<ResolvedGoogleChatAcc
     "botUser",
     "name",
   ],
-});
-
-const resolveGoogleChatDmPolicy = createScopedDmSecurityResolver<ResolvedGoogleChatAccount>({
-  channelKey: "googlechat",
-  resolvePolicy: (account) => account.config.dm?.policy,
-  resolveAllowFrom: (account) => account.config.dm?.allowFrom,
-  allowFromPathSuffix: "dm.",
-  normalizeEntry: (raw) => formatAllowFromEntry(raw),
 });
 
 export const googlechatDock: ChannelDock = {
@@ -180,7 +170,18 @@ export const googlechatPlugin: ChannelPlugin<ResolvedGoogleChatAccount> = {
     ...googleChatConfigAccessors,
   },
   security: {
-    resolveDmPolicy: resolveGoogleChatDmPolicy,
+    resolveDmPolicy: ({ cfg, accountId, account }) => {
+      return buildAccountScopedDmSecurityPolicy({
+        cfg,
+        channelKey: "googlechat",
+        accountId,
+        fallbackAccountId: account.accountId ?? DEFAULT_ACCOUNT_ID,
+        policy: account.config.dm?.policy,
+        allowFrom: account.config.dm?.allowFrom ?? [],
+        allowFromPathSuffix: "dm.",
+        normalizeEntry: (raw) => formatAllowFromEntry(raw),
+      });
+    },
     collectWarnings: ({ account, cfg }) => {
       const warnings = collectAllowlistProviderGroupPolicyWarnings({
         cfg,
@@ -511,39 +512,37 @@ export const googlechatPlugin: ChannelPlugin<ResolvedGoogleChatAccount> = {
   gateway: {
     startAccount: async (ctx) => {
       const account = ctx.account;
-      const statusSink = createAccountStatusSink({
-        accountId: account.accountId,
-        setStatus: ctx.setStatus,
-      });
       ctx.log?.info(`[${account.accountId}] starting Google Chat webhook`);
-      statusSink({
+      ctx.setStatus({
+        accountId: account.accountId,
         running: true,
         lastStartAt: Date.now(),
         webhookPath: resolveGoogleChatWebhookPath({ account }),
         audienceType: account.config.audienceType,
         audience: account.config.audience,
       });
-      await runPassiveAccountLifecycle({
+      const unregister = await startGoogleChatMonitor({
+        account,
+        config: ctx.cfg,
+        runtime: ctx.runtime,
         abortSignal: ctx.abortSignal,
-        start: async () =>
-          await startGoogleChatMonitor({
-            account,
-            config: ctx.cfg,
-            runtime: ctx.runtime,
-            abortSignal: ctx.abortSignal,
-            webhookPath: account.config.webhookPath,
-            webhookUrl: account.config.webhookUrl,
-            statusSink,
-          }),
-        stop: async (unregister) => {
-          unregister?.();
-        },
-        onStop: async () => {
-          statusSink({
-            running: false,
-            lastStopAt: Date.now(),
-          });
-        },
+        webhookPath: account.config.webhookPath,
+        webhookUrl: account.config.webhookUrl,
+        statusSink: (patch) => ctx.setStatus({ accountId: account.accountId, ...patch }),
+      });
+      // Keep the promise pending until abort (webhook mode is passive).
+      await new Promise<void>((resolve) => {
+        if (ctx.abortSignal.aborted) {
+          resolve();
+          return;
+        }
+        ctx.abortSignal.addEventListener("abort", () => resolve(), { once: true });
+      });
+      unregister?.();
+      ctx.setStatus({
+        accountId: account.accountId,
+        running: false,
+        lastStopAt: Date.now(),
       });
     },
   },

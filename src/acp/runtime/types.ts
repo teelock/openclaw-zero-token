@@ -35,7 +35,6 @@ export type AcpRuntimeEnsureInput = {
   sessionKey: string;
   agent: string;
   mode: AcpRuntimeSessionMode;
-  resumeSessionId?: string;
   cwd?: string;
   env?: Record<string, string>;
 };

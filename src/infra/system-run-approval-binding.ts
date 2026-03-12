@@ -50,16 +50,10 @@ export function normalizeSystemRunApprovalPlan(value: unknown): SystemRunApprova
   if (candidate.mutableFileOperand !== undefined && mutableFileOperand === null) {
     return null;
   }
-  const commandText =
-    normalizeNonEmptyString(candidate.commandText) ?? normalizeNonEmptyString(candidate.rawCommand);
-  if (!commandText) {
-    return null;
-  }
   return {
     argv,
     cwd: normalizeNonEmptyString(candidate.cwd),
-    commandText,
-    commandPreview: normalizeNonEmptyString(candidate.commandPreview),
+    rawCommand: normalizeNonEmptyString(candidate.rawCommand),
     agentId: normalizeNonEmptyString(candidate.agentId),
     sessionKey: normalizeNonEmptyString(candidate.sessionKey),
     mutableFileOperand: mutableFileOperand ?? undefined,

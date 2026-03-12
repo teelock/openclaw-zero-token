@@ -3,34 +3,21 @@ import { resolveGatewayCredentialsWithSecretInputs } from "./call.js";
 import {
   type ExplicitGatewayAuth,
   isGatewaySecretRefUnavailableError,
-  resolveGatewayProbeCredentialsFromConfig,
+  resolveGatewayCredentialsFromConfig,
 } from "./credentials.js";
-
-function buildGatewayProbeCredentialPolicy(params: {
-  cfg: OpenClawConfig;
-  mode: "local" | "remote";
-  env?: NodeJS.ProcessEnv;
-  explicitAuth?: ExplicitGatewayAuth;
-}) {
-  return {
-    config: params.cfg,
-    cfg: params.cfg,
-    env: params.env,
-    explicitAuth: params.explicitAuth,
-    modeOverride: params.mode,
-    mode: params.mode,
-    includeLegacyEnv: false,
-    remoteTokenFallback: "remote-only" as const,
-  };
-}
 
 export function resolveGatewayProbeAuth(params: {
   cfg: OpenClawConfig;
   mode: "local" | "remote";
   env?: NodeJS.ProcessEnv;
 }): { token?: string; password?: string } {
-  const policy = buildGatewayProbeCredentialPolicy(params);
-  return resolveGatewayProbeCredentialsFromConfig(policy);
+  return resolveGatewayCredentialsFromConfig({
+    cfg: params.cfg,
+    env: params.env,
+    modeOverride: params.mode,
+    includeLegacyEnv: false,
+    remoteTokenFallback: "remote-only",
+  });
 }
 
 export async function resolveGatewayProbeAuthWithSecretInputs(params: {
@@ -39,14 +26,13 @@ export async function resolveGatewayProbeAuthWithSecretInputs(params: {
   env?: NodeJS.ProcessEnv;
   explicitAuth?: ExplicitGatewayAuth;
 }): Promise<{ token?: string; password?: string }> {
-  const policy = buildGatewayProbeCredentialPolicy(params);
   return await resolveGatewayCredentialsWithSecretInputs({
-    config: policy.config,
-    env: policy.env,
-    explicitAuth: policy.explicitAuth,
-    modeOverride: policy.modeOverride,
-    includeLegacyEnv: policy.includeLegacyEnv,
-    remoteTokenFallback: policy.remoteTokenFallback,
+    config: params.cfg,
+    env: params.env,
+    explicitAuth: params.explicitAuth,
+    modeOverride: params.mode,
+    includeLegacyEnv: false,
+    remoteTokenFallback: "remote-only",
   });
 }
 

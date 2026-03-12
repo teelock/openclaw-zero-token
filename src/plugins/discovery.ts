@@ -69,11 +69,10 @@ function buildDiscoveryCacheKey(params: {
   workspaceDir?: string;
   extraPaths?: string[];
   ownershipUid?: number | null;
-  env: NodeJS.ProcessEnv;
 }): string {
   const workspaceKey = params.workspaceDir ? resolveUserPath(params.workspaceDir) : "";
-  const configExtensionsRoot = path.join(resolveConfigDir(params.env), "extensions");
-  const bundledRoot = resolveBundledPluginsDir(params.env) ?? "";
+  const configExtensionsRoot = path.join(resolveConfigDir(), "extensions");
+  const bundledRoot = resolveBundledPluginsDir() ?? "";
   const normalizedExtraPaths = (params.extraPaths ?? [])
     .filter((entry): entry is string => typeof entry === "string")
     .map((entry) => entry.trim())
@@ -154,7 +153,7 @@ function checkPathStatAndPermissions(params: {
       continue;
     }
     seen.add(normalized);
-    let stat = safeStatSync(targetPath);
+    const stat = safeStatSync(targetPath);
     if (!stat) {
       return {
         reason: "path_stat_failed",
@@ -163,28 +162,7 @@ function checkPathStatAndPermissions(params: {
         targetPath,
       };
     }
-    let modeBits = stat.mode & 0o777;
-    if ((modeBits & 0o002) !== 0 && params.origin === "bundled") {
-      // npm/global installs can create package-managed extension dirs without
-      // directory entries in the tarball, which may widen them to 0777.
-      // Tighten bundled dirs in place before applying the normal safety gate.
-      try {
-        fs.chmodSync(targetPath, modeBits & ~0o022);
-        const repairedStat = safeStatSync(targetPath);
-        if (!repairedStat) {
-          return {
-            reason: "path_stat_failed",
-            sourcePath: params.source,
-            rootPath: params.rootDir,
-            targetPath,
-          };
-        }
-        stat = repairedStat;
-        modeBits = repairedStat.mode & 0o777;
-      } catch {
-        // Fall through to the normal block path below when repair is not possible.
-      }
-    }
+    const modeBits = stat.mode & 0o777;
     if ((modeBits & 0o002) !== 0) {
       return {
         reason: "path_world_writable",
@@ -650,7 +628,6 @@ export function discoverOpenClawPlugins(params: {
     workspaceDir: params.workspaceDir,
     extraPaths: params.extraPaths,
     ownershipUid: params.ownershipUid,
-    env,
   });
   if (cacheEnabled) {
     const cached = discoveryCache.get(cacheKey);
@@ -699,7 +676,7 @@ export function discoverOpenClawPlugins(params: {
     }
   }
 
-  const bundledDir = resolveBundledPluginsDir(env);
+  const bundledDir = resolveBundledPluginsDir();
   if (bundledDir) {
     discoverInDirectory({
       dir: bundledDir,
@@ -713,7 +690,7 @@ export function discoverOpenClawPlugins(params: {
 
   // Keep auto-discovered global extensions behind bundled plugins.
   // Users can still intentionally override via plugins.load.paths (origin=config).
-  const globalDir = path.join(resolveConfigDir(env), "extensions");
+  const globalDir = path.join(resolveConfigDir(), "extensions");
   discoverInDirectory({
     dir: globalDir,
     origin: "global",

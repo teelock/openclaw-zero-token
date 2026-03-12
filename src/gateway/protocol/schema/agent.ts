@@ -1,5 +1,6 @@
 import { Type } from "@sinclair/typebox";
-import { InputProvenanceSchema, NonEmptyString, SessionLabelString } from "./primitives.js";
+import { INPUT_PROVENANCE_KIND_VALUES } from "../../../sessions/input-provenance.js";
+import { NonEmptyString, SessionLabelString } from "./primitives.js";
 
 export const AgentInternalEventSchema = Type.Object(
   {
@@ -95,9 +96,22 @@ export const AgentParamsSchema = Type.Object(
     lane: Type.Optional(Type.String()),
     extraSystemPrompt: Type.Optional(Type.String()),
     internalEvents: Type.Optional(Type.Array(AgentInternalEventSchema)),
-    inputProvenance: Type.Optional(InputProvenanceSchema),
+    inputProvenance: Type.Optional(
+      Type.Object(
+        {
+          kind: Type.String({ enum: [...INPUT_PROVENANCE_KIND_VALUES] }),
+          originSessionId: Type.Optional(Type.String()),
+          sourceSessionKey: Type.Optional(Type.String()),
+          sourceChannel: Type.Optional(Type.String()),
+          sourceTool: Type.Optional(Type.String()),
+        },
+        { additionalProperties: false },
+      ),
+    ),
     idempotencyKey: NonEmptyString,
     label: Type.Optional(SessionLabelString),
+    spawnedBy: Type.Optional(Type.String()),
+    workspaceDir: Type.Optional(Type.String()),
   },
   { additionalProperties: false },
 );

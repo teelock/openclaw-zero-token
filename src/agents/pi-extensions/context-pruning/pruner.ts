@@ -5,8 +5,9 @@ import type { EffectiveContextPruningSettings } from "./settings.js";
 import { makeToolPrunablePredicate } from "./tools.js";
 
 const CHARS_PER_TOKEN_ESTIMATE = 4;
+// We currently skip pruning tool results that contain images. Still, we count them (approx.) so
+// we start trimming prunable tool results earlier when image-heavy context is consuming the window.
 const IMAGE_CHAR_ESTIMATE = 8_000;
-const PRUNED_CONTEXT_IMAGE_MARKER = "[image removed during context pruning]";
 
 function asText(text: string): TextContent {
   return { type: "text", text };
@@ -17,22 +18,6 @@ function collectTextSegments(content: ReadonlyArray<TextContent | ImageContent>)
   for (const block of content) {
     if (block.type === "text") {
       parts.push(block.text);
-    }
-  }
-  return parts;
-}
-
-function collectPrunableToolResultSegments(
-  content: ReadonlyArray<TextContent | ImageContent>,
-): string[] {
-  const parts: string[] = [];
-  for (const block of content) {
-    if (block.type === "text") {
-      parts.push(block.text);
-      continue;
-    }
-    if (block.type === "image") {
-      parts.push(PRUNED_CONTEXT_IMAGE_MARKER);
     }
   }
   return parts;
@@ -205,25 +190,21 @@ function softTrimToolResultMessage(params: {
   settings: EffectiveContextPruningSettings;
 }): ToolResultMessage | null {
   const { msg, settings } = params;
-  const hasImages = hasImageBlocks(msg.content);
-  const parts = hasImages
-    ? collectPrunableToolResultSegments(msg.content)
-    : collectTextSegments(msg.content);
+  // Ignore image tool results for now: these are often directly relevant and hard to partially prune safely.
+  if (hasImageBlocks(msg.content)) {
+    return null;
+  }
+
+  const parts = collectTextSegments(msg.content);
   const rawLen = estimateJoinedTextLength(parts);
   if (rawLen <= settings.softTrim.maxChars) {
-    if (!hasImages) {
-      return null;
-    }
-    return { ...msg, content: [asText(parts.join("\n"))] };
+    return null;
   }
 
   const headChars = Math.max(0, settings.softTrim.headChars);
   const tailChars = Math.max(0, settings.softTrim.tailChars);
   if (headChars + tailChars >= rawLen) {
-    if (!hasImages) {
-      return null;
-    }
-    return { ...msg, content: [asText(parts.join("\n"))] };
+    return null;
   }
 
   const head = takeHeadFromJoinedText(parts, headChars);
@@ -291,6 +272,9 @@ export function pruneContextMessages(params: {
       continue;
     }
     if (!isToolPrunable(msg.toolName)) {
+      continue;
+    }
+    if (hasImageBlocks(msg.content)) {
       continue;
     }
     prunableToolIndexes.push(i);
