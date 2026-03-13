@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
 import { getHeadersWithAuth } from "../browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
@@ -11,6 +10,7 @@ import {
 } from "../browser/chrome.js";
 import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
 import { loadConfig } from "../config/io.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 
 export interface ClaudeWebClientOptions {
   sessionKey: string;
@@ -78,7 +78,7 @@ export class ClaudeWebClientBrowser {
     // If attachOnly is true, connect to existing Chrome instead of launching
     if (browserConfig.attachOnly) {
       console.log(`[Claude Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
-      
+
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
@@ -91,13 +91,15 @@ export class ClaudeWebClientBrowser {
       if (!wsUrl) {
         throw new Error(
           `Failed to connect to Chrome at ${profile.cdpUrl}. ` +
-          `Make sure Chrome is running in debug mode (./start-chrome-debug.sh)`
+            `Make sure Chrome is running in debug mode (./start-chrome-debug.sh)`,
         );
       }
 
-      this.browser = await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      }).then((b) => b.contexts()[0]);
+      this.browser = await chromium
+        .connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+        .then((b) => b.contexts()[0]);
 
       if (!this.browser) {
         throw new Error("Failed to connect to Chrome browser context");
@@ -105,7 +107,7 @@ export class ClaudeWebClientBrowser {
 
       // Find the Claude.ai page or create new one
       const pages = this.browser.pages();
-      let claudePage = pages.find(p => p.url().includes('claude.ai'));
+      let claudePage = pages.find((p) => p.url().includes("claude.ai"));
 
       if (claudePage) {
         console.log(`[Claude Web Browser] Found existing Claude page: ${claudePage.url()}`);
@@ -113,9 +115,9 @@ export class ClaudeWebClientBrowser {
       } else {
         console.log(`[Claude Web Browser] No Claude page found, creating new one...`);
         this.page = await this.browser.newPage();
-        await this.page.goto('https://claude.ai/new', { waitUntil: 'domcontentloaded' });
+        await this.page.goto("https://claude.ai/new", { waitUntil: "domcontentloaded" });
       }
-      
+
       console.log(`[Claude Web Browser] Connected to existing Chrome successfully`);
     } else {
       // Launch new Chrome
@@ -136,9 +138,11 @@ export class ClaudeWebClientBrowser {
         throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
       }
 
-      this.browser = await chromium.connectOverCDP(wsUrl, {
-        headers: getHeadersWithAuth(wsUrl),
-      }).then((b) => b.contexts()[0]);
+      this.browser = await chromium
+        .connectOverCDP(wsUrl, {
+          headers: getHeadersWithAuth(wsUrl),
+        })
+        .then((b) => b.contexts()[0]);
 
       if (!this.browser) {
         throw new Error("Failed to connect to Chrome browser context");
@@ -182,10 +186,11 @@ export class ClaudeWebClientBrowser {
         async ({ baseUrl, deviceId }) => {
           const res = await fetch(`${baseUrl}/organizations`, {
             headers: {
-              "Accept": "application/json",
+              Accept: "application/json",
               "anthropic-client-platform": "web_claude_ai",
               "anthropic-device-id": deviceId,
             },
+            credentials: "include",
           });
 
           if (!res.ok) {
@@ -231,6 +236,7 @@ export class ClaudeWebClientBrowser {
             name: `Conversation ${new Date().toISOString()}`,
             uuid: crypto.randomUUID(),
           }),
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -247,7 +253,9 @@ export class ClaudeWebClientBrowser {
     console.log(`[Claude Web Browser] Create conversation response: ${response.status}`);
 
     if (!response.ok) {
-      console.error(`[Claude Web Browser] Create conversation failed: ${response.status} - ${response.error}`);
+      console.error(
+        `[Claude Web Browser] Create conversation failed: ${response.status} - ${response.error}`,
+      );
       throw new Error(`Failed to create conversation: ${response.status}`);
     }
 
@@ -316,11 +324,12 @@ export class ClaudeWebClientBrowser {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Accept": "text/event-stream",
+            Accept: "text/event-stream",
             "anthropic-client-platform": "web_claude_ai",
             "anthropic-device-id": deviceId,
           },
           body: JSON.stringify(body),
+          credentials: "include",
         });
 
         if (!res.ok) {
@@ -339,7 +348,9 @@ export class ClaudeWebClientBrowser {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            break;
+          }
           fullText += decoder.decode(value, { stream: true });
         }
 
@@ -348,21 +359,29 @@ export class ClaudeWebClientBrowser {
       { url, body, deviceId: this.deviceId },
     );
 
-    console.log(`[Claude Web Browser] Message response: ${responseData.ok ? 200 : responseData.status}`);
+    console.log(
+      `[Claude Web Browser] Message response: ${responseData.ok ? 200 : responseData.status}`,
+    );
 
     if (!responseData.ok) {
-      console.error(`[Claude Web Browser] Message failed: ${responseData.status} - ${responseData.error}`);
+      console.error(
+        `[Claude Web Browser] Message failed: ${responseData.status} - ${responseData.error}`,
+      );
 
       if (responseData.status === 401) {
         throw new Error(
-          "Authentication failed. Please re-run onboarding to refresh your Claude session."
+          "Authentication failed. Please re-run onboarding to refresh your Claude session.",
         );
       }
       throw new Error(`Claude API error: ${responseData.status}`);
     }
 
-    console.log(`[Claude Web Browser] Response data length: ${responseData.data?.length || 0} bytes`);
-    console.log(`[Claude Web Browser] Response preview: ${responseData.data?.substring(0, 200) || 'empty'}`);
+    console.log(
+      `[Claude Web Browser] Response data length: ${responseData.data?.length || 0} bytes`,
+    );
+    console.log(
+      `[Claude Web Browser] Response preview: ${responseData.data?.substring(0, 200) || "empty"}`,
+    );
 
     // Convert the text response to a ReadableStream
     const encoder = new TextEncoder();

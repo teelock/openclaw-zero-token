@@ -1,0 +1,5 @@
+language: "zh-CN"
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
