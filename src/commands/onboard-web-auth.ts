@@ -5,31 +5,31 @@
  * 支持同时授权多个 Web 模型
  */
 
-import type { WizardStep } from "../wizard/types.js";
-import { loadConfig, writeConfigFile } from "../config/io.js";
-import type { OpenClawConfig } from "../config/config.js";
-import { resolveBrowserConfig, resolveProfile } from "../browser/config.js";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { resolveOpenClawAgentDir } from "../agents/agent-paths.js";
 import { ensureAuthProfileStore, saveAuthProfileStore } from "../agents/auth-profiles.js";
-import type { AuthProfileStore } from "../agents/auth-profiles/types.js";
-
+import { ensureOpenClawModelsJson } from "../agents/models-config.js";
+import type { OpenClawConfig } from "../config/config.js";
+import { loadConfig, writeConfigFile } from "../config/io.js";
+import { resolveAgentModelPrimaryValue } from "../config/model-input.js";
+import { loginChatGPTWeb } from "../providers/chatgpt-web-auth.js";
 // 导入各个 web 模型的登录函数
 import { loginClaudeWeb } from "../providers/claude-web-auth.js";
-import { loginChatGPTWeb } from "../providers/chatgpt-web-auth.js";
 import { loginDeepseekWeb } from "../providers/deepseek-web-auth.js";
 import { loginDoubaoWeb } from "../providers/doubao-web-auth.js";
 import { loginGeminiWeb } from "../providers/gemini-web-auth.js";
-import { loginZWeb } from "../providers/glm-web-auth.js";
 import { loginGlmIntlWeb } from "../providers/glm-intl-web-auth.js";
+import { loginZWeb } from "../providers/glm-web-auth.js";
 import { loginGrokWeb } from "../providers/grok-web-auth.js";
 import { loginKimiWeb } from "../providers/kimi-web-auth.js";
-import { loginQwenWeb } from "../providers/qwen-web-auth.js";
 import { loginQwenCNWeb } from "../providers/qwen-cn-web-auth.js";
+import { loginQwenWeb } from "../providers/qwen-web-auth.js";
+import type { WizardStep } from "../wizard/types.js";
+import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 
 // Web 模型凭证保存助手函数
-async function saveWebModelCredentials(
-  providerId: string,
-  credentials: unknown
-): Promise<void> {
+async function saveWebModelCredentials(providerId: string, credentials: unknown): Promise<void> {
   const store = ensureAuthProfileStore();
   const profileId = `${providerId}:default`;
 
@@ -105,6 +105,65 @@ async function addModelToWhitelist(providerId: string, modelIds: string[]): Prom
   console.log(`  > 已更新模型白名单到 openclaw.json`);
 }
 
+/**
+ * 将 agent models.json 中的 providers 同步到 openclaw.json。
+ * 解决首次运行时报错的问题：openclaw.json 初始 models.providers 为空，
+ * 导致 resolveConfiguredModelRef 默认回退到 anthropic，且 model catalog 无可用 provider。
+ */
+async function syncModelsProvidersToConfig(): Promise<void> {
+  const config = loadConfig();
+  await ensureOpenClawModelsJson(config);
+
+  const agentDir = resolveOpenClawAgentDir();
+  const modelsPath = path.join(agentDir, "models.json");
+
+  let providers: Record<string, unknown> = {};
+  try {
+    const raw = await fs.readFile(modelsPath, "utf8");
+    const parsed = JSON.parse(raw) as { providers?: Record<string, unknown> };
+    if (parsed?.providers && typeof parsed.providers === "object") {
+      providers = parsed.providers;
+    }
+  } catch {
+    return;
+  }
+
+  if (Object.keys(providers).length === 0) {
+    return;
+  }
+
+  let nextConfig: OpenClawConfig = {
+    ...config,
+    models: {
+      ...config.models,
+      mode: config.models?.mode ?? "merge",
+      providers: { ...(config.models?.providers ?? {}), ...providers },
+    },
+  };
+
+  // 若尚未设置主模型，使用首个 web provider 的首个模型，避免回退到 anthropic
+  if (!resolveAgentModelPrimaryValue(config.agents?.defaults?.model)) {
+    const firstEntry = Object.entries(providers).find(
+      ([, p]) =>
+        p &&
+        typeof p === "object" &&
+        Array.isArray((p as { models?: unknown[] }).models) &&
+        (p as { models: { id?: string }[] }).models.length > 0,
+    );
+    if (firstEntry) {
+      const [providerId, provider] = firstEntry;
+      const firstModel = (provider as { models: { id: string }[] }).models[0];
+      if (firstModel?.id) {
+        nextConfig = applyAgentDefaultModelPrimary(nextConfig, `${providerId}/${firstModel.id}`);
+        console.log(`  > 已设置默认模型: ${providerId}/${firstModel.id}`);
+      }
+    }
+  }
+
+  await writeConfigFile(nextConfig);
+  console.log(`  > 已同步 models.providers 到 openclaw.json`);
+}
+
 // Web 模型定义
 interface WebModelProvider {
   id: string;
@@ -134,8 +193,8 @@ export async function runOnboardWebAuth(): Promise<void> {
 
   // 显示已授权的模型
   const store = ensureAuthProfileStore();
-  const authorizedModels = Object.keys(store.profiles).filter((key) =>
-    key.endsWith("-web") || key.includes("-web:")
+  const authorizedModels = Object.keys(store.profiles).filter(
+    (key) => key.endsWith("-web") || key.includes("-web:"),
   );
 
   if (authorizedModels.length > 0) {
@@ -240,6 +299,11 @@ export async function runOnboardWebAuth(): Promise<void> {
     } catch (error) {
       console.error(`  ✗ ${provider.name} 授权失败:`, error);
     }
+  }
+
+  // 将 agent models.json 的 providers 同步到 openclaw.json，避免首次运行时报错
+  if (selectedProviders.length > 0) {
+    await syncModelsProvidersToConfig();
   }
 
   console.log("\n授权完成!");

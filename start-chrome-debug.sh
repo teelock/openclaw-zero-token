@@ -201,7 +201,7 @@ if curl -s http://127.0.0.1:9222/json/version > /dev/null 2>&1; then
   echo "=========================================="
   echo "1. 在各标签页中登录需要使用的平台"
   echo "2. 确保 config 中 browser.attachOnly=true 且 browser.cdpUrl=http://127.0.0.1:9222"
-  echo "3. 运行 ./onboard.sh 选择对应平台完成授权（将复用此浏览器）"
+  echo "3. 运行 ./onboard.sh webauth 选择对应平台完成授权（将复用此浏览器）"
   echo ""
   echo "停止调试模式："
   echo "  pkill -f 'chrome.*remote-debugging-port=9222'"

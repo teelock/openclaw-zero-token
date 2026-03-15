@@ -167,7 +167,7 @@ AskOnce 一次提问多模型回答
 
 ### 配置步骤
 
-你可以直接运行 `./start.sh` 一键启动，也可以按照下面的命令步骤依次执行：
+请按照下面的命令步骤依次执行：
 
 1. **编译**：下载项目后执行 `npm install && npm run build && pnpm ui:build`
 2. **打开浏览器调试**：运行 `./start-chrome-debug.sh`

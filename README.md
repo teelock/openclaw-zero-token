@@ -163,8 +163,6 @@ AskOnce can broadcast a single query to multiple configured providers and show t
 
 ### Helper scripts (first-time & daily use)
 
-You can either run `./start.sh` directly, or follow the steps below manually.
-
 ```text
 First-time:
   1. Build          npm install && npm run build && pnpm ui:build
