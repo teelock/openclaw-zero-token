@@ -33,25 +33,24 @@ import { resolveSessionAgentIds } from "../agent-scope.js";
 import type { ExecElevatedDefaults } from "../bash-tools.js";
 import { makeBootstrapWarn, resolveBootstrapContextForRun } from "../bootstrap-files.js";
 import { listChannelSupportedActions, resolveChannelMessageToolHints } from "../channel-tools.js";
+import { createChatGPTWebStreamFn } from "../chatgpt-web-stream.js";
+import { createClaudeWebStreamFn } from "../claude-web-stream.js";
 import { resolveContextWindowInfo } from "../context-window-guard.js";
 import { ensureCustomApiRegistered } from "../custom-api-registry.js";
 import { formatUserTime, resolveUserTimeFormat, resolveUserTimezone } from "../date-time.js";
+import { createDeepseekWebStreamFn } from "../deepseek-web-stream.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
 import { resolveOpenClawDocsPath } from "../docs-path.js";
+import { createDoubaoWebStreamFn } from "../doubao-web-stream.js";
+import { createGeminiWebStreamFn } from "../gemini-web-stream.js";
+import { createGlmIntlWebStreamFn } from "../glm-intl-web-stream.js";
+import { createGlmWebStreamFn } from "../glm-web-stream.js";
+import { createGrokWebStreamFn } from "../grok-web-stream.js";
+import { createKimiWebStreamFn } from "../kimi-web-stream.js";
 import { getApiKeyForModel, resolveModelAuthMode } from "../model-auth.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
 import { createConfiguredOllamaStreamFn } from "../ollama-stream.js";
-import { createDeepseekWebStreamFn } from "../deepseek-web-stream.js";
-import { createClaudeWebStreamFn } from "../claude-web-stream.js";
-import { createDoubaoWebStreamFn } from "../doubao-web-stream.js";
-import { createChatGPTWebStreamFn } from "../chatgpt-web-stream.js";
-import { createQwenWebStreamFn } from "../qwen-web-stream.js";
-import { createKimiWebStreamFn } from "../kimi-web-stream.js";
-import { createGeminiWebStreamFn } from "../gemini-web-stream.js";
-import { createGrokWebStreamFn } from "../grok-web-stream.js";
-import { createGlmWebStreamFn } from "../glm-web-stream.js";
-import { createGlmIntlWebStreamFn } from "../glm-intl-web-stream.js";
 import { resolveOwnerDisplaySetting } from "../owner-display.js";
 import {
   ensureSessionHeader,
@@ -60,6 +59,7 @@ import {
 } from "../pi-embedded-helpers.js";
 import { createPreparedEmbeddedPiSettingsManager } from "../pi-project-settings.js";
 import { createOpenClawCodingTools } from "../pi-tools.js";
+import { createQwenWebStreamFn } from "../qwen-web-stream.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { repairSessionFileIfNeeded } from "../session-file-repair.js";
@@ -77,6 +77,7 @@ import {
   type SkillSnapshot,
 } from "../skills.js";
 import { resolveTranscriptPolicy } from "../transcript-policy.js";
+import { createXiaomiMimoWebStreamFn } from "../xiaomimo-web-stream.js";
 import {
   compactWithSafetyTimeout,
   EMBEDDED_COMPACTION_TIMEOUT_MS,
@@ -347,7 +348,9 @@ export async function compactEmbeddedPiSessionDirect(
       agentDir,
     });
 
-    log.info(`[web-api] apiKeyInfo.mode=${apiKeyInfo.mode} apiKey=${apiKeyInfo.apiKey ? 'exists' : 'missing'}`);
+    log.info(
+      `[web-api] apiKeyInfo.mode=${apiKeyInfo.mode} apiKey=${apiKeyInfo.apiKey ? "exists" : "missing"}`,
+    );
     log.info(`[web-api] model.provider=${model.provider} model.api=${model.api}`);
     if (!apiKeyInfo.apiKey) {
       if (apiKeyInfo.mode !== "aws-sdk") {
@@ -666,29 +669,33 @@ export async function compactEmbeddedPiSessionDirect(
       applySystemPromptOverrideToSession(session, systemPromptOverride());
 
       // Register custom API providers for web-based models directly to session
-      log.info(`[web-api] resolvedApiKey=${resolvedApiKey ? 'exists' : 'missing'}, model.api=${model.api}`);
+      log.info(
+        `[web-api] resolvedApiKey=${resolvedApiKey ? "exists" : "missing"}, model.api=${model.api}`,
+      );
       if (resolvedApiKey) {
         let streamFn: StreamFn | undefined;
         if (model.api === "deepseek-web") {
-          streamFn = createDeepseekWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createDeepseekWebStreamFn(resolvedApiKey);
         } else if (model.api === "claude-web") {
-          streamFn = createClaudeWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createClaudeWebStreamFn(resolvedApiKey);
         } else if (model.api === "doubao-web") {
-          streamFn = createDoubaoWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createDoubaoWebStreamFn(resolvedApiKey);
         } else if (model.api === "chatgpt-web") {
-          streamFn = createChatGPTWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createChatGPTWebStreamFn(resolvedApiKey);
         } else if (model.api === "qwen-web") {
-          streamFn = createQwenWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createQwenWebStreamFn(resolvedApiKey);
         } else if (model.api === "kimi-web") {
-          streamFn = createKimiWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createKimiWebStreamFn(resolvedApiKey);
         } else if (model.api === "gemini-web") {
-          streamFn = createGeminiWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createGeminiWebStreamFn(resolvedApiKey);
         } else if (model.api === "grok-web") {
-          streamFn = createGrokWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createGrokWebStreamFn(resolvedApiKey);
         } else if (model.api === "glm-web") {
-          streamFn = createGlmWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createGlmWebStreamFn(resolvedApiKey);
         } else if (model.api === "glm-intl-web") {
-          streamFn = createGlmIntlWebStreamFn(resolvedApiKey) as StreamFn;
+          streamFn = createGlmIntlWebStreamFn(resolvedApiKey);
+        } else if (model.api === "xiaomimo-web") {
+          streamFn = createXiaomiMimoWebStreamFn(resolvedApiKey);
         }
 
         if (streamFn) {

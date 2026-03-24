@@ -25,8 +25,8 @@ import { loginGrokWeb } from "../providers/grok-web-auth.js";
 import { loginKimiWeb } from "../providers/kimi-web-auth.js";
 import { loginQwenCNWeb } from "../providers/qwen-cn-web-auth.js";
 import { loginQwenWeb } from "../providers/qwen-web-auth.js";
+import { loginXiaomiMimoWeb } from "../providers/xiaomimo-web-auth.js";
 import type { WizardStep } from "../wizard/types.js";
-import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 
 // Web 模型凭证保存助手函数
 async function saveWebModelCredentials(providerId: string, credentials: unknown): Promise<void> {
@@ -137,7 +137,7 @@ async function syncModelsProvidersToConfig(): Promise<void> {
     models: {
       ...config.models,
       mode: config.models?.mode ?? "merge",
-      providers: { ...(config.models?.providers ?? {}), ...providers },
+      providers: { ...config.models?.providers, ...providers },
     },
   };
 
@@ -186,6 +186,7 @@ const WEB_MODEL_PROVIDERS: WebModelProvider[] = [
   { id: "kimi-web", name: "Kimi Web", loginFn: loginKimiWeb },
   { id: "qwen-web", name: "Qwen Web (阿里国内)", loginFn: loginQwenWeb },
   { id: "qwen-cn-web", name: "Qwen Web (阿里国际)", loginFn: loginQwenCNWeb },
+  { id: "xiaomimo-web", name: "Xiaomi Mimo Web", loginFn: loginXiaomiMimoWeb },
 ];
 
 export async function runOnboardWebAuth(): Promise<void> {
@@ -270,6 +271,7 @@ export async function runOnboardWebAuth(): Promise<void> {
     "kimi-web": ["moonshot-v1-32k"],
     "qwen-web": ["qwen-max"],
     "qwen-cn-web": ["qwen-turbo"],
+    "xiaomimo-web": ["xiaomimo-chat"],
   };
 
   // 逐个授权

@@ -483,7 +483,8 @@ export function normalizeProviders(params: {
     let normalizedProvider = provider;
 
     // Fix common misconfig: apiKey set to "${ENV_VAR}" instead of "ENV_VAR".
-    const apiKeyStr = typeof normalizedProvider.apiKey === "string" ? normalizedProvider.apiKey : undefined;
+    const apiKeyStr =
+      typeof normalizedProvider.apiKey === "string" ? normalizedProvider.apiKey : undefined;
     if (apiKeyStr && normalizeApiKeyConfig(apiKeyStr) !== apiKeyStr) {
       mutated = true;
       normalizedProvider = {
@@ -538,9 +539,7 @@ export function normalizeProviders(params: {
       const seen = new Set(
         (existing.models as Array<{ id?: string }>).map((m) => m.id).filter(Boolean),
       );
-      const extra = normalizedProvider.models.filter(
-        (m) => m.id && !seen.has(m.id),
-      );
+      const extra = normalizedProvider.models.filter((m) => m.id && !seen.has(m.id));
       if (extra.length > 0) {
         mutated = true;
         next[outputKey] = {
@@ -732,6 +731,7 @@ function buildTogetherProvider(): ProviderConfig {
 }
 
 async function buildVllmProvider(params?: {
+  _?: never;
   baseUrl?: string;
   apiKey?: string;
 }): Promise<ProviderConfig> {
@@ -771,6 +771,7 @@ export function buildQianfanProvider(): ProviderConfig {
 }
 
 export async function discoverDeepseekWebModels(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ModelDefinitionConfig[]> {
   if (params?.apiKey) {
@@ -778,7 +779,7 @@ export async function discoverDeepseekWebModels(params?: {
       const auth = JSON.parse(params.apiKey);
       const { DeepSeekWebClient } = await import("../providers/deepseek-web-client.js");
       const client = new DeepSeekWebClient(auth);
-      return (await client.discoverModels()) as ModelDefinitionConfig[];
+      return await client.discoverModels();
     } catch (e) {
       console.warn("[DeepSeekWeb] Dynamic discovery failed, falling back to built-in list:", e);
     }
@@ -825,6 +826,7 @@ export async function discoverDeepseekWebModels(params?: {
 }
 
 export async function buildDeepseekWebProvider(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   const models = await discoverDeepseekWebModels(params);
@@ -836,6 +838,7 @@ export async function buildDeepseekWebProvider(params?: {
 }
 
 export async function discoverDoubaoWebModels(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ModelDefinitionConfig[]> {
   if (params?.apiKey) {
@@ -843,7 +846,7 @@ export async function discoverDoubaoWebModels(params?: {
       const auth = JSON.parse(params.apiKey);
       const { DoubaoWebClient } = await import("../providers/doubao-web-client.js");
       const client = new DoubaoWebClient(auth);
-      return (await client.discoverModels()) as ModelDefinitionConfig[];
+      return await client.discoverModels();
     } catch (e) {
       console.warn("[DoubaoWeb] Dynamic discovery failed, falling back to built-in list:", e);
     }
@@ -872,6 +875,7 @@ export async function discoverDoubaoWebModels(params?: {
 }
 
 export async function buildDoubaoWebProvider(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   const models = await discoverDoubaoWebModels(params);
@@ -883,6 +887,7 @@ export async function buildDoubaoWebProvider(params?: {
 }
 
 export async function discoverClaudeWebModels(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ModelDefinitionConfig[]> {
   if (params?.apiKey) {
@@ -890,7 +895,7 @@ export async function discoverClaudeWebModels(params?: {
       const auth = JSON.parse(params.apiKey);
       const { ClaudeWebClientBrowser } = await import("../providers/claude-web-client-browser.js");
       const client = new ClaudeWebClientBrowser(auth);
-      const models = (await client.discoverModels()) as ModelDefinitionConfig[];
+      const models = await client.discoverModels();
       await client.close();
       return models;
     } catch (e) {
@@ -930,6 +935,7 @@ export async function discoverClaudeWebModels(params?: {
 }
 
 export async function buildClaudeWebProvider(params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   const models = await discoverClaudeWebModels(params);
@@ -940,7 +946,8 @@ export async function buildClaudeWebProvider(params?: {
   };
 }
 
-export async function buildChatGPTWebProvider(params?: {
+export async function buildChatGPTWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -978,7 +985,8 @@ export async function buildChatGPTWebProvider(params?: {
   };
 }
 
-export async function buildQwenWebProvider(params?: {
+export async function buildQwenWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1012,7 +1020,8 @@ const QWEN_CN_WEB_DEFAULT_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite
 const QWEN_CN_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
 const QWEN_CN_WEB_DEFAULT_MAX_TOKENS = 4096;
 
-export async function buildQwenCNWebProvider(params?: {
+export async function buildQwenCNWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1041,7 +1050,8 @@ export async function buildQwenCNWebProvider(params?: {
   };
 }
 
-export async function buildKimiWebProvider(params?: {
+export async function buildKimiWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1079,7 +1089,8 @@ export async function buildKimiWebProvider(params?: {
   };
 }
 
-export async function buildGeminiWebProvider(params?: {
+export async function buildGeminiWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1108,7 +1119,8 @@ export async function buildGeminiWebProvider(params?: {
   };
 }
 
-export async function buildGrokWebProvider(params?: {
+export async function buildGrokWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1137,7 +1149,8 @@ export async function buildGrokWebProvider(params?: {
   };
 }
 
-export async function buildZWebProvider(params?: {
+export async function buildZWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1166,7 +1179,8 @@ export async function buildZWebProvider(params?: {
   };
 }
 
-export async function buildGlmIntlWebProvider(params?: {
+export async function buildGlmIntlWebProvider(_params?: {
+  _?: never;
   apiKey?: string;
 }): Promise<ProviderConfig> {
   return {
@@ -1223,6 +1237,32 @@ export function buildManusApiProvider(): ProviderConfig {
         cost: MANUS_API_DEFAULT_COST,
         contextWindow: MANUS_API_DEFAULT_CONTEXT_WINDOW,
         maxTokens: MANUS_API_DEFAULT_MAX_TOKENS,
+      },
+    ],
+  };
+}
+
+const XIAOMIMO_WEB_BASE_URL = "https://aistudio.xiaomimimo.com";
+const XIAOMIMO_WEB_DEFAULT_CONTEXT_WINDOW = 128000;
+const XIAOMIMO_WEB_DEFAULT_MAX_TOKENS = 4096;
+const XIAOMIMO_WEB_DEFAULT_COST = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+
+export function buildXiaomiMimoWebProvider(_params?: {
+  _?: never;
+  apiKey?: string;
+}): ProviderConfig {
+  return {
+    baseUrl: XIAOMIMO_WEB_BASE_URL,
+    api: "xiaomimo-web",
+    models: [
+      {
+        id: "xiaomimo-chat",
+        name: "MiMo Chat",
+        reasoning: false,
+        input: ["text"],
+        cost: XIAOMIMO_WEB_DEFAULT_COST,
+        contextWindow: XIAOMIMO_WEB_DEFAULT_CONTEXT_WINDOW,
+        maxTokens: XIAOMIMO_WEB_DEFAULT_MAX_TOKENS,
       },
     ],
   };
@@ -1292,7 +1332,7 @@ export async function resolveImplicitProviders(params: {
     providers[pluginProvider.id] = {
       baseUrl: pluginProvider.models?.baseUrl ?? "",
       apiKey: undefined,
-      api: pluginProvider.id as any,
+      api: pluginProvider.id as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       models: pluginProvider.models?.models ?? [],
     };
   }
@@ -1581,6 +1621,15 @@ export async function resolveImplicitProviders(params: {
   providers["manus-api"] = {
     ...buildManusApiProvider(),
     apiKey: manusApiKey,
+  };
+
+  const xiaomimoWebKey =
+    resolveEnvApiKeyVarName("xiaomimo-web") ??
+    resolveApiKeyFromProfiles({ provider: "xiaomimo-web", store: authStore });
+
+  providers["xiaomimo-web"] = {
+    ...buildXiaomiMimoWebProvider({ apiKey: xiaomimoWebKey }),
+    apiKey: xiaomimoWebKey,
   };
 
   return providers;
