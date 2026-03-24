@@ -1,6 +1,6 @@
 # OpenClaw Zero Token
 
-**Use LLMs without API tokens** — log in via browser once, then call ChatGPT, Claude, Gemini, DeepSeek, Qwen (intl/cn), Doubao, Kimi, Zhipu GLM, Grok, Manus and more for free through a unified gateway.
+**Use LLMs without API tokens** — log in via browser once, then call ChatGPT, Claude, Gemini, DeepSeek, Qwen (intl/cn), Doubao, Kimi, Zhipu GLM, Grok, Xiaomi MiMo, Manus and more for free through a unified gateway.
 
 [License: MIT](https://opensource.org/licenses/MIT)
 
@@ -56,18 +56,19 @@ OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw
 | Grok Web                | ✅ tested | Grok 1, Grok 2                                       |
 | GLM Web (Zhipu)         | ✅ tested | glm-4-Plus, glm-4-Think                              |
 | GLM Web (International) | ✅ tested | GLM-4 Plus, GLM-4 Think                              |
+| Xiaomi MiMo             | ✅ tested | MiMo 2.0, MiMo 2.5 Pro                               |
 | Manus API               | ✅ tested | Manus 1.6, Manus 1.6 Lite (API key, free quota)      |
 
 ### Tool calling
 
 All supported models can call **local tools** (`exec`, `read_file`, `list_dir`, `browser`, `apply_patch`, etc.) so that agents can run commands, read/write workspace files, and automate the browser.
 
-| Provider type                                               | Tools | Notes                                                                  |
-| ----------------------------------------------------------- | ----- | ---------------------------------------------------------------------- |
-| Web (DeepSeek, Qwen, Kimi, Claude, Doubao, GLM, Grok, etc.) | ✅    | Inject XML tool descriptions in `system`, parse `<tool_call>` streams. |
-| ChatGPT Web / Gemini Web / Manus API                        | ✅    | Similar via tool descriptions + multi-turn context + `<tool_call>`.    |
-| OpenRouter / OpenAI-compatible APIs                         | ✅    | Uses native `tools` / `tool_calls`.                                    |
-| Ollama                                                      | ✅    | Uses native `/api/chat` tools.                                         |
+| Provider type                                                            | Tools | Notes                                                                  |
+| ------------------------------------------------------------------------ | ----- | ---------------------------------------------------------------------- |
+| Web (DeepSeek, Qwen, Kimi, Claude, Doubao, GLM, Grok, Xiaomi MiMo, etc.) | ✅    | Inject XML tool descriptions in `system`, parse `<tool_call>` streams. |
+| ChatGPT Web / Gemini Web / Manus API                                     | ✅    | Similar via tool descriptions + multi-turn context + `<tool_call>`.    |
+| OpenRouter / OpenAI-compatible APIs                                      | ✅    | Uses native `tools` / `tool_calls`.                                    |
+| Ollama                                                                   | ✅    | Uses native `/api/chat` tools.                                         |
 
 Agent file access is restricted by the configured **workspace** directory (see `agents.defaults.workspace`).
 
@@ -112,6 +113,7 @@ AskOnce can broadcast a single query to multiple configured providers and show t
 │  │  Gemini Web (Zero Token)                                        ✅   │  │
 │  │  Grok Web (Zero Token)                                          ✅   │  │
 │  │  GLM Web (Zero Token)                                           ✅   │  │
+│  │  Xiaomi MiMo (Zero Token)                                       ✅   │  │
 │  │  Manus API (Token)                                              ✅   │  │
 │  └───────────────────────────────────────────────────────────────────────┘  │
 │                                                                              │
@@ -410,7 +412,7 @@ The doctor command will:
 
 ### Current focus
 
-- ✅ DeepSeek Web, Qwen intl/cn, Kimi, Claude Web, Doubao, ChatGPT Web, Gemini Web, Grok Web, GLM Web, GLM intl, Manus API — all tested
+- ✅ DeepSeek Web, Qwen intl/cn, Kimi, Claude Web, Doubao, ChatGPT Web, Gemini Web, Grok Web, GLM Web, GLM intl, Xiaomi MiMo, Manus API — all tested
 - 🔧 Improve credential capture robustness
 - 📝 Documentation improvements
 
