@@ -138,7 +138,7 @@ export function createZWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (Array.isArray(lastUserMessage.content)) {
                 prompt = lastUserMessage.content
                   .filter((part) => part.type === "text")
-                  .map((part) => (part as TextContent).text)
+                  .map((part) => (part).text)
                   .join("");
               }
             }
@@ -454,7 +454,7 @@ export function createZWebStreamFn(cookieOrJson: string): StreamFn {
                       }
                     }
                   }
-                  if (delta) break;
+                  if (delta) {break;}
                 }
               }
             }
