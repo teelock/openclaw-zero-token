@@ -257,6 +257,9 @@ const GLM_INTL_WEB_DEFAULT_COST = {
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 const NVIDIA_DEFAULT_MODEL_ID = "nvidia/llama-3.1-nemotron-70b-instruct";
+
+export const PERPLEXITY_WEB_BASE_URL = "https://www.perplexity.ai";
+export const PERPLEXITY_WEB_DEFAULT_MODEL_ID = "perplexity-web";
 const NVIDIA_DEFAULT_CONTEXT_WINDOW = 131072;
 const NVIDIA_DEFAULT_MAX_TOKENS = 4096;
 const NVIDIA_DEFAULT_COST = {

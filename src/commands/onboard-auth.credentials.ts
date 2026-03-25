@@ -503,3 +503,16 @@ export async function setKilocodeApiKey(
     agentDir: resolveAuthAgentDir(agentDir),
   });
 }
+
+export async function setPerplexityWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "perplexity-web:default",
+    credential: {
+      type: "api_key",
+      provider: "perplexity-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}

@@ -30,6 +30,8 @@ import {
   Z_WEB_DEFAULT_MODEL_ID,
   GLM_INTL_WEB_BASE_URL,
   GLM_INTL_WEB_DEFAULT_MODEL_ID,
+  PERPLEXITY_WEB_BASE_URL,
+  PERPLEXITY_WEB_DEFAULT_MODEL_ID,
 } from "../agents/models-config.providers.js";
 import {
   buildSyntheticModelDefinition,
@@ -615,7 +617,7 @@ export function applyDeepseekWebProviderConfig(cfg: OpenClawConfig): OpenClawCon
     providerId: "deepseek-web",
     api: "deepseek-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: DEEPSEEK_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -644,7 +646,7 @@ export function applyDoubaoWebProviderConfig(cfg: OpenClawConfig): OpenClawConfi
     providerId: "doubao-web",
     api: "doubao-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: DOUBAO_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -673,7 +675,7 @@ export function applyClaudeWebProviderConfig(cfg: OpenClawConfig): OpenClawConfi
     providerId: "claude-web",
     api: "claude-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: CLAUDE_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -702,7 +704,7 @@ export function applyChatGPTWebProviderConfig(cfg: OpenClawConfig): OpenClawConf
     providerId: "chatgpt-web",
     api: "chatgpt-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: CHATGPT_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -731,7 +733,7 @@ export function applyQwenWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig 
     providerId: "qwen-web",
     api: "qwen-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: QWEN_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -760,7 +762,7 @@ export function applyKimiWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig 
     providerId: "kimi-web",
     api: "kimi-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: KIMI_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -789,7 +791,7 @@ export function applyGeminiWebProviderConfig(cfg: OpenClawConfig): OpenClawConfi
     providerId: "gemini-web",
     api: "gemini-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: GEMINI_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -818,7 +820,7 @@ export function applyGrokWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig 
     providerId: "grok-web",
     api: "grok-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: GROK_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -847,7 +849,7 @@ export function applyGlmWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
     providerId: "glm-web",
     api: "glm-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: Z_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -876,7 +878,7 @@ export function applyGlmIntlWebProviderConfig(cfg: OpenClawConfig): OpenClawConf
     providerId: "glm-intl-web",
     api: "glm-intl-web",
     baseUrl: resolvedBaseUrl,
-    defaultModels: existingProvider?.models as any[] || [],
+    defaultModels: (existingProvider?.models as unknown[]) || [],
     defaultModelId: GLM_INTL_WEB_DEFAULT_MODEL_ID,
   });
 }
@@ -884,4 +886,33 @@ export function applyGlmIntlWebProviderConfig(cfg: OpenClawConfig): OpenClawConf
 export function applyGlmIntlWebConfig(cfg: OpenClawConfig): OpenClawConfig {
   const next = applyGlmIntlWebProviderConfig(cfg);
   return applyAgentDefaultModelPrimary(next, `glm-intl-web/${GLM_INTL_WEB_DEFAULT_MODEL_ID}`);
+}
+
+export function applyPerplexityWebProviderConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const models = { ...cfg.agents?.defaults?.models };
+  models[`perplexity-web/${PERPLEXITY_WEB_DEFAULT_MODEL_ID}`] = {
+    ...models[`perplexity-web/${PERPLEXITY_WEB_DEFAULT_MODEL_ID}`],
+    alias: models[`perplexity-web/${PERPLEXITY_WEB_DEFAULT_MODEL_ID}`]?.alias ?? "Perplexity Web",
+  };
+
+  const existingProvider = cfg.models?.providers?.["perplexity-web"] as
+    | { baseUrl?: unknown; api?: unknown; models?: unknown[] }
+    | undefined;
+  const existingBaseUrl =
+    typeof existingProvider?.baseUrl === "string" ? existingProvider.baseUrl.trim() : "";
+  const resolvedBaseUrl = existingBaseUrl || PERPLEXITY_WEB_BASE_URL;
+
+  return applyProviderConfigWithDefaultModels(cfg, {
+    agentModels: models,
+    providerId: "perplexity-web",
+    api: "perplexity-web",
+    baseUrl: resolvedBaseUrl,
+    defaultModels: (existingProvider?.models as unknown[]) || [],
+    defaultModelId: PERPLEXITY_WEB_DEFAULT_MODEL_ID,
+  });
+}
+
+export function applyPerplexityWebConfig(cfg: OpenClawConfig): OpenClawConfig {
+  const next = applyPerplexityWebProviderConfig(cfg);
+  return applyAgentDefaultModelPrimary(next, `perplexity-web/${PERPLEXITY_WEB_DEFAULT_MODEL_ID}`);
 }

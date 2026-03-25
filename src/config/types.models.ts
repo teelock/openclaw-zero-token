@@ -23,6 +23,7 @@ export const MODEL_APIS = [
   "doubao-web",
   "manus-api",
   "xiaomimo-web",
+  "perplexity-web",
 ] as const;
 
 export type ModelApi = (typeof MODEL_APIS)[number];

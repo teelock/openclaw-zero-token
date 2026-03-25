@@ -41,15 +41,19 @@ export const vi: TranslationMap = {
     agents: "Quản lý không gian làm việc của trợ lý (agent workspaces), các công cụ và danh tính.",
     overview: "Trạng thái Cổng kết nối (Gateway), các điểm đầu vào và kiểm tra hệ thống nhanh.",
     channels: "Quản lý các kênh (channels) và cài đặt liên lạc.",
-    instances: "Tín hiệu hiện diện (Presence beacons) từ các máy khách và các nút (nodes) đang kết nối.",
-    sessions: "Kiểm tra các phiên làm việc (sessions) đang hoạt động và điều chỉnh mặc định cho từng phiên.",
+    instances:
+      "Tín hiệu hiện diện (Presence beacons) từ các máy khách và các nút (nodes) đang kết nối.",
+    sessions:
+      "Kiểm tra các phiên làm việc (sessions) đang hoạt động và điều chỉnh mặc định cho từng phiên.",
     usage: "Theo dõi mức sử dụng API và chi phí tương ứng.",
     cron: "Lên lịch đánh thức và cấu hình trợ lý tự động chạy định kỳ.",
     skills: "Quản lý tính khả dụng của kỹ năng và cấu hình nhúng khóa API.",
-    nodes: "Các thiết bị đã ghép nối (Paired devices), khả năng kết nối và những lệnh mở công khai.",
+    nodes:
+      "Các thiết bị đã ghép nối (Paired devices), khả năng kết nối và những lệnh mở công khai.",
     chat: "Phiên trò chuyện (chat session) tương tác trực tiếp qua Cổng kết nối để can thiệp nhanh.",
     config: "Chỉnh sửa ~/.openclaw/openclaw.json một cách an toàn.",
-    debug: "Tạo ảnh chụp nhanh (snapshots) của Cổng kết nối, sự kiện và tương tác với các lệnh gọi RPC theo cách thủ công.",
+    debug:
+      "Tạo ảnh chụp nhanh (snapshots) của Cổng kết nối, sự kiện và tương tác với các lệnh gọi RPC theo cách thủ công.",
     logs: "Bám sát (Live tail) các file nhật ký luồng dữ liệu liên quan tới Cổng kết nối.",
   },
   overview: {
@@ -71,13 +75,15 @@ export const vi: TranslationMap = {
       uptime: "Thời gian hoạt động (Uptime)",
       tickInterval: "Cự ly nhịp tín hiệu (Tick Interval)",
       lastChannelsRefresh: "Lần tải làm mới các Kênh cuối cùng",
-      channelsHint: "Chuyển sang tab Kênh (Channels) để kết nối vào WhatsApp, Telegram, Discord, Signal, hoặc là iMessage.",
+      channelsHint:
+        "Chuyển sang tab Kênh (Channels) để kết nối vào WhatsApp, Telegram, Discord, Signal, hoặc là iMessage.",
     },
     stats: {
       instances: "Phiên bản (Instances)",
       instancesHint: "Tín hiệu hiện diện trong vòng 5 phút qua.",
       sessions: "Phiên làm việc (Sessions)",
-      sessionsHint: "Những khóa phiên sử dụng (session keys) gần đây được Cổng kết nối đi theo theo dõi.",
+      sessionsHint:
+        "Những khóa phiên sử dụng (session keys) gần đây được Cổng kết nối đi theo theo dõi.",
       cron: "Cron",
       cronNext: "Lần thức dậy tiếp theo {time}",
     },
@@ -85,14 +91,18 @@ export const vi: TranslationMap = {
       title: "Ghi chú",
       subtitle: "Nhắc nhở nhanh để dùng cho việc thiết lập điều khiển từ xa.",
       tailscaleTitle: "Tailscale serve",
-      tailscaleText: "Khuyên ưu tiên chạy ở chế độ serve để đảm bảo Cổng kết nối nằm an toàn trong mạng loopback và áp dụng tốt với tailnet auth.",
+      tailscaleText:
+        "Khuyên ưu tiên chạy ở chế độ serve để đảm bảo Cổng kết nối nằm an toàn trong mạng loopback và áp dụng tốt với tailnet auth.",
       sessionTitle: "Tiêu chuẩn phiên (Session hygiene)",
-      sessionText: "Dùng các tham số như /new hoặc calls từ sessions.patch có thể tạo làm mới dọn dẹp ngữ cảnh.",
+      sessionText:
+        "Dùng các tham số như /new hoặc calls từ sessions.patch có thể tạo làm mới dọn dẹp ngữ cảnh.",
       cronTitle: "Nhắc nhở qua Cron",
-      cronText: "Bạn nên khởi động dùng kèm các phiên tách lập biệt lập nhằm khi kích lên chạy chu kỳ tự lập cố định.",
+      cronText:
+        "Bạn nên khởi động dùng kèm các phiên tách lập biệt lập nhằm khi kích lên chạy chu kỳ tự lập cố định.",
     },
     auth: {
-      required: "Cổng kết nối này yêu cầu quá trình tiến hành đăng nhập / xác thực bảo vệ. Nhập điền thêm Mã thông báo (token) vào chỗ trống hay Mật mã đã dựng lên rồi Nhấn dứt điểm nút Kết nối (Connect).",
+      required:
+        "Cổng kết nối này yêu cầu quá trình tiến hành đăng nhập / xác thực bảo vệ. Nhập điền thêm Mã thông báo (token) vào chỗ trống hay Mật mã đã dựng lên rồi Nhấn dứt điểm nút Kết nối (Connect).",
       failed:
         "Bị từ chối báo lỗi chứng thực khi đăng nhập. Mời hãy tiến tới làm thao tác sao lưu tiếp nhận lại một đường liên kết qua cách áp dụng dòng câu lệnh {command}, hoặc chịu khó tự kiểm nghiệm bổ sung lại Mã thông báo (token) và nhấn kết nối lại liền luôn.",
     },
@@ -103,14 +113,16 @@ export const vi: TranslationMap = {
     },
     insecure: {
       hint: "Hiện tại ở ngoài này trình duyệt tải đang sử dụng giao thức là chuẩn HTTP không rào cản thế nên là nó không chịu chuyển thông tin nhân dạng đặc tính bảo lưu thiết bị an ninh của mảy. Hãy qua trở lề bên HTTPS (hoặc đường Tailscale Serve) hoặc đi ngược sang trang dùng mở đường link {url} tự do tại cái thiết bị cổng host luôn.",
-      stayHttp: "Giả dụ mà nếu cứ kiên quyết thích làm thân chung qua lại chỉ trên chuẩn HTTP, có hãy cấu hình cập nhập tùy chỉnh thay đổi bằng quy định tham biến {config} qua tệp json lên (sau đây nó sẽ giới hạn cho chạy duy đúng xác thực mỗi mã Token).",
+      stayHttp:
+        "Giả dụ mà nếu cứ kiên quyết thích làm thân chung qua lại chỉ trên chuẩn HTTP, có hãy cấu hình cập nhập tùy chỉnh thay đổi bằng quy định tham biến {config} qua tệp json lên (sau đây nó sẽ giới hạn cho chạy duy đúng xác thực mỗi mã Token).",
     },
   },
   chat: {
     disconnected: "Mất kết nối với Gateway.",
     refreshTitle: "Làm mới dữ liệu tin nhắn",
     thinkingToggle: "Bật/tắt tiến trình thao tác đang xử lý của LLM",
-    focusToggle: "Bật/Tắt chế độ tập trung đặc biệt (Sẽ bao phủ ẩn các thanh khu phụ trên màn hình)",
+    focusToggle:
+      "Bật/Tắt chế độ tập trung đặc biệt (Sẽ bao phủ ẩn các thanh khu phụ trên màn hình)",
     hideCronSessions: "Che giấu mốc ẩn lịch qua Cron",
     showCronSessions: "Trừng đưa làm xuất hiện lại các mốc lịch ghi qua Cron",
     showCronSessionsHidden: "Nổi hiện danh sách phiên lên lịch Cron ({count} bị ẩn đi)",
@@ -137,7 +149,8 @@ export const vi: TranslationMap = {
     },
     jobs: {
       title: "Công việc (Jobs)",
-      subtitle: "Quản trị lưu lại toàn bộ mọi thiết lập công việc định sẵn nằm gọn chỗ hệ thống máy cổng Gateway nội đài.",
+      subtitle:
+        "Quản trị lưu lại toàn bộ mọi thiết lập công việc định sẵn nằm gọn chỗ hệ thống máy cổng Gateway nội đài.",
       shownOf: "Xuất ra khoảng chừng {shown} cái trong túc số lớn {total} lệnh",
       searchJobs: "Soi tra tên tác vụ cài công việc",
       searchPlaceholder: "Danh tự, câu ghi giải nghĩa, hay dòng đặc tính trợ lý LLM",
@@ -159,13 +172,15 @@ export const vi: TranslationMap = {
     },
     runs: {
       title: "Lịch sử thực thi (Run history)",
-      subtitleAll: "Tất cả các thành quả bản chạy của những cấu trúc chạy mốc tự việc cho hết tất yếu lên mặt lên bảng.",
+      subtitleAll:
+        "Tất cả các thành quả bản chạy của những cấu trúc chạy mốc tự việc cho hết tất yếu lên mặt lên bảng.",
       subtitleJob: "Các nội dung phiên ghi chạy gần nhứt cho bên tác việc {title}.",
       scope: "Cụm nhắm bao quát dò tầm hiển thị",
       allJobs: "Trọn cả tất cả tác vụ cài việc",
       selectedJob: "Luân công việc đã và đang bị chấm lựa chọn coi xem riêng",
       searchRuns: "Soi khảo rà thông tin phiên tiến trình",
-      searchPlaceholder: "Hòm hóm sơ sơ báo, thông báo báo ngẫu sự lố lỗi, hoen gỉ tên chỉ điểm vào mỗi phiên lệnh",
+      searchPlaceholder:
+        "Hòm hóm sơ sơ báo, thông báo báo ngẫu sự lố lỗi, hoen gỉ tên chỉ điểm vào mỗi phiên lệnh",
       newestFirst: "Tin bản thực phiên thời sự sát mốc liền ngay nay thì làm trên trước",
       oldestFirst: "Giữ kẹp hoài cổ xa lìa dời trước",
       status: "Kiện trạng hiện thị",
@@ -173,8 +188,10 @@ export const vi: TranslationMap = {
       clear: "Hoãn làm trong chùi bớt",
       allStatuses: "Quang thu nhận vào thảy tất cả bộ dạng trạng thái",
       allDelivery: "Mọi việc khâu đưa liên",
-      selectJobHint: "Bạn bèn châm thử nhấn trọn cái ngự tác việc đi sẽ hiển thị kỹ xuất coi rà lịch tiến trình hoạt quá cho.",
-      noMatching: "Lục hết dôi móc không đơm dẻ cái đinh lần ghi trình phiển chạy lệnh khớp chi dữ vậy à.",
+      selectJobHint:
+        "Bạn bèn châm thử nhấn trọn cái ngự tác việc đi sẽ hiển thị kỹ xuất coi rà lịch tiến trình hoạt quá cho.",
+      noMatching:
+        "Lục hết dôi móc không đơm dẻ cái đinh lần ghi trình phiển chạy lệnh khớp chi dữ vậy à.",
       loadMore: "Tải trồi lên ngóc thêm mớ chuỗi ghi lần trích nạp coi tiếp",
       runStatusOk: "Ổn Khỏe Rồi",
       runStatusError: "Hư lỗi (Error)",
@@ -189,18 +206,22 @@ export const vi: TranslationMap = {
       editJob: "Thay Sửa Chữa Mốc Lượng Bản Vụ Việc Cài Cho",
       newJob: "Luân Việc Mới toang",
       updateSubtitle: "Đắp vô tân gia nạp biên chép sửa mớ lại đống lệnh ấn lên.",
-      createSubtitle: "Soạn phác tự cái thời điểm choàng mốc định lượng khởi hay là chu kì khơi gợi cho LLM con AI trợ thao phát khởi động.",
+      createSubtitle:
+        "Soạn phác tự cái thời điểm choàng mốc định lượng khởi hay là chu kì khơi gợi cho LLM con AI trợ thao phát khởi động.",
       required: "Luật ấn định bó buộc (Required)",
       requiredSr: "Yêu cầu (Required)",
       basics: "Bộ mặt nội chính bản bản nền",
-      basicsSub: "Báo đặt xưng danh tự nó thế nào, chấm trúng bạn trợ thủ nào LLM đi rồi nhớ mở đóng công tắc hiện hữu chi nó.",
+      basicsSub:
+        "Báo đặt xưng danh tự nó thế nào, chấm trúng bạn trợ thủ nào LLM đi rồi nhớ mở đóng công tắc hiện hữu chi nó.",
       fieldName: "Tên quy xưng gọi",
       description: "Thuyết thuật đoạn nghĩa trình thêm gì không",
       agentId: "Bí chú chỉ điểm danh số Của LLM (Agent ID)",
       namePlaceholder: "Tin tức buổi ban sớm đây à mà",
-      descriptionPlaceholder: "Kể răn thêm cho đôi câu dẫn lý do có cho công đoạn này tự ý thêm nhen",
+      descriptionPlaceholder:
+        "Kể răn thêm cho đôi câu dẫn lý do có cho công đoạn này tự ý thêm nhen",
       agentPlaceholder: "main là được hoặc ghi ops cũng duyệt",
-      agentHelp: "Anh nắn gõ đi một lúc là bảng báo sẽ xổ trớn cho lựa mớ trợ thủ vốn rành làm sẵn, hoặc đánh rành tên mình thiết lấy vô cũng ngon.",
+      agentHelp:
+        "Anh nắn gõ đi một lúc là bảng báo sẽ xổ trớn cho lựa mớ trợ thủ vốn rành làm sẵn, hoặc đánh rành tên mình thiết lấy vô cũng ngon.",
       schedule: "Xếp thời lập tiến hẹn trình biểu sự việc (Schedule)",
       scheduleSub: "Dắt chòm khống chế lúc khơi gợi cho tiến lệnh nó rúc làm.",
       every: "Chi kỳ mỗi đè lần lượng (Every)",
@@ -216,70 +237,97 @@ export const vi: TranslationMap = {
       everyAmountPlaceholder: "30",
       timezoneOptional: "Chỉ múc lấn lấy hệ quy điểm Múi Giờ địa (Tùy nghi nếu có rảnh rỗi)",
       timezonePlaceholder: "Asia/Ho_Chi_Minh",
-      timezoneHelp: "Thả trích lựa các vùng khung thông hiểu có phổ biến nhất trên list ra hay anh chịu khó dán nguyên y xì cái mã hệ vùng định chuẩn quốc địa phương chuẩn IANA.",
-      jitterHelp: "Bị bí tải server ư làm hệ điều khiển nó phải văng dãn chu trình thòng chệch nhịp cho nhàn nha? Cứ đâm đầu vào ô Nâng Cao Cao Tốc (Advanced) đê → Rồi mà lần tìm chỉnh độ dãn tẹc khia tại thông số của Cửa văng đọng sai và Cự dạt đọng đó.",
+      timezoneHelp:
+        "Thả trích lựa các vùng khung thông hiểu có phổ biến nhất trên list ra hay anh chịu khó dán nguyên y xì cái mã hệ vùng định chuẩn quốc địa phương chuẩn IANA.",
+      jitterHelp:
+        "Bị bí tải server ư làm hệ điều khiển nó phải văng dãn chu trình thòng chệch nhịp cho nhàn nha? Cứ đâm đầu vào ô Nâng Cao Cao Tốc (Advanced) đê → Rồi mà lần tìm chỉnh độ dãn tẹc khia tại thông số của Cửa văng đọng sai và Cự dạt đọng đó.",
       execution: "Toàn Đạt Trích Thực Nôm Của Chạy Áp Phê (Execution)",
-      executionSub: "Dịch chuyển ra dấu ý là khi mô mốc tỉnh khởi gọi thì hòng nó dấn làm chi đây nè.",
+      executionSub:
+        "Dịch chuyển ra dấu ý là khi mô mốc tỉnh khởi gọi thì hòng nó dấn làm chi đây nè.",
       session: "Nhập môn chia khoảnh riêng ranh phiên hành sự lưu chạy hệ (Session)",
       main: "Toán chánh trung môn",
       isolated: "Tách bạch ẩn cách cho chia cúp mút phân lìa",
-      sessionHelp: "Phiên chính sẽ đánh quả dâng rêu sự tình hiện tại dán ngay vô tường trình timeline lộ liễu kia đó. Mà chừng anh dùng Phiên tách bạch thì lại là đánh đánh nhúm tách rời hẳn 1 lút cửa buồng giam hành lạc 1 hiệp chạy làm ngót trọn của tên LLM nó thực chiến cho coi.",
+      sessionHelp:
+        "Phiên chính sẽ đánh quả dâng rêu sự tình hiện tại dán ngay vô tường trình timeline lộ liễu kia đó. Mà chừng anh dùng Phiên tách bạch thì lại là đánh đánh nhúm tách rời hẳn 1 lút cửa buồng giam hành lạc 1 hiệp chạy làm ngót trọn của tên LLM nó thực chiến cho coi.",
       wakeMode: "Kiểu bộ loại đánh động khơi khởi lệnh dậy (Wake mode)",
       now: "Tỉnh ngay giờ đây",
       nextHeartbeat: "Tại cự phát phập phòng nhịp truyền tiếp kỳ độ kia",
-      wakeModeHelp: "Ngay đây thì làm chóp nháng liền tại lút chỗ đó làm liền. Đợi nhịp cự tráng thì chờ chầu cho đến cữ chu trình vòng quét rà tiếp kế nha.",
+      wakeModeHelp:
+        "Ngay đây thì làm chóp nháng liền tại lút chỗ đó làm liền. Đợi nhịp cự tráng thì chờ chầu cho đến cữ chu trình vòng quét rà tiếp kế nha.",
       payloadKind: "Chỉ nhắm đòi xử loại tiến thực thi cho là giống cái chi bây chừ?",
-      systemEvent: "Dán bố cáo gửi điêu truyền trên đại mảng thông báo lịch chu trình thông tuột mặt trước kia kìa",
-      agentTurn: "Gắn nổ pháo dẫn điệm mồi nhắc chạy mớ nhiệm việc dành gộp của trợ thủ con lính (loại này phải vô chia cách biệt ranh cự riêng lẻ đó nha)",
+      systemEvent:
+        "Dán bố cáo gửi điêu truyền trên đại mảng thông báo lịch chu trình thông tuột mặt trước kia kìa",
+      agentTurn:
+        "Gắn nổ pháo dẫn điệm mồi nhắc chạy mớ nhiệm việc dành gộp của trợ thủ con lính (loại này phải vô chia cách biệt ranh cự riêng lẻ đó nha)",
       systemEventHelp:
         "Điều xuất chuỗi nhắn gõ văn ngôn kia dán vô đường chỉ dòng mạch hoạt đồ đại quy chuẩn chính của cự móng Cổng máy nhà nhé (Làm cái trò nỳ thích hợp êm ru cho mớ trò cắm lịch ngài gọi rên nhắc khéo hay dộng điểm khơi động cái bộ nổ nè).",
-      agentTurnHelp: "Đẩy đề lô củi lửa khởi rèn ra dòng máy trí tuệ AI nó trổ ngón làm phiên tự lập độc biên ngay ngót 1 khúc chuỗi riêng, trích từ bộ chuỗi dữ liệu anh soạn đưa chỉ đường chỉ điểm đưa câu mồi.",
+      agentTurnHelp:
+        "Đẩy đề lô củi lửa khởi rèn ra dòng máy trí tuệ AI nó trổ ngón làm phiên tự lập độc biên ngay ngót 1 khúc chuỗi riêng, trích từ bộ chuỗi dữ liệu anh soạn đưa chỉ đường chỉ điểm đưa câu mồi.",
       timeoutSeconds: "Cứa thời hết nhãn nhượng (Treo rụng TimeOut đo theo lắt Giây)",
       timeoutPlaceholder: "Biên chừa thêm ví dụ 90 s cho",
       timeoutHelp:
         "Đây có cũng được. Buông thõng chừa trắng bóc thì ta xái luôn quy luật cự định dập rụng mặc thế tại bảng Cổng điều máy xái giùm chung nha.",
-      mainTimelineMessage: "Chuỗi văn nhắn đánh tiếng gởi lên đường trục lịch biểu đại đồ chính yếu",
+      mainTimelineMessage:
+        "Chuỗi văn nhắn đánh tiếng gởi lên đường trục lịch biểu đại đồ chính yếu",
       assistantTaskPrompt: "Bảng gõ chữ nhắn sai phái đề đưa con AI LLM tiến xử tiến hành",
       deliverySection: "Truyền nạp giao xuất kết ngõ",
-      deliverySub: "Nhắm chọn khu xả đẩy bọm chữ kết đoản báo công của cuộc chạy này tống về mé nao.",
+      deliverySub:
+        "Nhắm chọn khu xả đẩy bọm chữ kết đoản báo công của cuộc chạy này tống về mé nao.",
       resultDelivery: "Báo cáo bạt nộp thông tin thu kết lại đi",
       announceDefault: "Vạch mặt dán bố cáo bài sơ quát liền (Chuẩn thế tự gốc là vậy nghe)",
       webhookPost: "Tống kiện gửi dữ lượng liên tuyến kiểu POST trích cho rảnh Webhook nha",
-      noneInternal: "Nín khe chả cần làm trò điêu xuất ẻo gì (Chỉ giấu trong bao kín bưng ngầm hệ đó đi nha)",
-      deliveryHelp: "Gửi công bố tức diễn tống một bài tổng quát kết ra ngoài màn hình dán. Đặt là Nín lặng sẽ triệt tiêu bưng ép im nhốt khư khư kết việc trọn bưng đi không phun nhả ra hoài.",
+      noneInternal:
+        "Nín khe chả cần làm trò điêu xuất ẻo gì (Chỉ giấu trong bao kín bưng ngầm hệ đó đi nha)",
+      deliveryHelp:
+        "Gửi công bố tức diễn tống một bài tổng quát kết ra ngoài màn hình dán. Đặt là Nín lặng sẽ triệt tiêu bưng ép im nhốt khư khư kết việc trọn bưng đi không phun nhả ra hoài.",
       webhookUrl: "Link chỉ đường đến Webhook",
       channel: "Tuyển ra Đường kết đường Kênh rẽ truyền",
       webhookPlaceholder: "https://example.com/cron",
-      channelHelp: "Nhắm trượt chọn trúng một trong nhiều hệ cầu rẽ truyền Kênh thông tuyến đã trổ ra ngõ hầu mượn trích báo cáo.",
-      webhookHelp: "Ép đẩy gánh mớ dòng chữ báo cái cự mốc chạy tống ra truyền đi gửi thẳng chót cái lỗ nút chờ API webhook phía phương xa nha.",
+      channelHelp:
+        "Nhắm trượt chọn trúng một trong nhiều hệ cầu rẽ truyền Kênh thông tuyến đã trổ ra ngõ hầu mượn trích báo cáo.",
+      webhookHelp:
+        "Ép đẩy gánh mớ dòng chữ báo cái cự mốc chạy tống ra truyền đi gửi thẳng chót cái lỗ nút chờ API webhook phía phương xa nha.",
       to: "Truyền thẳng nhắm tới cho phía mé bên đằng kia",
       toPlaceholder: "Ví dụ trổ số điện thoai +84.. hoặc điền vô cự Id chat là xong á chớ",
-      toHelp: "Để tuỳ nghi lựa có ép đôn ghi đè qua cái điểm trích báo riêng lén không xài chuẩn kia nha (Thí dụ dán ID nhòm vô ổ Hội thoại, Điện thoại tréo leo hay số chứng thư gã User ID cho xài nghen).",
+      toHelp:
+        "Để tuỳ nghi lựa có ép đôn ghi đè qua cái điểm trích báo riêng lén không xài chuẩn kia nha (Thí dụ dán ID nhòm vô ổ Hội thoại, Điện thoại tréo leo hay số chứng thư gã User ID cho xài nghen).",
       advanced: "Tùy Trình Phức Bức Can Thiệp Nâng Lên Lệch Gì Hơn (Advanced)",
       advancedHelp:
         "Tùy biến lẩn thòng đôn dập quy thay lệch chỉnh cho phần ngán bắt trọn vẹn của nhận đưa, cựa điểm giờ sai số bị động chệch nhịp lẫn ép đôn cho điều hướng máy AI Model dùng cho công chuyện.",
-      deleteAfterRun: "Gõ lệnh xẻ tiêu xóa ngót luôn cho phi sạch khỏi sau khi mà cự chạy đã thành (Delete after run)",
-      deleteAfterRunHelp: "Loại thuốc tiên ngất tuyệt rất ư là hiệu cho cái kiểu nhắc nhắc sáo ngỗng 1 cái cho rồi biến qua đi xong rũ xả bộ tự thu dẹp cái trớn rành rập sau đi cho nó trong sạch sẽ gọn xài.",
+      deleteAfterRun:
+        "Gõ lệnh xẻ tiêu xóa ngót luôn cho phi sạch khỏi sau khi mà cự chạy đã thành (Delete after run)",
+      deleteAfterRunHelp:
+        "Loại thuốc tiên ngất tuyệt rất ư là hiệu cho cái kiểu nhắc nhắc sáo ngỗng 1 cái cho rồi biến qua đi xong rũ xả bộ tự thu dẹp cái trớn rành rập sau đi cho nó trong sạch sẽ gọn xài.",
       clearAgentOverride: "Ủi quét lật xửa đứt cái dấu vết khơi đánh đè lên LLM nhân trợ đi nhe",
-      clearAgentHelp: "Mở nút kềm ép trói lại cự tác tác cho rấp làm tuân dùng cho cái danh tướng tá máy LLM cơ thế tiêu điểm tự nhiên của cự gốc Máy Gateway là OK thoi.",
-      exactTiming: "Gõ chốt giờ điểm làm thời nhác trâm trâm đúng ngót chuẩn canh y sì (Ép gắt kềm điểm dãn nghen)",
-      exactTimingHelp: "Tống ép chạy miệt boong đi trúng bo chốc kỉ luật của rào cron số chả chi ra chừa vòm sai hay dàn đi lệch tẹo nào nha chú mi.",
+      clearAgentHelp:
+        "Mở nút kềm ép trói lại cự tác tác cho rấp làm tuân dùng cho cái danh tướng tá máy LLM cơ thế tiêu điểm tự nhiên của cự gốc Máy Gateway là OK thoi.",
+      exactTiming:
+        "Gõ chốt giờ điểm làm thời nhác trâm trâm đúng ngót chuẩn canh y sì (Ép gắt kềm điểm dãn nghen)",
+      exactTimingHelp:
+        "Tống ép chạy miệt boong đi trúng bo chốc kỉ luật của rào cron số chả chi ra chừa vòm sai hay dàn đi lệch tẹo nào nha chú mi.",
       staggerWindow: "Trương ô số thời khung khoanh vòm trễ hoãn giãn cách số",
       staggerUnit: "Biên chốt đo vạch thời chỉ độ cho cữ khung sai đi",
       staggerPlaceholder: "Ví tỉ là 30 đi ha",
       seconds: "Chi li qua số Giây ngót thời nha",
       model: "Cấp chọn mô dạng LLM kiểu Model Máy tính loại chi",
       modelPlaceholder: "xạo xạo như openai/gpt-5.2 kìa",
-      modelHelp: "Lạch cạch tay rành gõ biên lôi cự máy nhân có dạng định biết nằm trong đầu sách lên dùng, nếu không thì ghi tùy tay tên nhãn model do mình lập trình tự ý riêng nha bạn.",
+      modelHelp:
+        "Lạch cạch tay rành gõ biên lôi cự máy nhân có dạng định biết nằm trong đầu sách lên dùng, nếu không thì ghi tùy tay tên nhãn model do mình lập trình tự ý riêng nha bạn.",
       thinking: "Dạng chi độ Càng xoáy nghiền nghĩ màng lâu (Thinking)",
       thinkingPlaceholder: "Ví von như là độ low coi (thấp độ)",
-      thinkingHelp: "Dùng vẹt một cái mức chuẩn gợi nhắc hay phang cho cái giá tham lượng tự dưng của nhà API API nhào nặn vô.",
-      bestEffortDelivery: "Ép rán cố đánh tới cố sức phát phát cho dứt đường cùng thì ra đi nhe (Best effort delivery)",
-      bestEffortHelp: "Là đánh vạch khống chế ép không đánh làm tịt đứt hỏng thất bại dính lệnh cho luôn việc nếu như rủi phần chuyển gửi giao không thành kìa.",
+      thinkingHelp:
+        "Dùng vẹt một cái mức chuẩn gợi nhắc hay phang cho cái giá tham lượng tự dưng của nhà API API nhào nặn vô.",
+      bestEffortDelivery:
+        "Ép rán cố đánh tới cố sức phát phát cho dứt đường cùng thì ra đi nhe (Best effort delivery)",
+      bestEffortHelp:
+        "Là đánh vạch khống chế ép không đánh làm tịt đứt hỏng thất bại dính lệnh cho luôn việc nếu như rủi phần chuyển gửi giao không thành kìa.",
       cantAddYet: "Kẹt đơ chưa đủ để phang gài thêm tác đi nha chú trẩu xài à",
-      fillRequired: "Mong anh rán gồng bôi chắp chữ lấp lợp cớ đống lỗ báo cần thiếu bị đỏ ở ngay hàng này dưới cho khai tỏ cự chức nhận nút Đăng Nạp cái coi nha anh ha.",
-      fixFields: "Để xí đụp điền bôi fix tẹc cho tròn cái {count} chỗ dính đó đi đi đặng cho nhích qua cữ.",
-      fixFieldsPlural: "Làm ơn xem kỹ tút chuỗi chỗ tréo báo {count} vị dính đạn cái đi đặng bước được ván lấn mốc.",
+      fillRequired:
+        "Mong anh rán gồng bôi chắp chữ lấp lợp cớ đống lỗ báo cần thiếu bị đỏ ở ngay hàng này dưới cho khai tỏ cự chức nhận nút Đăng Nạp cái coi nha anh ha.",
+      fixFields:
+        "Để xí đụp điền bôi fix tẹc cho tròn cái {count} chỗ dính đó đi đi đặng cho nhích qua cữ.",
+      fixFieldsPlural:
+        "Làm ơn xem kỹ tút chuỗi chỗ tréo báo {count} vị dính đạn cái đi đặng bước được ván lấn mốc.",
       saving: "Rầm rì cố gánh chốt lưu giùm...",
       saveChanges: "Áp vô thay đi",
       addJob: "Ngỏ lệnh trâm vô cài thêm một công nữa đê",
@@ -319,14 +367,19 @@ export const vi: TranslationMap = {
     errors: {
       nameRequired: "Tên tuổi thì buộc lấp đầy vào đi chứ.",
       scheduleAtInvalid: "Quá trình lạp vạch sai nhét cái đúng Giờ/Ngày vào hén bạn ta.",
-      everyAmountInvalid: "Chuội nhịp biên chu lặp làm mức số lấn vạch hơn qua vị lớn cỡ của con > 0 đi cha.",
+      everyAmountInvalid:
+        "Chuội nhịp biên chu lặp làm mức số lấn vạch hơn qua vị lớn cỡ của con > 0 đi cha.",
       cronExprRequired: "Hệ hàm số dất lệnh bộ Cron buộc nhét dán vào nà héng.",
-      staggerAmountInvalid: "Phần biên chừa độ dãn xệch đi nhét điền vào buộc sai lệch lệch khỏi to hơn cỡ của điểm vị 0 vào là OK.",
+      staggerAmountInvalid:
+        "Phần biên chừa độ dãn xệch đi nhét điền vào buộc sai lệch lệch khỏi to hơn cỡ của điểm vị 0 vào là OK.",
       systemTextRequired: "Xin gõ lệnh châm chữ diễn văn làm vào nghen cho đi nha.",
-      agentMessageRequired: "Kẹt phần phải xin tí lời lôi của chú ghi làm điểm tựa nhắn cho bé AI nhé nhen.",
-      timeoutInvalid: "Rủ bộ canh thời lạn trót có thì gõ cái điểm bưng thời đo chệch vị lớn hơn là xấp lấp trên 0 cái nha trời à.",
+      agentMessageRequired:
+        "Kẹt phần phải xin tí lời lôi của chú ghi làm điểm tựa nhắn cho bé AI nhé nhen.",
+      timeoutInvalid:
+        "Rủ bộ canh thời lạn trót có thì gõ cái điểm bưng thời đo chệch vị lớn hơn là xấp lấp trên 0 cái nha trời à.",
       webhookUrlRequired: "Link Webhook bắt gắn đắp rải vô cái nèo.",
-      webhookUrlInvalid: "Vạch Webhook xin cho chạy móc đi ngõ xuất là gõ từ chữ đắp http:// hông thì https:// nhen anh trai.",
+      webhookUrlInvalid:
+        "Vạch Webhook xin cho chạy móc đi ngõ xuất là gõ từ chữ đắp http:// hông thì https:// nhen anh trai.",
       invalidRunTime: "Canh giò định đôn lệch múi giò nghen sao mà chạy nổi.",
       invalidIntervalAmount: "Hỏng bét cữ độ đo chia khoảng mốc vạch rồi bạn già.",
       cronExprRequiredShort: "Báo cron là buộc.",

@@ -90,7 +90,8 @@ export async function loginPerplexityWeb(
           document.cookie.includes("intercom_session") ||
           document.cookie.includes("perplexity_") ||
           document.cookie.includes("next-auth.session-token") ||
-          (window.location.pathname === "/" && !document.querySelector('button[data-testid="login-button"]'))
+          (window.location.pathname === "/" &&
+            !document.querySelector('button[data-testid="login-button"]'))
         );
       },
       { timeout: 300000 },

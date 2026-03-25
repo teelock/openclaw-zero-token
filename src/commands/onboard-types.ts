@@ -50,6 +50,7 @@ export type AuthChoice =
   | "byteplus-api-key"
   | "qianfan-api-key"
   | "custom-api-key"
+  | "perplexity-web"
   | "skip";
 export type AuthChoiceGroupId =
   | "openai"
@@ -140,6 +141,7 @@ export type OnboardOptions = {
   customModelId?: string;
   customProviderId?: string;
   customCompatibility?: "openai" | "anthropic";
+  perplexityWebCookie?: string;
   gatewayPort?: number;
   gatewayBind?: GatewayBind;
   gatewayAuth?: GatewayAuthChoice;

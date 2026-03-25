@@ -86,6 +86,11 @@ const WEB_PROVIDERS = [
     label: "Xiaomi Mimo Web",
     defaultModel: "xiaomimo-chat",
   },
+  {
+    id: "perplexity-web",
+    label: "Perplexity Web",
+    defaultModel: "perplexity-web",
+  },
 ] as const;
 
 // 凭证标记 - 用于标识通过浏览器认证的 provider
@@ -271,6 +276,16 @@ function createWebModels(providerId: string): ModelDefinitionConfig[] {
       {
         id: "xiaomimo-chat",
         name: "MiMo Chat",
+        input: ["text"],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 4096,
+      },
+    ],
+    "perplexity-web": [
+      {
+        id: "perplexity-web",
+        name: "Perplexity Sonar",
         input: ["text"],
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
         contextWindow: 128000,

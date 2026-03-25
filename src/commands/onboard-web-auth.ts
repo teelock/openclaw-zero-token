@@ -23,6 +23,7 @@ import { loginGlmIntlWeb } from "../providers/glm-intl-web-auth.js";
 import { loginZWeb } from "../providers/glm-web-auth.js";
 import { loginGrokWeb } from "../providers/grok-web-auth.js";
 import { loginKimiWeb } from "../providers/kimi-web-auth.js";
+import { loginPerplexityWeb } from "../providers/perplexity-web-auth.js";
 import { loginQwenCNWeb } from "../providers/qwen-cn-web-auth.js";
 import { loginQwenWeb } from "../providers/qwen-web-auth.js";
 import { loginXiaomiMimoWeb } from "../providers/xiaomimo-web-auth.js";
@@ -85,6 +86,9 @@ async function addModelToWhitelist(providerId: string, modelIds: string[]): Prom
     },
     "kimi-web": {
       "moonshot-v1-32k": "Kimi Web",
+    },
+    "perplexity-web": {
+      "perplexity-web": "Perplexity Web",
     },
     "qwen-web": {
       "qwen-max": "Qwen Web",
@@ -184,6 +188,7 @@ const WEB_MODEL_PROVIDERS: WebModelProvider[] = [
   { id: "glm-intl-web", name: "GLM Web (国际)", loginFn: loginGlmIntlWeb },
   { id: "grok-web", name: "Grok Web", loginFn: loginGrokWeb },
   { id: "kimi-web", name: "Kimi Web", loginFn: loginKimiWeb },
+  { id: "perplexity-web", name: "Perplexity Web", loginFn: loginPerplexityWeb },
   { id: "qwen-web", name: "Qwen Web (阿里国内)", loginFn: loginQwenWeb },
   { id: "qwen-cn-web", name: "Qwen Web (阿里国际)", loginFn: loginQwenCNWeb },
   { id: "xiaomimo-web", name: "Xiaomi Mimo Web", loginFn: loginXiaomiMimoWeb },
@@ -269,6 +274,7 @@ export async function runOnboardWebAuth(): Promise<void> {
     "glm-intl-web": ["glm-4-plus", "glm-4-think"],
     "grok-web": ["grok-2"],
     "kimi-web": ["moonshot-v1-32k"],
+    "perplexity-web": ["perplexity-web"],
     "qwen-web": ["qwen-max"],
     "qwen-cn-web": ["qwen-turbo"],
     "xiaomimo-web": ["xiaomimo-chat"],

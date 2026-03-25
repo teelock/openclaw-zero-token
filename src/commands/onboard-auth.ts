@@ -39,6 +39,8 @@ export {
   applyXiaomiProviderConfig,
   applyZaiConfig,
   applyZaiProviderConfig,
+  applyPerplexityWebConfig,
+  applyPerplexityWebProviderConfig,
   KILOCODE_BASE_URL,
 } from "./onboard-auth.config-core.js";
 export {
@@ -84,6 +86,7 @@ export {
   setVolcengineApiKey,
   setZaiApiKey,
   setXaiApiKey,
+  setPerplexityWebCookie,
   writeOAuthCredentials,
   HUGGINGFACE_DEFAULT_MODEL_REF,
   VERCEL_AI_GATEWAY_DEFAULT_MODEL_REF,
