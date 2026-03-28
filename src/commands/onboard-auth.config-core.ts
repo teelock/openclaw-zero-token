@@ -12,6 +12,26 @@ import {
   XIAOMI_DEFAULT_MODEL_ID,
 } from "../agents/models-config.providers.js";
 import {
+  buildSyntheticModelDefinition,
+  SYNTHETIC_BASE_URL,
+  SYNTHETIC_DEFAULT_MODEL_REF,
+  SYNTHETIC_MODEL_CATALOG,
+} from "../agents/synthetic-models.js";
+import {
+  buildTogetherModelDefinition,
+  TOGETHER_BASE_URL,
+  TOGETHER_MODEL_CATALOG,
+} from "../agents/together-models.js";
+import {
+  buildVeniceModelDefinition,
+  VENICE_BASE_URL,
+  VENICE_DEFAULT_MODEL_REF,
+  VENICE_MODEL_CATALOG,
+} from "../agents/venice-models.js";
+import type { OpenClawConfig } from "../config/config.js";
+import type { ModelApi } from "../config/types.models.js";
+import { KILOCODE_BASE_URL } from "../providers/kilocode-shared.js";
+import {
   CHATGPT_WEB_BASE_URL,
   CHATGPT_WEB_DEFAULT_MODEL_ID,
   CLAUDE_WEB_BASE_URL,
@@ -35,26 +55,6 @@ import {
   Z_WEB_BASE_URL,
   Z_WEB_DEFAULT_MODEL_ID,
 } from "../zero-token/bridge/web-providers.js";
-import {
-  buildSyntheticModelDefinition,
-  SYNTHETIC_BASE_URL,
-  SYNTHETIC_DEFAULT_MODEL_REF,
-  SYNTHETIC_MODEL_CATALOG,
-} from "../agents/synthetic-models.js";
-import {
-  buildTogetherModelDefinition,
-  TOGETHER_BASE_URL,
-  TOGETHER_MODEL_CATALOG,
-} from "../agents/together-models.js";
-import {
-  buildVeniceModelDefinition,
-  VENICE_BASE_URL,
-  VENICE_DEFAULT_MODEL_REF,
-  VENICE_MODEL_CATALOG,
-} from "../agents/venice-models.js";
-import type { OpenClawConfig } from "../config/config.js";
-import type { ModelApi } from "../config/types.models.js";
-import { KILOCODE_BASE_URL } from "../providers/kilocode-shared.js";
 import {
   HUGGINGFACE_DEFAULT_MODEL_REF,
   KILOCODE_DEFAULT_MODEL_REF,

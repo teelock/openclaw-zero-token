@@ -3,7 +3,7 @@ import { getWebStreamFactory, listWebStreamApiIds } from "./web-stream-factories
 
 describe("web-stream-factories", () => {
   it("lists stable web stream api ids", () => {
-    const ids = listWebStreamApiIds().slice().sort();
+    const ids = listWebStreamApiIds().slice().toSorted();
     expect(ids).toEqual(
       [
         "chatgpt-web",
@@ -19,7 +19,7 @@ describe("web-stream-factories", () => {
         "qwen-cn-web",
         "qwen-web",
         "xiaomimo-web",
-      ].sort(),
+      ].toSorted(),
     );
   });
 

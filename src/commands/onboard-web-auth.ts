@@ -13,6 +13,7 @@ import { ensureOpenClawModelsJson } from "../agents/models-config.js";
 import type { OpenClawConfig } from "../config/config.js";
 import { loadConfig, writeConfigFile } from "../config/io.js";
 import { resolveAgentModelPrimaryValue } from "../config/model-input.js";
+import type { WizardStep } from "../wizard/types.js";
 import { loginChatGPTWeb } from "../zero-token/providers/chatgpt-web-auth.js";
 // 导入各个 web 模型的登录函数
 import { loginClaudeWeb } from "../zero-token/providers/claude-web-auth.js";
@@ -27,7 +28,6 @@ import { loginPerplexityWeb } from "../zero-token/providers/perplexity-web-auth.
 import { loginQwenCNWeb } from "../zero-token/providers/qwen-cn-web-auth.js";
 import { loginQwenWeb } from "../zero-token/providers/qwen-web-auth.js";
 import { loginXiaomiMimoWeb } from "../zero-token/providers/xiaomimo-web-auth.js";
-import type { WizardStep } from "../wizard/types.js";
 import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 
 // Web 模型凭证保存助手函数

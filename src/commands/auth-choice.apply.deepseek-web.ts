@@ -1,4 +1,7 @@
-import { loginDeepseekWeb, loginDeepseekWebAttachOnly } from "../zero-token/providers/deepseek-web-auth.js";
+import {
+  loginDeepseekWeb,
+  loginDeepseekWebAttachOnly,
+} from "../zero-token/providers/deepseek-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyDeepseekWebConfig } from "./onboard-auth.config-core.js";
 import { setDeepseekWebCookie } from "./onboard-auth.credentials.js";

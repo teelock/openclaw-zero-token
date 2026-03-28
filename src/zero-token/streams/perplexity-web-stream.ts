@@ -48,13 +48,17 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
             let resultText = "";
             if (Array.isArray(tr.content)) {
               for (const part of tr.content) {
-                if (part.type === "text") {resultText += part.text;}
+                if (part.type === "text") {
+                  resultText += part.text;
+                }
               }
             }
             content = `\n[Tool Result: ${tr.toolName}]\n${resultText}\n`;
           } else if (Array.isArray(m.content)) {
             for (const part of m.content) {
-              if (part.type === "text") {content += (part).text;}
+              if (part.type === "text") {
+                content += part.text;
+              }
             }
           } else {
             content = String(m.content);
@@ -66,7 +70,9 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
         }
 
         const prompt = historyParts.join("\n\n");
-        if (!prompt) {throw new Error("No message found to send to Perplexity API");}
+        if (!prompt) {
+          throw new Error("No message found to send to Perplexity API");
+        }
 
         console.log(`[PerplexityWebStream] Starting run`);
 
@@ -76,7 +82,9 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
           signal: streamOptions?.signal,
         });
 
-        if (!responseStream) {throw new Error("Perplexity API returned empty response body");}
+        if (!responseStream) {
+          throw new Error("Perplexity API returned empty response body");
+        }
 
         const reader = responseStream.getReader();
         const decoder = new TextDecoder();
@@ -103,9 +111,13 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
         });
 
         const processLine = (line: string) => {
-          if (!line || !line.startsWith("data:")) {return;}
+          if (!line || !line.startsWith("data:")) {
+            return;
+          }
           const dataStr = line.slice(5).trim();
-          if (dataStr === "[DONE]" || !dataStr) {return;}
+          if (dataStr === "[DONE]" || !dataStr) {
+            return;
+          }
           try {
             const data = JSON.parse(dataStr);
             const delta = data.text || data.content || data.delta;
@@ -125,7 +137,9 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
-            if (buffer.trim()) {processLine(buffer.trim());}
+            if (buffer.trim()) {
+              processLine(buffer.trim());
+            }
             break;
           }
           const chunk = decoder.decode(value, { stream: true });
@@ -178,7 +192,7 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
             },
             timestamp: Date.now(),
           },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any);
       } finally {
         stream.end();

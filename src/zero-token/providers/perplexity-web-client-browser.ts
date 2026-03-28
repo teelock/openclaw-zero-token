@@ -72,7 +72,9 @@ export class PerplexityWebClientBrowser {
       console.log(`[Perplexity Web Browser] Connecting to existing Chrome at ${profile.cdpUrl}`);
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) {
+          break;
+        }
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -86,7 +88,9 @@ export class PerplexityWebClientBrowser {
       const cdpUrl = `http://127.0.0.1:${running.cdpPort}`;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) {
+          break;
+        }
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -200,12 +204,16 @@ export class PerplexityWebClientBrowser {
 
         // Return the SSE stream as text
         const reader = response.body?.getReader();
-        if (!reader) {throw new Error("No response body");}
+        if (!reader) {
+          throw new Error("No response body");
+        }
 
         const chunks: number[][] = [];
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {break;}
+          if (done) {
+            break;
+          }
           chunks.push(Array.from(value));
         }
 

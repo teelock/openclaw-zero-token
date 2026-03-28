@@ -5,6 +5,21 @@ import {
   DEFAULT_COPILOT_API_BASE_URL,
   resolveCopilotApiToken,
 } from "../providers/github-copilot-token.js";
+import {
+  buildChatGPTWebProvider,
+  buildClaudeWebProvider,
+  buildDeepseekWebProvider,
+  buildDoubaoWebProvider,
+  buildGeminiWebProvider,
+  buildGlmIntlWebProvider,
+  buildGrokWebProvider,
+  buildKimiWebProvider,
+  buildPerplexityWebProvider,
+  buildQwenCNWebProvider,
+  buildQwenWebProvider,
+  buildXiaomiMimoWebProvider,
+  buildZWebProvider,
+} from "../zero-token/bridge/web-providers.js";
 import { ensureAuthProfileStore, listProfilesForProvider } from "./auth-profiles.js";
 import { discoverBedrockModels } from "./bedrock-discovery.js";
 import {
@@ -35,21 +50,6 @@ import {
   buildTogetherModelDefinition,
 } from "./together-models.js";
 import { discoverVeniceModels, VENICE_BASE_URL } from "./venice-models.js";
-import {
-  buildChatGPTWebProvider,
-  buildClaudeWebProvider,
-  buildDeepseekWebProvider,
-  buildDoubaoWebProvider,
-  buildGeminiWebProvider,
-  buildGlmIntlWebProvider,
-  buildGrokWebProvider,
-  buildKimiWebProvider,
-  buildPerplexityWebProvider,
-  buildQwenCNWebProvider,
-  buildQwenWebProvider,
-  buildXiaomiMimoWebProvider,
-  buildZWebProvider,
-} from "../zero-token/bridge/web-providers.js";
 
 export {
   buildChatGPTWebProvider,

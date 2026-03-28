@@ -131,11 +131,11 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
             } else if (Array.isArray(m.content)) {
               for (const part of m.content) {
                 if (part.type === "text") {
-                  content += (part as TextContent).text;
+                  content += part.text;
                 } else if (part.type === "thinking") {
-                  content += `<think>\n${(part as ThinkingContent).thinking}\n</think>\n`;
+                  content += `<think>\n${part.thinking}\n</think>\n`;
                 } else if (part.type === "toolCall") {
-                  const tc = part as ToolCall;
+                  const tc = part;
                   content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;
                 }
               }

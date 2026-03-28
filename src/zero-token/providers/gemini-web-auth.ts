@@ -59,7 +59,9 @@ export async function loginGeminiWeb(
     onProgress("Waiting for browser debugger...");
     for (let i = 0; i < 10; i++) {
       wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-      if (wsUrl) break;
+      if (wsUrl) {
+        break;
+      }
       await new Promise((r) => setTimeout(r, 500));
     }
 

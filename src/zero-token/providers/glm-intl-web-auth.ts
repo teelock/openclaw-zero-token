@@ -59,7 +59,9 @@ export async function loginGlmIntlWeb(
     onProgress("Waiting for browser debugger...");
     for (let i = 0; i < 10; i++) {
       wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-      if (wsUrl) {break;}
+      if (wsUrl) {
+        break;
+      }
       await new Promise((r) => setTimeout(r, 500));
     }
 
@@ -135,7 +137,8 @@ export async function loginGlmIntlWeb(
         onProgress("Proceeding with available cookies...");
       } else {
         throw new Error(
-          `Login timeout. Please ensure you've logged in to chat.z.ai in the browser window. Available cookies: ${cookieNames || "none"}`, { cause: error },
+          `Login timeout. Please ensure you've logged in to chat.z.ai in the browser window. Available cookies: ${cookieNames || "none"}`,
+          { cause: error },
         );
       }
     }

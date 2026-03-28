@@ -68,7 +68,6 @@ import { createPreparedEmbeddedPiSettingsManager } from "../../pi-project-settin
 import { applyPiAutoCompactionGuard } from "../../pi-settings.js";
 import { toClientToolDefinitions } from "../../pi-tool-definition-adapter.js";
 import { createOpenClawCodingTools, resolveToolLoopDetectionConfig } from "../../pi-tools.js";
-import { getWebStreamFactory } from "../../web-stream-factories.js";
 import { resolveSandboxContext } from "../../sandbox.js";
 import { resolveSandboxRuntimeStatus } from "../../sandbox/runtime-status.js";
 import { isXaiProvider } from "../../schema/clean-for-xai.js";
@@ -91,6 +90,7 @@ import { sanitizeToolCallIdsForCloudCodeAssist } from "../../tool-call-id.js";
 import { resolveEffectiveToolFsWorkspaceOnly } from "../../tool-fs-policy.js";
 import { normalizeToolName } from "../../tool-policy.js";
 import { resolveTranscriptPolicy } from "../../transcript-policy.js";
+import { getWebStreamFactory } from "../../web-stream-factories.js";
 import { DEFAULT_BOOTSTRAP_FILENAME } from "../../workspace.js";
 import { isRunnerAbortError } from "../abort.js";
 import { appendCacheTtlTimestamp, isCacheTtlEligibleProvider } from "../cache-ttl.js";
@@ -1259,11 +1259,17 @@ export async function runEmbeddedAttempt(
         } else if (params.model.api === "openai-responses" && params.provider === "openai") {
           const wsApiKey = await params.authStorage.getApiKey(params.provider);
           if (wsApiKey) {
-            activeSession.agent.streamFn = createOpenAIWebSocketStreamFn(wsApiKey, params.sessionId, {
-              signal: runAbortController.signal,
-            });
+            activeSession.agent.streamFn = createOpenAIWebSocketStreamFn(
+              wsApiKey,
+              params.sessionId,
+              {
+                signal: runAbortController.signal,
+              },
+            );
           } else {
-            log.warn(`[ws-stream] no API key for provider=${params.provider}; using HTTP transport`);
+            log.warn(
+              `[ws-stream] no API key for provider=${params.provider}; using HTTP transport`,
+            );
             activeSession.agent.streamFn = streamSimple;
           }
         } else {

@@ -136,7 +136,7 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (Array.isArray(lastUserMessage.content)) {
                 prompt = lastUserMessage.content
                   .filter((part) => part.type === "text")
-                  .map((part) => (part).text)
+                  .map((part) => part.text)
                   .join("");
               }
             }
@@ -457,18 +457,21 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
                   console.log(
                     `[QwenCNWebStream] messages[${i}] keys: ${Object.keys(msg).join(", ")}`,
                   );
-                  if (msg.content)
-                    {console.log(
+                  if (msg.content) {
+                    console.log(
                       `[QwenCNWebStream] messages[${i}].content: "${String(msg.content).substring(0, 100)}"`,
-                    );}
-                  if (msg.text)
-                    {console.log(
+                    );
+                  }
+                  if (msg.text) {
+                    console.log(
                       `[QwenCNWebStream] messages[${i}].text: "${String(msg.text).substring(0, 100)}"`,
-                    );}
-                  if (msg.delta)
-                    {console.log(
+                    );
+                  }
+                  if (msg.delta) {
+                    console.log(
                       `[QwenCNWebStream] messages[${i}].delta: "${String(msg.delta).substring(0, 100)}"`,
-                    );}
+                    );
+                  }
                 }
               }
             }
@@ -499,18 +502,21 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
               // Check for content in various possible locations
               const msg = data.data.messages[0];
               console.log(`[QwenCNWebStream] Debug msg keys: ${Object.keys(msg).join(", ")}`);
-              if (msg.content)
-                {console.log(
+              if (msg.content) {
+                console.log(
                   `[QwenCNWebStream] Debug msg.content: ${typeof msg.content} = "${String(msg.content).substring(0, 100)}"`,
-                );}
-              if (msg.text)
-                {console.log(
+                );
+              }
+              if (msg.text) {
+                console.log(
                   `[QwenCNWebStream] Debug msg.text: ${typeof msg.text} = "${String(msg.text).substring(0, 100)}"`,
-                );}
-              if (msg.delta)
-                {console.log(
+                );
+              }
+              if (msg.delta) {
+                console.log(
                   `[QwenCNWebStream] Debug msg.delta: ${typeof msg.delta} = "${String(msg.delta).substring(0, 100)}"`,
-                );}
+                );
+              }
             }
 
             let delta = "";

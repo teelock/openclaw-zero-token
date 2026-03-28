@@ -2,7 +2,10 @@
  * GLM (智谱) Web 适配器
  */
 
-import { ensureAuthProfileStore, listProfilesForProvider } from "../../../../../../agents/auth-profiles.js";
+import {
+  ensureAuthProfileStore,
+  listProfilesForProvider,
+} from "../../../../../../agents/auth-profiles.js";
 import { createZWebStreamFn } from "../../../../streams/glm-web-stream.js";
 import type { ModelResponse, AdapterQueryOptions } from "../types.js";
 import { BaseAdapter } from "./base.js";

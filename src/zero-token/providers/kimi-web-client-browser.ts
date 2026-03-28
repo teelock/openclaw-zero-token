@@ -60,7 +60,9 @@ export class KimiWebClientBrowser {
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(profile.cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) {
+          break;
+        }
         await new Promise((r) => setTimeout(r, 500));
       }
       if (!wsUrl) {
@@ -89,10 +91,14 @@ export class KimiWebClientBrowser {
       let wsUrl: string | null = null;
       for (let i = 0; i < 10; i++) {
         wsUrl = await getChromeWebSocketUrl(cdpUrl, 2000);
-        if (wsUrl) {break;}
+        if (wsUrl) {
+          break;
+        }
         await new Promise((r) => setTimeout(r, 500));
       }
-      if (!wsUrl) {throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);}
+      if (!wsUrl) {
+        throw new Error(`Failed to resolve Chrome WebSocket URL from ${cdpUrl}`);
+      }
 
       this.browser = (
         await chromium.connectOverCDP(wsUrl, { headers: getHeadersWithAuth(wsUrl) })
@@ -108,7 +114,9 @@ export class KimiWebClientBrowser {
         const [name, ...valueParts] = c.trim().split("=");
         const nameStr = name?.trim() ?? "";
         const valueStr = valueParts.join("=").trim();
-        if (!nameStr) {return null;}
+        if (!nameStr) {
+          return null;
+        }
         const cookie: {
           name: string;
           value: string;
@@ -212,7 +220,9 @@ export class KimiWebClientBrowser {
         let o = 0;
         while (o + 5 <= u8.length) {
           const len = new DataView(u8.buffer, u8.byteOffset + o + 1, 4).getUint32(0, false);
-          if (o + 5 + len > u8.length) {break;}
+          if (o + 5 + len > u8.length) {
+            break;
+          }
           const chunk = u8.slice(o + 5, o + 5 + len);
           try {
             const obj = JSON.parse(new TextDecoder().decode(chunk));
@@ -226,7 +236,9 @@ export class KimiWebClientBrowser {
             if (obj.block?.text?.content && ["set", "append"].includes(obj.op || "")) {
               texts.push(obj.block.text.content);
             }
-            if (obj.done) {break;}
+            if (obj.done) {
+              break;
+            }
           } catch {
             // ignore parse errors for non-JSON chunks
           }

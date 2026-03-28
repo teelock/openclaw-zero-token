@@ -2,7 +2,10 @@
  * Grok Web 适配器
  */
 
-import { ensureAuthProfileStore, listProfilesForProvider } from "../../../../../../agents/auth-profiles.js";
+import {
+  ensureAuthProfileStore,
+  listProfilesForProvider,
+} from "../../../../../../agents/auth-profiles.js";
 import { createGrokWebStreamFn } from "../../../../streams/grok-web-stream.js";
 import type { ModelResponse, AdapterQueryOptions } from "../types.js";
 import { BaseAdapter } from "./base.js";

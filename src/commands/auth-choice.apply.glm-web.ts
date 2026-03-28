@@ -48,7 +48,9 @@ export async function applyAuthChoiceZWeb(
           message: "Would you like to try manual paste instead?",
           initialValue: true,
         });
-        if (!retryManual) {throw err;}
+        if (!retryManual) {
+          throw err;
+        }
       }
     }
 

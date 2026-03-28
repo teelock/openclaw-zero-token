@@ -159,7 +159,9 @@ export class ChatGPTWebClientBrowser {
 
   /** 确保 chatgpt.com 页面已加载且 oaistatic Sentinel 脚本已就绪 */
   private async ensureChatGptPageReady() {
-    if (!this.page) {return;}
+    if (!this.page) {
+      return;
+    }
     if (!this.page.url().includes("chatgpt.com")) {
       await this.page.goto("https://chatgpt.com/", { waitUntil: "load" });
     }
@@ -199,9 +201,13 @@ export class ChatGPTWebClientBrowser {
       let inputEl: HTMLTextAreaElement | HTMLElement | null = null;
       for (const sel of inputSelectors) {
         inputEl = document.querySelector(sel);
-        if (inputEl && inputEl.offsetParent !== null) {break;}
+        if (inputEl && inputEl.offsetParent !== null) {
+          break;
+        }
       }
-      if (!inputEl) {return { ok: false, error: "找不到输入框" };}
+      if (!inputEl) {
+        return { ok: false, error: "找不到输入框" };
+      }
 
       inputEl.focus();
       if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
@@ -224,10 +230,14 @@ export class ChatGPTWebClientBrowser {
       let sendBtn: HTMLElement | null = null;
       for (const sel of sendSelectors) {
         sendBtn = document.querySelector(sel);
-        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {break;}
+        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {
+          break;
+        }
       }
-      if (!sendBtn) {return { ok: false, error: "找不到发送按钮" };}
-      (sendBtn).click();
+      if (!sendBtn) {
+        return { ok: false, error: "找不到发送按钮" };
+      }
+      sendBtn.click();
       return { ok: true };
     }, params.message);
 
@@ -243,7 +253,9 @@ export class ChatGPTWebClientBrowser {
     const signal = params.signal;
 
     for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollIntervalMs) {
-      if (signal?.aborted) {throw new Error("ChatGPT 请求已取消");}
+      if (signal?.aborted) {
+        throw new Error("ChatGPT 请求已取消");
+      }
 
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
@@ -391,7 +403,9 @@ export class ChatGPTWebClientBrowser {
             }
             const z = await g.bk();
             const turnstileKey = z?.turnstile?.bx ?? z?.turnstile?.dx;
-            if (!turnstileKey) {return { error: "Sentinel chat-requirements missing turnstile" };}
+            if (!turnstileKey) {
+              return { error: "Sentinel chat-requirements missing turnstile" };
+            }
             const r = await g.bi(turnstileKey);
             let arkose: unknown = null;
             try {
@@ -450,13 +464,17 @@ export class ChatGPTWebClientBrowser {
         }
 
         const reader = res.body?.getReader();
-        if (!reader) {return { ok: false, status: 500, error: "No response body", sentinelError };}
+        if (!reader) {
+          return { ok: false, status: 500, error: "No response body", sentinelError };
+        }
 
         const decoder = new TextDecoder();
         let fullText = "";
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {break;}
+          if (done) {
+            break;
+          }
           fullText += decoder.decode(value, { stream: true });
         }
         return { ok: true, data: fullText };

@@ -146,7 +146,7 @@ export function createQwenWebStreamFn(cookieOrJson: string): StreamFn {
               } else if (Array.isArray(lastUserMessage.content)) {
                 prompt = lastUserMessage.content
                   .filter((part) => part.type === "text")
-                  .map((part) => (part).text)
+                  .map((part) => part.text)
                   .join("");
               }
             }

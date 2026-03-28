@@ -2,7 +2,10 @@
  * Qwen CN (通义千问中国版) Web 适配器
  */
 
-import { ensureAuthProfileStore, listProfilesForProvider } from "../../../../../../agents/auth-profiles.js";
+import {
+  ensureAuthProfileStore,
+  listProfilesForProvider,
+} from "../../../../../../agents/auth-profiles.js";
 import { createQwenCNWebStreamFn } from "../../../../streams/qwen-cn-web-stream.js";
 import type { ModelResponse, AdapterQueryOptions } from "../types.js";
 import { BaseAdapter } from "./base.js";

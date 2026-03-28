@@ -100,17 +100,39 @@ export class DoubaoWebClient {
 
     // 从auth中提取动态参数到config
     const dynamicConfig: Partial<DoubaoWebClientConfig> = {};
-    if (this.auth.msToken) {dynamicConfig.msToken = this.auth.msToken;}
-    if (this.auth.a_bogus) {dynamicConfig.a_bogus = this.auth.a_bogus;}
-    if (this.auth.fp) {dynamicConfig.fp = this.auth.fp;}
-    if (this.auth.tea_uuid) {dynamicConfig.tea_uuid = this.auth.tea_uuid;}
-    if (this.auth.device_id) {dynamicConfig.device_id = this.auth.device_id;}
-    if (this.auth.web_tab_id) {dynamicConfig.web_tab_id = this.auth.web_tab_id;}
-    if (this.auth.aid) {dynamicConfig.aid = this.auth.aid;}
-    if (this.auth.version_code) {dynamicConfig.version_code = this.auth.version_code;}
-    if (this.auth.pc_version) {dynamicConfig.pc_version = this.auth.pc_version;}
-    if (this.auth.region) {dynamicConfig.region = this.auth.region;}
-    if (this.auth.language) {dynamicConfig.language = this.auth.language;}
+    if (this.auth.msToken) {
+      dynamicConfig.msToken = this.auth.msToken;
+    }
+    if (this.auth.a_bogus) {
+      dynamicConfig.a_bogus = this.auth.a_bogus;
+    }
+    if (this.auth.fp) {
+      dynamicConfig.fp = this.auth.fp;
+    }
+    if (this.auth.tea_uuid) {
+      dynamicConfig.tea_uuid = this.auth.tea_uuid;
+    }
+    if (this.auth.device_id) {
+      dynamicConfig.device_id = this.auth.device_id;
+    }
+    if (this.auth.web_tab_id) {
+      dynamicConfig.web_tab_id = this.auth.web_tab_id;
+    }
+    if (this.auth.aid) {
+      dynamicConfig.aid = this.auth.aid;
+    }
+    if (this.auth.version_code) {
+      dynamicConfig.version_code = this.auth.version_code;
+    }
+    if (this.auth.pc_version) {
+      dynamicConfig.pc_version = this.auth.pc_version;
+    }
+    if (this.auth.region) {
+      dynamicConfig.region = this.auth.region;
+    }
+    if (this.auth.language) {
+      dynamicConfig.language = this.auth.language;
+    }
 
     // 设置默认配置
     this.config = {
@@ -285,8 +307,8 @@ export class DoubaoWebClient {
 
     const headers = this.getHeaders();
     if (USE_SAMANTHA_API) {
-      (headers)["Referer"] = "https://www.doubao.com/chat/";
-      (headers)["Agw-js-conv"] = "str";
+      headers["Referer"] = "https://www.doubao.com/chat/";
+      headers["Agw-js-conv"] = "str";
     }
 
     console.log(`🌐 发送请求到: ${url}`);
@@ -335,7 +357,9 @@ export class DoubaoWebClient {
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) {break;}
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -408,7 +432,9 @@ export class DoubaoWebClient {
     onChunk: (chunk: string) => void,
     onContent: (chunk: string) => void,
   ): Promise<void> {
-    if (!event.event || !event.data) {return;}
+    if (!event.event || !event.data) {
+      return;
+    }
 
     try {
       const data = JSON.parse(event.data);
@@ -477,7 +503,9 @@ export class DoubaoWebClient {
   /** 豆包可能使用单行 SSE：id: 123 event: CHUNK_DELTA data: {"text":"..."} */
   private parseSingleLineSSE(line: string): { event: string; data: string } | null {
     const m = line.match(/id:\s*\d+\s+event:\s*(\S+)\s+data:\s*(.+)/);
-    if (!m) {return null;}
+    if (!m) {
+      return null;
+    }
     return { event: m[1].trim(), data: m[2].trim() };
   }
 
@@ -489,14 +517,22 @@ export class DoubaoWebClient {
     const chunks: string[] = [];
     try {
       const raw = JSON.parse(line) as { event_type?: number; event_data?: string; code?: number };
-      if (raw.code != null && raw.code !== 0) {return chunks;}
-      if (raw.event_type === 2003) {return chunks;}
-      if (raw.event_type !== 2001 || !raw.event_data) {return chunks;}
+      if (raw.code != null && raw.code !== 0) {
+        return chunks;
+      }
+      if (raw.event_type === 2003) {
+        return chunks;
+      }
+      if (raw.event_type !== 2001 || !raw.event_data) {
+        return chunks;
+      }
       const result = JSON.parse(raw.event_data) as {
         message?: { content?: string; content_type?: number };
         is_finish?: boolean;
       };
-      if (result.is_finish) {return chunks;}
+      if (result.is_finish) {
+        return chunks;
+      }
       const message = result.message;
       const contentType = message?.content_type;
       if (
@@ -504,10 +540,13 @@ export class DoubaoWebClient {
         contentType === undefined ||
         ![2001, 2008].includes(contentType) ||
         !message.content
-      )
-        {return chunks;}
+      ) {
+        return chunks;
+      }
       const content = JSON.parse(message.content) as { text?: string };
-      if (content.text) {chunks.push(content.text);}
+      if (content.text) {
+        chunks.push(content.text);
+      }
     } catch {
       // 非 samantha 格式，忽略
     }
@@ -528,7 +567,9 @@ export class DoubaoWebClient {
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) {break;}
+      if (done) {
+        break;
+      }
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
@@ -541,7 +582,9 @@ export class DoubaoWebClient {
           if (currentEvent.event && currentEvent.data) {
             eventCount++;
             const chunks = await this.extractTextFromEvent(currentEvent);
-            if (chunks.length > 0) {textEventCount++;}
+            if (chunks.length > 0) {
+              textEventCount++;
+            }
             for (const chunk of chunks) {
               yield chunk;
             }
@@ -558,7 +601,9 @@ export class DoubaoWebClient {
             event: single.event,
             data: single.data,
           });
-          if (chunks.length > 0) {textEventCount++;}
+          if (chunks.length > 0) {
+            textEventCount++;
+          }
           for (const chunk of chunks) {
             yield chunk;
           }
@@ -594,7 +639,9 @@ export class DoubaoWebClient {
     if (currentEvent.event && currentEvent.data) {
       eventCount++;
       const chunks = await this.extractTextFromEvent(currentEvent);
-      if (chunks.length > 0) {textEventCount++;}
+      if (chunks.length > 0) {
+        textEventCount++;
+      }
       for (const chunk of chunks) {
         yield chunk;
       }
@@ -614,7 +661,9 @@ export class DoubaoWebClient {
   }): Promise<string[]> {
     const chunks: string[] = [];
 
-    if (!event.event || !event.data) {return chunks;}
+    if (!event.event || !event.data) {
+      return chunks;
+    }
 
     try {
       const data = JSON.parse(event.data);
@@ -672,7 +721,9 @@ export class DoubaoWebClient {
     let fullContent = "";
 
     for (const line of lines) {
-      if (line.trim() === "") {continue;}
+      if (line.trim() === "") {
+        continue;
+      }
 
       if (line.startsWith("id: ")) {
         const match = line.match(/id: (\d+) event: (\w+) data: (.+)/);

@@ -265,7 +265,9 @@ export class DoubaoWebClientBrowser {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) {break;}
+          if (done) {
+            break;
+          }
           fullText += decoder.decode(value, { stream: true });
         }
 
