@@ -11,6 +11,10 @@
 ## 目录
 
 - [项目简介](#项目简介)
+- [Zero Token 文档索引](docs/zero-token/index.md)
+- [需求与演进跟踪](docs/zero-token/zero-token-requirements.md)
+- [与上游同步说明](docs/zero-token/upstream-sync.md)
+- [Web 模型浏览器模式](docs/zero-token/web-models-browser-modes.md)
 - [实现原理](#实现原理)
 - [快速开始](#快速开始)
 - [使用方式](#使用方式)
@@ -297,6 +301,8 @@ node openclaw.mjs onboard
 deepseek授权的时候，如果一直显示等待，记得刷新下网页
 
 看到认证成功就可以了，如果要增加其他模型，再运行一次 ./onboard.sh webauth
+
+当出现「授权完成」等结束提示后，一般会自动回到 shell 提示符。若 Node 进程**一直不退出**（部分浏览器 CDP 连接会挂住事件循环），可按 **Ctrl+C** 结束：此时凭证和配置通常已写入，可放心退出。
 ```
 
 #### 步骤 3：启动 Gateway
@@ -334,6 +340,8 @@ deepseek授权的时候，如果一直显示等待，记得刷新下网页
 /model doubao-web/doubao-seed-2.0
 /model deepseek-web/deepseek-chat
 ```
+
+> **Claude Web：** 请使用**完整模型 ID**：`/model claude-web/claude-sonnet-4-6`（与注册表里的默认模型一致）。仅 `/model claude-web` 在部分场景下可能无法正确解析或选中目标模型。
 
 #### 查看可用模型
 
@@ -495,7 +503,7 @@ node dist/index.mjs doctor
 
 要添加新的 Web 认证平台，需要创建以下文件：
 
-### 1. 认证模块 (`src/providers/{platform}-web-auth.ts`)
+### 1. 认证模块 (`src/zero-token/providers/{platform}-web-auth.ts`)
 
 ```typescript
 export async function loginPlatformWeb(params: {
@@ -506,7 +514,7 @@ export async function loginPlatformWeb(params: {
 }
 ```
 
-### 2. API 客户端 (`src/providers/{platform}-web-client.ts`)
+### 2. API 客户端 (`src/zero-token/providers/{platform}-web-client*.ts`)
 
 ```typescript
 export class PlatformWebClient {
@@ -518,7 +526,7 @@ export class PlatformWebClient {
 }
 ```
 
-### 3. 流处理器 (`src/agents/{platform}-web-stream.ts`)
+### 3. 流处理器 (`src/zero-token/streams/{platform}-web-stream.ts`，并在 `web-stream-factories.ts` 注册)
 
 ```typescript
 export function createPlatformWebStreamFn(credentials: string): StreamFn {
@@ -533,11 +541,11 @@ export function createPlatformWebStreamFn(credentials: string): StreamFn {
 ```
 openclaw-zero-token/
 ├── src/
-│   ├── providers/
-│   │   ├── deepseek-web-auth.ts      # DeepSeek 登录捕获
-│   │   └── deepseek-web-client.ts    # DeepSeek API 客户端
+│   ├── zero-token/
+│   │   ├── providers/                # Web 客户端与 *-web-auth.ts
+│   │   └── streams/                  # *-web-stream.ts 与 web-stream-factories.ts
 │   ├── agents/
-│   │   └── deepseek-web-stream.ts    # 流式响应处理
+│   │   └── web-stream-factories.ts   # re-export（runner 稳定 import）
 │   ├── commands/
 │   │   └── auth-choice.apply.deepseek-web.ts  # 认证流程
 │   └── browser/
@@ -562,6 +570,8 @@ openclaw-zero-token/
 ---
 
 ## 与上游同步
+
+详细改动面清单与推荐流程见 **[与上游同步说明](docs/zero-token/upstream-sync.md)**。
 
 本项目基于 OpenClaw，可以通过以下方式同步上游更新：
 

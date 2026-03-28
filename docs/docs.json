@@ -806,6 +806,22 @@
     {
       "source": "/gateway/trusted-proxy",
       "destination": "/gateway/trusted-proxy-auth"
+    },
+    {
+      "source": "/zero-token-requirements",
+      "destination": "/zero-token/zero-token-requirements"
+    },
+    {
+      "source": "/upstream-sync",
+      "destination": "/zero-token/upstream-sync"
+    },
+    {
+      "source": "/web-models-support",
+      "destination": "/zero-token/web-models-support"
+    },
+    {
+      "source": "/web-models-browser-modes",
+      "destination": "/zero-token/web-models-browser-modes"
     }
   ],
   "navigation": {
@@ -843,6 +859,17 @@
                   "start/openclaw",
                   "start/wizard-cli-reference",
                   "start/wizard-cli-automation"
+                ]
+              },
+              {
+                "group": "Zero Token (fork)",
+                "pages": [
+                  "zero-token/index",
+                  "zero-token/zero-token-requirements",
+                  "zero-token/upstream-sync",
+                  "zero-token/web-models-support",
+                  "zero-token/web-models-browser-modes",
+                  "zero-token/plans/2026-03-28-zero-token-refactor"
                 ]
               }
             ]

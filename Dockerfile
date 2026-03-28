@@ -62,7 +62,7 @@ COPY . .
 
 # Normalize extension paths now so runtime COPY preserves safe modes
 # without adding a second full extensions layer.
-RUN for dir in /app/extensions /app/.agent /app/.agents; do \
+RUN for dir in /app/extensions /app/src/zero-token/extensions /app/.agent /app/.agents; do \
       if [ -d "$dir" ]; then \
         find "$dir" -type d -exec chmod 755 {} +; \
         find "$dir" -type f -exec chmod 644 {} +; \
@@ -132,6 +132,7 @@ COPY --from=runtime-assets --chown=node:node /app/node_modules ./node_modules
 COPY --from=runtime-assets --chown=node:node /app/package.json .
 COPY --from=runtime-assets --chown=node:node /app/openclaw.mjs .
 COPY --from=runtime-assets --chown=node:node /app/extensions ./extensions
+COPY --from=runtime-assets --chown=node:node /app/src/zero-token/extensions ./src/zero-token/extensions
 COPY --from=runtime-assets --chown=node:node /app/skills ./skills
 COPY --from=runtime-assets --chown=node:node /app/docs ./docs
 

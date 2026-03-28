@@ -43,6 +43,8 @@ pnpm ui:build   # 构建 Web UI
 
 > **关键规则：** 只有在 `./onboard.sh webauth` 中完成配置的平台，才会写入 `openclaw.json` 并出现在 `/models` 列表中。
 
+授权向导结束后若终端未返回提示符，可按 **Ctrl+C** 退出（凭证通常已保存）。
+
 然后访问：http://127.0.0.1:3001/#token=62b791625fa441be036acd3c206b7e14e2bb13c803355823
 
 ---
@@ -111,6 +113,8 @@ npm run build
 ```
 
 > **Important:** Only platforms completed in `./onboard.sh webauth` are written into `openclaw.json` and shown in `/models`.
+
+If the terminal does not return to the prompt after webauth finishes, press **Ctrl+C** (credentials are usually saved by then).
 
 Then visit: http://127.0.0.1:3001/#token=62b791625fa441be036acd3c206b7e14e2bb13c803355823
 
