@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { openBoundaryFileSync } from "../infra/boundary-file-read.js";
 import { resolveConfigDir, resolveUserPath } from "../utils.js";
-import { resolveBundledPluginsDir } from "./bundled-dir.js";
+import { resolveBundledPluginSearchDirs } from "./bundled-dir.js";
 import {
   DEFAULT_PLUGIN_ENTRY_CANDIDATES,
   getPackageManifestMetadata,
@@ -69,10 +69,12 @@ function buildDiscoveryCacheKey(params: {
   workspaceDir?: string;
   extraPaths?: string[];
   ownershipUid?: number | null;
+  env?: NodeJS.ProcessEnv;
 }): string {
   const workspaceKey = params.workspaceDir ? resolveUserPath(params.workspaceDir) : "";
-  const configExtensionsRoot = path.join(resolveConfigDir(), "extensions");
-  const bundledRoot = resolveBundledPluginsDir() ?? "";
+  const configEnv = params.env ?? process.env;
+  const configExtensionsRoot = path.join(resolveConfigDir(configEnv), "extensions");
+  const bundledRoots = resolveBundledPluginSearchDirs(configEnv).join("\0");
   const normalizedExtraPaths = (params.extraPaths ?? [])
     .filter((entry): entry is string => typeof entry === "string")
     .map((entry) => entry.trim())
@@ -80,7 +82,7 @@ function buildDiscoveryCacheKey(params: {
     .map((entry) => resolveUserPath(entry))
     .toSorted();
   const ownershipUid = params.ownershipUid ?? currentUid();
-  return `${workspaceKey}::${ownershipUid ?? "none"}::${configExtensionsRoot}::${bundledRoot}::${JSON.stringify(normalizedExtraPaths)}`;
+  return `${workspaceKey}::${ownershipUid ?? "none"}::${configExtensionsRoot}::${bundledRoots}::${JSON.stringify(normalizedExtraPaths)}`;
 }
 
 function currentUid(overrideUid?: number | null): number | null {
@@ -440,6 +442,20 @@ function discoverInDirectory(params: {
       continue;
     }
 
+    // Bundled packs ship from archives/git checkouts; normalize unsafe dir modes
+    // (matches Docker image chmod pass; keeps tests + installs consistent).
+    // Note: on a dev tree, world-writable extension dirs are chmod'd to 755 at scan time.
+    if (params.origin === "bundled" && process.platform !== "win32") {
+      try {
+        const dirStat = safeStatSync(fullPath);
+        if (dirStat?.isDirectory() && (dirStat.mode & 0o002) !== 0) {
+          fs.chmodSync(fullPath, 0o755);
+        }
+      } catch {
+        // ignore chmod failures (read-only mounts, etc.)
+      }
+    }
+
     const rejectHardlinks = params.origin !== "bundled";
     const manifest = readPackageManifest(fullPath, rejectHardlinks);
     const extensionResolution = resolvePackageExtensionEntries(manifest ?? undefined);
@@ -628,6 +644,7 @@ export function discoverOpenClawPlugins(params: {
     workspaceDir: params.workspaceDir,
     extraPaths: params.extraPaths,
     ownershipUid: params.ownershipUid,
+    env,
   });
   if (cacheEnabled) {
     const cached = discoveryCache.get(cacheKey);
@@ -676,8 +693,7 @@ export function discoverOpenClawPlugins(params: {
     }
   }
 
-  const bundledDir = resolveBundledPluginsDir();
-  if (bundledDir) {
+  for (const bundledDir of resolveBundledPluginSearchDirs(env)) {
     discoverInDirectory({
       dir: bundledDir,
       origin: "bundled",
@@ -690,7 +706,7 @@ export function discoverOpenClawPlugins(params: {
 
   // Keep auto-discovered global extensions behind bundled plugins.
   // Users can still intentionally override via plugins.load.paths (origin=config).
-  const globalDir = path.join(resolveConfigDir(), "extensions");
+  const globalDir = path.join(resolveConfigDir(env), "extensions");
   discoverInDirectory({
     dir: globalDir,
     origin: "global",

@@ -1,4 +1,4 @@
-import { loginQwenWeb } from "../providers/qwen-web-auth.js";
+import { loginQwenWeb } from "../zero-token/providers/qwen-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyQwenWebConfig } from "./onboard-auth.config-core.js";
 import { setQwenWebCookie } from "./onboard-auth.credentials.js";

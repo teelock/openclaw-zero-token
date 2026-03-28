@@ -1,4 +1,4 @@
-import { loginClaudeWeb } from "../providers/claude-web-auth.js";
+import { loginClaudeWeb } from "../zero-token/providers/claude-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyClaudeWebConfig } from "./onboard-auth.config-core.js";
 import { setClaudeWebCookie } from "./onboard-auth.credentials.js";

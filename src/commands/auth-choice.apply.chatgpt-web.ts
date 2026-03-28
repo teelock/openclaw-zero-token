@@ -1,4 +1,4 @@
-import { loginChatGPTWeb } from "../providers/chatgpt-web-auth.js";
+import { loginChatGPTWeb } from "../zero-token/providers/chatgpt-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyChatGPTWebConfig } from "./onboard-auth.config-core.js";
 import { setChatGPTWebCookie } from "./onboard-auth.credentials.js";

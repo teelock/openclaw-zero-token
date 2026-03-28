@@ -1,4 +1,4 @@
-import { loginPerplexityWeb } from "../providers/perplexity-web-auth.js";
+import { loginPerplexityWeb } from "../zero-token/providers/perplexity-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyPerplexityWebConfig } from "./onboard-auth.config-core.js";
 import { setPerplexityWebCookie } from "./onboard-auth.credentials.js";

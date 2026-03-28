@@ -1,4 +1,4 @@
-import { loginGlmIntlWeb } from "../providers/glm-intl-web-auth.js";
+import { loginGlmIntlWeb } from "../zero-token/providers/glm-intl-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyGlmIntlWebConfig } from "./onboard-auth.config-core.js";
 import { setGlmIntlWebCookie } from "./onboard-auth.credentials.js";

@@ -1,5 +1,5 @@
 // Narrow plugin-sdk surface for the bundled askonce plugin.
-// Keep this list additive and scoped to symbols used under extensions/askonce.
+// Keep this list additive and scoped to symbols used under src/zero-token/extensions/askonce.
 
 import type { Command } from "commander";
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";

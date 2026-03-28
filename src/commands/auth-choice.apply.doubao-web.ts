@@ -1,4 +1,4 @@
-import { loginDoubaoWeb } from "../providers/doubao-web-auth.js";
+import { loginDoubaoWeb } from "../zero-token/providers/doubao-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyDoubaoWebConfig } from "./onboard-auth.config-core.js";
 import { setDoubaoWebCookie } from "./onboard-auth.credentials.js";

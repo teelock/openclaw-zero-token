@@ -46,49 +46,58 @@ export function syncPluginVersions(rootDir = resolve(".")) {
     throw new Error("Root package.json missing version.");
   }
 
-  const extensionsDir = join(rootDir, "extensions");
-  const dirs = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
-    entry.isDirectory(),
-  );
+  const extensionRoots = [
+    join(rootDir, "extensions"),
+    join(rootDir, "src", "zero-token", "extensions"),
+  ];
 
   const updated: string[] = [];
   const changelogged: string[] = [];
   const skipped: string[] = [];
   const strippedWorkspaceDevDeps: string[] = [];
 
-  for (const dir of dirs) {
-    const packagePath = join(extensionsDir, dir.name, "package.json");
-    let pkg: PackageJson;
-    try {
-      pkg = JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
-    } catch {
+  for (const extensionsDir of extensionRoots) {
+    if (!existsSync(extensionsDir)) {
       continue;
     }
+    const dirs = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
+      entry.isDirectory(),
+    );
 
-    if (!pkg.name) {
-      skipped.push(dir.name);
-      continue;
+    for (const dir of dirs) {
+      const packagePath = join(extensionsDir, dir.name, "package.json");
+      let pkg: PackageJson;
+      try {
+        pkg = JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
+      } catch {
+        continue;
+      }
+
+      if (!pkg.name) {
+        skipped.push(dir.name);
+        continue;
+      }
+
+      const changelogPath = join(extensionsDir, dir.name, "CHANGELOG.md");
+      if (ensureChangelogEntry(changelogPath, targetVersion)) {
+        changelogged.push(pkg.name);
+      }
+
+      const removedWorkspaceDevDependency = stripWorkspaceOpenclawDevDependency(pkg);
+      if (removedWorkspaceDevDependency) {
+        strippedWorkspaceDevDeps.push(pkg.name);
+      }
+
+      const versionChanged = pkg.version !== targetVersion;
+      if (!versionChanged && !removedWorkspaceDevDependency) {
+        skipped.push(pkg.name);
+        continue;
+      }
+
+      pkg.version = targetVersion;
+      writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+      updated.push(pkg.name);
     }
-
-    const changelogPath = join(extensionsDir, dir.name, "CHANGELOG.md");
-    if (ensureChangelogEntry(changelogPath, targetVersion)) {
-      changelogged.push(pkg.name);
-    }
-
-    const removedWorkspaceDevDependency = stripWorkspaceOpenclawDevDependency(pkg);
-    if (removedWorkspaceDevDependency) {
-      strippedWorkspaceDevDeps.push(pkg.name);
-    }
-
-    const versionChanged = pkg.version !== targetVersion;
-    if (!versionChanged && !removedWorkspaceDevDependency) {
-      skipped.push(pkg.name);
-      continue;
-    }
-
-    pkg.version = targetVersion;
-    writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
-    updated.push(pkg.name);
   }
 
   return {

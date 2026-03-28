@@ -1,4 +1,4 @@
-import { loginKimiWeb } from "../providers/kimi-web-auth.js";
+import { loginKimiWeb } from "../zero-token/providers/kimi-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyKimiWebConfig } from "./onboard-auth.config-core.js";
 import { setKimiWebCookie } from "./onboard-auth.credentials.js";

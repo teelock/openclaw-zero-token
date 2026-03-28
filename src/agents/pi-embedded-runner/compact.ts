@@ -33,20 +33,11 @@ import { resolveSessionAgentIds } from "../agent-scope.js";
 import type { ExecElevatedDefaults } from "../bash-tools.js";
 import { makeBootstrapWarn, resolveBootstrapContextForRun } from "../bootstrap-files.js";
 import { listChannelSupportedActions, resolveChannelMessageToolHints } from "../channel-tools.js";
-import { createChatGPTWebStreamFn } from "../chatgpt-web-stream.js";
-import { createClaudeWebStreamFn } from "../claude-web-stream.js";
 import { resolveContextWindowInfo } from "../context-window-guard.js";
 import { ensureCustomApiRegistered } from "../custom-api-registry.js";
 import { formatUserTime, resolveUserTimeFormat, resolveUserTimezone } from "../date-time.js";
-import { createDeepseekWebStreamFn } from "../deepseek-web-stream.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../defaults.js";
 import { resolveOpenClawDocsPath } from "../docs-path.js";
-import { createDoubaoWebStreamFn } from "../doubao-web-stream.js";
-import { createGeminiWebStreamFn } from "../gemini-web-stream.js";
-import { createGlmIntlWebStreamFn } from "../glm-intl-web-stream.js";
-import { createGlmWebStreamFn } from "../glm-web-stream.js";
-import { createGrokWebStreamFn } from "../grok-web-stream.js";
-import { createKimiWebStreamFn } from "../kimi-web-stream.js";
 import { getApiKeyForModel, resolveModelAuthMode } from "../model-auth.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
@@ -59,7 +50,7 @@ import {
 } from "../pi-embedded-helpers.js";
 import { createPreparedEmbeddedPiSettingsManager } from "../pi-project-settings.js";
 import { createOpenClawCodingTools } from "../pi-tools.js";
-import { createQwenWebStreamFn } from "../qwen-web-stream.js";
+import { getWebStreamFactory } from "../web-stream-factories.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { repairSessionFileIfNeeded } from "../session-file-repair.js";
@@ -77,7 +68,6 @@ import {
   type SkillSnapshot,
 } from "../skills.js";
 import { resolveTranscriptPolicy } from "../transcript-policy.js";
-import { createXiaomiMimoWebStreamFn } from "../xiaomimo-web-stream.js";
 import {
   compactWithSafetyTimeout,
   EMBEDDED_COMPACTION_TIMEOUT_MS,
@@ -674,28 +664,9 @@ export async function compactEmbeddedPiSessionDirect(
       );
       if (resolvedApiKey) {
         let streamFn: StreamFn | undefined;
-        if (model.api === "deepseek-web") {
-          streamFn = createDeepseekWebStreamFn(resolvedApiKey);
-        } else if (model.api === "claude-web") {
-          streamFn = createClaudeWebStreamFn(resolvedApiKey);
-        } else if (model.api === "doubao-web") {
-          streamFn = createDoubaoWebStreamFn(resolvedApiKey);
-        } else if (model.api === "chatgpt-web") {
-          streamFn = createChatGPTWebStreamFn(resolvedApiKey);
-        } else if (model.api === "qwen-web") {
-          streamFn = createQwenWebStreamFn(resolvedApiKey);
-        } else if (model.api === "kimi-web") {
-          streamFn = createKimiWebStreamFn(resolvedApiKey);
-        } else if (model.api === "gemini-web") {
-          streamFn = createGeminiWebStreamFn(resolvedApiKey);
-        } else if (model.api === "grok-web") {
-          streamFn = createGrokWebStreamFn(resolvedApiKey);
-        } else if (model.api === "glm-web") {
-          streamFn = createGlmWebStreamFn(resolvedApiKey);
-        } else if (model.api === "glm-intl-web") {
-          streamFn = createGlmIntlWebStreamFn(resolvedApiKey);
-        } else if (model.api === "xiaomimo-web") {
-          streamFn = createXiaomiMimoWebStreamFn(resolvedApiKey);
+        const webFactory = getWebStreamFactory(model.api);
+        if (webFactory) {
+          streamFn = webFactory(resolvedApiKey);
         }
 
         if (streamFn) {
@@ -979,6 +950,39 @@ export async function compactEmbeddedPiSession(
       ensureContextEnginesInitialized();
       const contextEngine = await resolveContextEngine(params.config);
       try {
+        const ownsCompaction = contextEngine.info?.ownsCompaction === true;
+        if (ownsCompaction) {
+          const hookSessionKey = params.sessionKey?.trim() || params.sessionId;
+          const resolvedMessageProvider = params.messageChannel ?? params.messageProvider;
+          const { sessionAgentId } = resolveSessionAgentIds({
+            sessionKey: hookSessionKey,
+            config: params.config,
+          });
+          const hookRunner = getGlobalHookRunner();
+          if (hookRunner?.hasHooks("before_compaction")) {
+            try {
+              await hookRunner.runBeforeCompaction(
+                {
+                  messageCount: -1,
+                  sessionFile: params.sessionFile,
+                },
+                {
+                  sessionId: params.sessionId,
+                  agentId: sessionAgentId,
+                  sessionKey: hookSessionKey,
+                  workspaceDir: params.workspaceDir,
+                  messageProvider: resolvedMessageProvider,
+                },
+              );
+            } catch (err) {
+              log.warn("before_compaction hook failed", {
+                errorMessage: err instanceof Error ? err.message : String(err),
+                errorStack: err instanceof Error ? err.stack : undefined,
+              });
+            }
+          }
+        }
+
         // Resolve token budget from model context window so the context engine
         // knows the compaction target.  The runner's afterTurn path passes this
         // automatically, but the /compact command path needs to compute it here.
@@ -1001,6 +1005,41 @@ export async function compactEmbeddedPiSession(
           force: params.trigger === "manual",
           runtimeContext: params as Record<string, unknown>,
         });
+
+        if (ownsCompaction && result.ok && result.compacted) {
+          const hookSessionKey = params.sessionKey?.trim() || params.sessionId;
+          const resolvedMessageProvider = params.messageChannel ?? params.messageProvider;
+          const { sessionAgentId } = resolveSessionAgentIds({
+            sessionKey: hookSessionKey,
+            config: params.config,
+          });
+          const hookRunner = getGlobalHookRunner();
+          if (hookRunner?.hasHooks("after_compaction")) {
+            try {
+              await hookRunner.runAfterCompaction(
+                {
+                  messageCount: -1,
+                  tokenCount: result.result?.tokensAfter,
+                  compactedCount: -1,
+                  sessionFile: params.sessionFile,
+                },
+                {
+                  sessionId: params.sessionId,
+                  agentId: sessionAgentId,
+                  sessionKey: hookSessionKey,
+                  workspaceDir: params.workspaceDir,
+                  messageProvider: resolvedMessageProvider,
+                },
+              );
+            } catch (err) {
+              log.warn("after_compaction hook failed", {
+                errorMessage: err instanceof Error ? err.message : String(err),
+                errorStack: err instanceof Error ? err.stack : undefined,
+              });
+            }
+          }
+        }
+
         return {
           ok: result.ok,
           compacted: result.compacted,

@@ -261,8 +261,6 @@ importers:
         specifier: 0.1.15
         version: 0.1.15(zod@4.3.6)
 
-  extensions/askonce: {}
-
   extensions/bluebubbles:
     dependencies:
       zod:
@@ -541,6 +539,8 @@ importers:
       openclaw:
         specifier: workspace:*
         version: link:../..
+
+  src/zero-token/extensions/askonce: {}
 
   ui:
     dependencies:

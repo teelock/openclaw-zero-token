@@ -1,4 +1,4 @@
-import { loginZWeb } from "../providers/glm-web-auth.js";
+import { loginZWeb } from "../zero-token/providers/glm-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyGlmWebConfig } from "./onboard-auth.config-core.js";
 import { setZWebCookie } from "./onboard-auth.credentials.js";

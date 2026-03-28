@@ -43,20 +43,11 @@ import {
   listChannelSupportedActions,
   resolveChannelMessageToolHints,
 } from "../../channel-tools.js";
-import { createChatGPTWebStreamFn } from "../../chatgpt-web-stream.js";
-import { createClaudeWebStreamFn } from "../../claude-web-stream.js";
 import { ensureCustomApiRegistered } from "../../custom-api-registry.js";
-import { createDeepseekWebStreamFn } from "../../deepseek-web-stream.js";
 import { DEFAULT_CONTEXT_TOKENS } from "../../defaults.js";
 import { resolveOpenClawDocsPath } from "../../docs-path.js";
-import { createDoubaoWebStreamFn } from "../../doubao-web-stream.js";
 import { isTimeoutError } from "../../failover-error.js";
-import { createGeminiWebStreamFn } from "../../gemini-web-stream.js";
-import { createGlmIntlWebStreamFn } from "../../glm-intl-web-stream.js";
-import { createGlmWebStreamFn } from "../../glm-web-stream.js";
-import { createGrokWebStreamFn } from "../../grok-web-stream.js";
 import { resolveImageSanitizationLimits } from "../../image-sanitization.js";
-import { createKimiWebStreamFn } from "../../kimi-web-stream.js";
 import { resolveModelAuthMode } from "../../model-auth.js";
 import { normalizeProviderId, resolveDefaultModelForAgent } from "../../model-selection.js";
 import { supportsModelTools } from "../../model-tool-support.js";
@@ -77,7 +68,7 @@ import { createPreparedEmbeddedPiSettingsManager } from "../../pi-project-settin
 import { applyPiAutoCompactionGuard } from "../../pi-settings.js";
 import { toClientToolDefinitions } from "../../pi-tool-definition-adapter.js";
 import { createOpenClawCodingTools, resolveToolLoopDetectionConfig } from "../../pi-tools.js";
-import { createQwenWebStreamFn } from "../../qwen-web-stream.js";
+import { getWebStreamFactory } from "../../web-stream-factories.js";
 import { resolveSandboxContext } from "../../sandbox.js";
 import { resolveSandboxRuntimeStatus } from "../../sandbox/runtime-status.js";
 import { isXaiProvider } from "../../schema/clean-for-xai.js";
@@ -101,7 +92,6 @@ import { resolveEffectiveToolFsWorkspaceOnly } from "../../tool-fs-policy.js";
 import { normalizeToolName } from "../../tool-policy.js";
 import { resolveTranscriptPolicy } from "../../transcript-policy.js";
 import { DEFAULT_BOOTSTRAP_FILENAME } from "../../workspace.js";
-import { createXiaomiMimoWebStreamFn } from "../../xiaomimo-web-stream.js";
 import { isRunnerAbortError } from "../abort.js";
 import { appendCacheTtlTimestamp, isCacheTtlEligibleProvider } from "../cache-ttl.js";
 import type { CompactEmbeddedPiSessionParams } from "../compact.js";
@@ -1255,118 +1245,31 @@ export async function runEmbeddedAttempt(
         });
         activeSession.agent.streamFn = ollamaStreamFn;
         ensureCustomApiRegistered(params.model.api, ollamaStreamFn);
-      } else if (params.model.api === "deepseek-web") {
-        const cookie = (await params.authStorage.getApiKey("deepseek-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createDeepseekWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for deepseek-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "claude-web") {
-        const cookie = (await params.authStorage.getApiKey("claude-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createClaudeWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for claude-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "doubao-web") {
-        const cookie = (await params.authStorage.getApiKey("doubao-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createDoubaoWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for doubao-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "chatgpt-web") {
-        const cookie = (await params.authStorage.getApiKey("chatgpt-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createChatGPTWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for chatgpt-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "qwen-web") {
-        const cookie = (await params.authStorage.getApiKey("qwen-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createQwenWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for qwen-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "kimi-web") {
-        const cookie = (await params.authStorage.getApiKey("kimi-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createKimiWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for kimi-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "gemini-web") {
-        const cookie = (await params.authStorage.getApiKey("gemini-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createGeminiWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for gemini-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "grok-web") {
-        const cookie = (await params.authStorage.getApiKey("grok-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createGrokWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for grok-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "glm-web") {
-        const cookie = (await params.authStorage.getApiKey("glm-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createGlmWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for glm-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "glm-intl-web") {
-        const cookie = (await params.authStorage.getApiKey("glm-intl-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createGlmIntlWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for glm-intl-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "xiaomimo-web") {
-        const cookie = (await params.authStorage.getApiKey("xiaomimo-web")) || "";
-        if (cookie) {
-          activeSession.agent.streamFn = createXiaomiMimoWebStreamFn(cookie);
-          ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
-        } else {
-          log.warn(`[web-stream] no API key for xiaomimo-web`);
-          activeSession.agent.streamFn = streamSimple;
-        }
-      } else if (params.model.api === "openai-responses" && params.provider === "openai") {
-        const wsApiKey = await params.authStorage.getApiKey(params.provider);
-        if (wsApiKey) {
-          activeSession.agent.streamFn = createOpenAIWebSocketStreamFn(wsApiKey, params.sessionId, {
-            signal: runAbortController.signal,
-          });
-        } else {
-          log.warn(`[ws-stream] no API key for provider=${params.provider}; using HTTP transport`);
-          activeSession.agent.streamFn = streamSimple;
-        }
       } else {
-        // Force a stable streamFn reference so vitest can reliably mock @mariozechner/pi-ai.
-        activeSession.agent.streamFn = streamSimple;
+        const webFactory = getWebStreamFactory(params.model.api);
+        if (webFactory) {
+          const cookie = (await params.authStorage.getApiKey(params.model.api)) || "";
+          if (cookie) {
+            activeSession.agent.streamFn = webFactory(cookie);
+            ensureCustomApiRegistered(params.model.api, activeSession.agent.streamFn);
+          } else {
+            log.warn(`[web-stream] no API key for ${params.model.api}`);
+            activeSession.agent.streamFn = streamSimple;
+          }
+        } else if (params.model.api === "openai-responses" && params.provider === "openai") {
+          const wsApiKey = await params.authStorage.getApiKey(params.provider);
+          if (wsApiKey) {
+            activeSession.agent.streamFn = createOpenAIWebSocketStreamFn(wsApiKey, params.sessionId, {
+              signal: runAbortController.signal,
+            });
+          } else {
+            log.warn(`[ws-stream] no API key for provider=${params.provider}; using HTTP transport`);
+            activeSession.agent.streamFn = streamSimple;
+          }
+        } else {
+          // Force a stable streamFn reference so vitest can reliably mock @mariozechner/pi-ai.
+          activeSession.agent.streamFn = streamSimple;
+        }
       }
 
       // Ollama with OpenAI-compatible API needs num_ctx in payload.options.

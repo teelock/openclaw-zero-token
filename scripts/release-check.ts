@@ -1,7 +1,7 @@
 #!/usr/bin/env -S node --import tsx
 
 import { execSync } from "node:child_process";
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
@@ -164,25 +164,34 @@ export function collectBundledExtensionRootDependencyGapErrors(params: {
   return errors;
 }
 
-function collectBundledExtensions(): BundledExtension[] {
-  const extensionsDir = resolve("extensions");
-  const entries = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
-    entry.isDirectory(),
-  );
+const BUNDLED_EXTENSION_ROOTS = ["extensions", join("src", "zero-token", "extensions")] as const;
 
-  return entries.flatMap((entry) => {
-    const packagePath = join(extensionsDir, entry.name, "package.json");
-    try {
-      return [
-        {
+function collectBundledExtensions(): BundledExtension[] {
+  const byId = new Map<string, BundledExtension>();
+  for (const rootRel of BUNDLED_EXTENSION_ROOTS) {
+    const extensionsDir = resolve(rootRel);
+    if (!existsSync(extensionsDir)) {
+      continue;
+    }
+    const entries = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
+      entry.isDirectory(),
+    );
+    for (const entry of entries) {
+      if (byId.has(entry.name)) {
+        continue;
+      }
+      const packagePath = join(extensionsDir, entry.name, "package.json");
+      try {
+        byId.set(entry.name, {
           id: entry.name,
           packageJson: JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson,
-        },
-      ];
-    } catch {
-      return [];
+        });
+      } catch {
+        // ignore
+      }
     }
-  });
+  }
+  return [...byId.values()];
 }
 
 function checkBundledExtensionRootDependencyMirrors() {
@@ -229,28 +238,33 @@ function checkPluginVersions() {
     process.exit(1);
   }
 
-  const extensionsDir = resolve("extensions");
-  const entries = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
-    entry.isDirectory(),
-  );
-
   const mismatches: string[] = [];
 
-  for (const entry of entries) {
-    const packagePath = join(extensionsDir, entry.name, "package.json");
-    let pkg: PackageJson;
-    try {
-      pkg = JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
-    } catch {
+  for (const rootRel of BUNDLED_EXTENSION_ROOTS) {
+    const extensionsDir = resolve(rootRel);
+    if (!existsSync(extensionsDir)) {
       continue;
     }
+    const entries = readdirSync(extensionsDir, { withFileTypes: true }).filter((entry) =>
+      entry.isDirectory(),
+    );
 
-    if (!pkg.name || !pkg.version) {
-      continue;
-    }
+    for (const entry of entries) {
+      const packagePath = join(extensionsDir, entry.name, "package.json");
+      let pkg: PackageJson;
+      try {
+        pkg = JSON.parse(readFileSync(packagePath, "utf8")) as PackageJson;
+      } catch {
+        continue;
+      }
 
-    if (normalizePluginSyncVersion(pkg.version) !== targetBaseVersion) {
-      mismatches.push(`${pkg.name} (${pkg.version})`);
+      if (!pkg.name || !pkg.version) {
+        continue;
+      }
+
+      if (normalizePluginSyncVersion(pkg.version) !== targetBaseVersion) {
+        mismatches.push(`${pkg.name} (${pkg.version})`);
+      }
     }
   }
 

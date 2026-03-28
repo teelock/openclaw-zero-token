@@ -239,6 +239,8 @@ vi.mock("../../config/channel-capabilities.js", () => ({
 
 vi.mock("../../utils/message-channel.js", () => ({
   normalizeMessageChannel: vi.fn(() => undefined),
+  /** Must match `src/utils/message-channel.ts` for modules that import the constant. */
+  INTERNAL_MESSAGE_CHANNEL: "webchat",
 }));
 
 vi.mock("../pi-embedded-helpers.js", () => ({

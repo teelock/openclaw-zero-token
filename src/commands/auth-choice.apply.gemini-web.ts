@@ -1,4 +1,4 @@
-import { loginGeminiWeb } from "../providers/gemini-web-auth.js";
+import { loginGeminiWeb } from "../zero-token/providers/gemini-web-auth.js";
 import type { ApplyAuthChoiceParams, ApplyAuthChoiceResult } from "./auth-choice.apply.js";
 import { applyGeminiWebConfig } from "./onboard-auth.config-core.js";
 import { setGeminiWebCookie } from "./onboard-auth.credentials.js";
