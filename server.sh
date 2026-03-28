@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="$SCRIPT_DIR/.openclaw-upstream-state"
 CONFIG_FILE="$STATE_DIR/openclaw.json"
 PID_FILE="$SCRIPT_DIR/.gateway.pid"
-PORT=3002
+PORT=3001
 
 # 日志文件名（区分不同实例）
 LOG_PREFIX="openclaw-upstream"

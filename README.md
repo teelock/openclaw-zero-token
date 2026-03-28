@@ -182,7 +182,7 @@ Daily:
 | ----------------------- | -------------------------- | ------------------------------------------------------------------------ |
 | `start-chrome-debug.sh` | Start Chrome in debug mode | Step 2: open browser on port 9222 for logins + onboarding                |
 | `onboard.sh`            | Auth/onboarding wizard     | Step 4/5: select provider (e.g. `deepseek-web`) and capture credentials  |
-| `server.sh`             | Manage gateway service     | Step 5 & daily use: `start` / `stop` / `restart` / `status` on port 3002 |
+| `server.sh`             | Manage gateway service     | Step 5 & daily use: `start` / `stop` / `restart` / `status` on port 3001 |
 
 ### Installation
 
@@ -315,7 +315,7 @@ deepseek-web/deepseek-chat                 text       64k      no    no    confi
 ### HTTP API
 
 ```bash
-curl http://127.0.0.1:3002/v1/chat/completions \
+curl http://127.0.0.1:3001/v1/chat/completions \
   -H "Authorization: Bearer YOUR_GATEWAY_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -370,7 +370,7 @@ node openclaw.mjs tui
     }
   },
   "gateway": {
-    "port": 3002,
+    "port": 3001,
     "auth": {
       "mode": "token",
       "token": "your-gateway-token"
