@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
 import type { ModelCatalogEntry } from "../agents/model-catalog.js";
 import {
+  qualifyCatalogProviderRef,
   resolveAllowedModelRef,
   resolveDefaultModelForAgent,
   resolveSubagentConfiguredModelSelection,
@@ -11,6 +12,7 @@ import {
   formatThinkingLevels,
   formatXHighModelHint,
   normalizeElevatedLevel,
+  normalizeFastMode,
   normalizeReasoningLevel,
   normalizeThinkLevel,
   normalizeUsageDisplay,
@@ -67,6 +69,22 @@ function supportsSpawnLineage(storeKey: string): boolean {
   return isSubagentSessionKey(storeKey) || isAcpSessionKey(storeKey);
 }
 
+function normalizeSubagentRole(raw: string): "orchestrator" | "leaf" | undefined {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "orchestrator" || normalized === "leaf") {
+    return normalized;
+  }
+  return undefined;
+}
+
+function normalizeSubagentControlScope(raw: string): "children" | "none" | undefined {
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "children" || normalized === "none") {
+    return normalized;
+  }
+  return undefined;
+}
+
 export async function applySessionsPatchToStore(params: {
   cfg: OpenClawConfig;
   store: Record<string, SessionEntry>;
@@ -112,6 +130,27 @@ export async function applySessionsPatchToStore(params: {
     }
   }
 
+  if ("spawnedWorkspaceDir" in patch) {
+    const raw = patch.spawnedWorkspaceDir;
+    if (raw === null) {
+      if (existing?.spawnedWorkspaceDir) {
+        return invalid("spawnedWorkspaceDir cannot be cleared once set");
+      }
+    } else if (raw !== undefined) {
+      if (!supportsSpawnLineage(storeKey)) {
+        return invalid("spawnedWorkspaceDir is only supported for subagent:* or acp:* sessions");
+      }
+      const trimmed = String(raw).trim();
+      if (!trimmed) {
+        return invalid("invalid spawnedWorkspaceDir: empty");
+      }
+      if (existing?.spawnedWorkspaceDir && existing.spawnedWorkspaceDir !== trimmed) {
+        return invalid("spawnedWorkspaceDir cannot be changed once set");
+      }
+      next.spawnedWorkspaceDir = trimmed;
+    }
+  }
+
   if ("spawnDepth" in patch) {
     const raw = patch.spawnDepth;
     if (raw === null) {
@@ -131,6 +170,48 @@ export async function applySessionsPatchToStore(params: {
         return invalid("spawnDepth cannot be changed once set");
       }
       next.spawnDepth = normalized;
+    }
+  }
+
+  if ("subagentRole" in patch) {
+    const raw = patch.subagentRole;
+    if (raw === null) {
+      if (existing?.subagentRole) {
+        return invalid("subagentRole cannot be cleared once set");
+      }
+    } else if (raw !== undefined) {
+      if (!supportsSpawnLineage(storeKey)) {
+        return invalid("subagentRole is only supported for subagent:* or acp:* sessions");
+      }
+      const normalized = normalizeSubagentRole(String(raw));
+      if (!normalized) {
+        return invalid('invalid subagentRole (use "orchestrator" or "leaf")');
+      }
+      if (existing?.subagentRole && existing.subagentRole !== normalized) {
+        return invalid("subagentRole cannot be changed once set");
+      }
+      next.subagentRole = normalized;
+    }
+  }
+
+  if ("subagentControlScope" in patch) {
+    const raw = patch.subagentControlScope;
+    if (raw === null) {
+      if (existing?.subagentControlScope) {
+        return invalid("subagentControlScope cannot be cleared once set");
+      }
+    } else if (raw !== undefined) {
+      if (!supportsSpawnLineage(storeKey)) {
+        return invalid("subagentControlScope is only supported for subagent:* or acp:* sessions");
+      }
+      const normalized = normalizeSubagentControlScope(String(raw));
+      if (!normalized) {
+        return invalid('invalid subagentControlScope (use "children" or "none")');
+      }
+      if (existing?.subagentControlScope && existing.subagentControlScope !== normalized) {
+        return invalid("subagentControlScope cannot be changed once set");
+      }
+      next.subagentControlScope = normalized;
     }
   }
 
@@ -170,6 +251,19 @@ export async function applySessionsPatchToStore(params: {
         );
       }
       next.thinkingLevel = normalized;
+    }
+  }
+
+  if ("fastMode" in patch) {
+    const raw = patch.fastMode;
+    if (raw === null) {
+      delete next.fastMode;
+    } else if (raw !== undefined) {
+      const normalized = normalizeFastMode(raw);
+      if (normalized === undefined) {
+        return invalid("invalid fastMode (use true or false)");
+      }
+      next.fastMode = normalized;
     }
   }
 
@@ -303,10 +397,14 @@ export async function applySessionsPatchToStore(params: {
         };
       }
       const catalog = await params.loadGatewayModelCatalog();
+      // If bare ID matches a known provider in the catalog, qualify it so
+      // "gemini-web" → "gemini-web/gemini-pro" instead of wrong "deepseek-web/gemini-web".
+      const qualified =
+        qualifyCatalogProviderRef(trimmed, catalog) ?? trimmed;
       const resolved = resolveAllowedModelRef({
         cfg,
         catalog,
-        raw: trimmed,
+        raw: qualified,
         defaultProvider: resolvedDefault.provider,
         defaultModel: subagentModelHint ?? resolvedDefault.model,
       });

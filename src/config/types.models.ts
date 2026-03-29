@@ -36,12 +36,16 @@ export type ModelCompatConfig = {
   supportsTools?: boolean;
   supportsStrictMode?: boolean;
   maxTokensField?: "max_completion_tokens" | "max_tokens";
-  thinkingFormat?: "openai" | "zai" | "qwen";
+  thinkingFormat?: "openai" | "zai" | "qwen" | "openrouter" | "qwen-chat-template";
   requiresToolResultName?: boolean;
   requiresAssistantAfterToolResult?: boolean;
   requiresThinkingAsText?: boolean;
   requiresMistralToolIds?: boolean;
   requiresOpenAiAnthropicToolPayload?: boolean;
+  toolSchemaProfile?: string;
+  nativeWebSearchTool?: boolean;
+  toolCallArgumentsEncoding?: string;
+  unsupportedToolSchemaKeywords?: string[];
 };
 
 export type ModelProviderAuthMode = "api-key" | "aws-sdk" | "oauth" | "token";

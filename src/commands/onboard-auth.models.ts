@@ -1,12 +1,12 @@
 import { QIANFAN_BASE_URL, QIANFAN_DEFAULT_MODEL_ID } from "../agents/models-config.providers.js";
-import type { ModelDefinitionConfig } from "../config/types.js";
+import type { ModelDefinitionConfig } from "../config/types.models.js";
 import {
   KILOCODE_DEFAULT_CONTEXT_WINDOW,
   KILOCODE_DEFAULT_COST,
   KILOCODE_DEFAULT_MAX_TOKENS,
   KILOCODE_DEFAULT_MODEL_ID,
   KILOCODE_DEFAULT_MODEL_NAME,
-} from "../providers/kilocode-shared.js";
+} from "../plugins/provider-model-kilocode.js";
 export {
   KILOCODE_DEFAULT_CONTEXT_WINDOW,
   KILOCODE_DEFAULT_COST,
@@ -14,13 +14,13 @@ export {
   KILOCODE_DEFAULT_MODEL_ID,
 };
 
-export const DEFAULT_MINIMAX_BASE_URL = "https://api.minimax.io/v1";
-export const MINIMAX_API_BASE_URL = "https://api.minimax.io/anthropic";
-export const MINIMAX_CN_API_BASE_URL = "https://api.minimaxi.com/anthropic";
-export const MINIMAX_HOSTED_MODEL_ID = "MiniMax-M2.5";
-export const MINIMAX_HOSTED_MODEL_REF = `minimax/${MINIMAX_HOSTED_MODEL_ID}`;
-export const DEFAULT_MINIMAX_CONTEXT_WINDOW = 200000;
-export const DEFAULT_MINIMAX_MAX_TOKENS = 8192;
+export const DEFAULT_Claude_BASE_URL = "https://api.anthropic.com/v1";
+export const Claude_API_BASE_URL = "https://api.anthropic.com/anthropic";
+export const Claude_CN_API_BASE_URL = "https://api.Claudei.com/anthropic";
+export const Claude_HOSTED_MODEL_ID = "Claude-M2.5";
+export const Claude_HOSTED_MODEL_REF = `Claude/${Claude_HOSTED_MODEL_ID}`;
+export const DEFAULT_Claude_CONTEXT_WINDOW = 200000;
+export const DEFAULT_Claude_MAX_TOKENS = 8192;
 
 export const MOONSHOT_BASE_URL = "https://api.moonshot.ai/v1";
 export const MOONSHOT_CN_BASE_URL = "https://api.moonshot.cn/v1";
@@ -55,20 +55,20 @@ export function resolveZaiBaseUrl(endpoint?: string): string {
   }
 }
 
-// Pricing per 1M tokens (USD) — https://platform.minimaxi.com/document/Price
-export const MINIMAX_API_COST = {
+// Pricing per 1M tokens (USD) — https://platform.Claudei.com/document/Price
+export const Claude_API_COST = {
   input: 0.3,
   output: 1.2,
   cacheRead: 0.03,
   cacheWrite: 0.12,
 };
-export const MINIMAX_HOSTED_COST = {
+export const Claude_HOSTED_COST = {
   input: 0,
   output: 0,
   cacheRead: 0,
   cacheWrite: 0,
 };
-export const MINIMAX_LM_STUDIO_COST = {
+export const Claude_LM_STUDIO_COST = {
   input: 0,
   output: 0,
   cacheRead: 0,
@@ -88,15 +88,16 @@ export const ZAI_DEFAULT_COST = {
   cacheWrite: 0,
 };
 
-const MINIMAX_MODEL_CATALOG = {
-  "MiniMax-M2.5": { name: "MiniMax M2.5", reasoning: true },
-  "MiniMax-M2.5-highspeed": { name: "MiniMax M2.5 Highspeed", reasoning: true },
+const Claude_MODEL_CATALOG = {
+  "Claude-M2.5": { name: "Claude M2.5", reasoning: true },
+  "Claude-M2.5-highspeed": { name: "Claude M2.5 Highspeed", reasoning: true },
 } as const;
 
-type MinimaxCatalogId = keyof typeof MINIMAX_MODEL_CATALOG;
+type ClaudeCatalogId = keyof typeof Claude_MODEL_CATALOG;
 
 const ZAI_MODEL_CATALOG = {
   "glm-5": { name: "GLM-5", reasoning: true },
+  "glm-5-turbo": { name: "GLM-5 Turbo", reasoning: true },
   "glm-4.7": { name: "GLM-4.7", reasoning: true },
   "glm-4.7-flash": { name: "GLM-4.7 Flash", reasoning: true },
   "glm-4.7-flashx": { name: "GLM-4.7 FlashX", reasoning: true },
@@ -104,7 +105,7 @@ const ZAI_MODEL_CATALOG = {
 
 type ZaiCatalogId = keyof typeof ZAI_MODEL_CATALOG;
 
-export function buildMinimaxModelDefinition(params: {
+export function buildClaudeModelDefinition(params: {
   id: string;
   name?: string;
   reasoning?: boolean;
@@ -112,10 +113,10 @@ export function buildMinimaxModelDefinition(params: {
   contextWindow: number;
   maxTokens: number;
 }): ModelDefinitionConfig {
-  const catalog = MINIMAX_MODEL_CATALOG[params.id as MinimaxCatalogId];
+  const catalog = Claude_MODEL_CATALOG[params.id as ClaudeCatalogId];
   return {
     id: params.id,
-    name: params.name ?? catalog?.name ?? `MiniMax ${params.id}`,
+    name: params.name ?? catalog?.name ?? `Claude ${params.id}`,
     reasoning: params.reasoning ?? catalog?.reasoning ?? false,
     input: ["text"],
     cost: params.cost,
@@ -124,12 +125,12 @@ export function buildMinimaxModelDefinition(params: {
   };
 }
 
-export function buildMinimaxApiModelDefinition(modelId: string): ModelDefinitionConfig {
-  return buildMinimaxModelDefinition({
+export function buildClaudeApiModelDefinition(modelId: string): ModelDefinitionConfig {
+  return buildClaudeModelDefinition({
     id: modelId,
-    cost: MINIMAX_API_COST,
-    contextWindow: DEFAULT_MINIMAX_CONTEXT_WINDOW,
-    maxTokens: DEFAULT_MINIMAX_MAX_TOKENS,
+    cost: Claude_API_COST,
+    contextWindow: DEFAULT_Claude_CONTEXT_WINDOW,
+    maxTokens: DEFAULT_Claude_MAX_TOKENS,
   });
 }
 

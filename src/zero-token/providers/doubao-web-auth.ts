@@ -1,14 +1,14 @@
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright-core";
-import { getHeadersWithAuth } from "../../browser/cdp.helpers.js";
+import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
   stopOpenClawChrome,
   getChromeWebSocketUrl,
   isChromeReachable,
-} from "../../browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../browser/config.js";
+} from "../../../extensions/browser/src/browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 
 export interface DoubaoAuth {

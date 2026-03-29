@@ -9,23 +9,29 @@ import {
   resolvePackageExtensionEntries,
   type OpenClawPackageManifest,
   type PackageManifest,
+  type PluginManifest,
 } from "./manifest.js";
 import { formatPosixMode, isPathInside, safeRealpathSync, safeStatSync } from "./path-safety.js";
-import type { PluginDiagnostic, PluginOrigin } from "./types.js";
+import type { PluginBundleFormat, PluginDiagnostic, PluginFormat, PluginOrigin } from "./types.js";
 
 const EXTENSION_EXTS = new Set([".ts", ".js", ".mts", ".cts", ".mjs", ".cjs"]);
 
 export type PluginCandidate = {
   idHint: string;
   source: string;
+  setupSource?: string;
   rootDir: string;
   origin: PluginOrigin;
+  format?: PluginFormat;
+  bundleFormat?: PluginBundleFormat;
   workspaceDir?: string;
   packageName?: string;
   packageVersion?: string;
   packageDescription?: string;
   packageDir?: string;
   packageManifest?: OpenClawPackageManifest;
+  bundledManifest?: PluginManifest;
+  bundledManifestPath?: string;
 };
 
 export type PluginDiscoveryResult = {

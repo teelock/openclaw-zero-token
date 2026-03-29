@@ -1,6 +1,5 @@
 import type { OpenClawConfig } from "../config/config.js";
 import type { ModelDefinitionConfig } from "../config/types.models.js";
-import { resolvePluginProviders } from "../plugins/providers.js";
 import {
   DEFAULT_COPILOT_API_BASE_URL,
   resolveCopilotApiToken,
@@ -775,27 +774,10 @@ export async function resolveImplicitProviders(params: {
     allowKeychainPrompt: false,
   });
 
-  // Load additional providers from plugins (only if they have auth credentials)
-  // This allows plugins to extend the provider list beyond hardcoded providers
-  const pluginProviders = resolvePluginProviders({
-    config: params.config,
-    workspaceDir: params.agentDir,
-  });
-  for (const pluginProvider of pluginProviders) {
-    // Only add plugin providers that have auth credentials in the auth store
-    // This maintains backward compatibility while allowing plugin extensions
-    const hasAuth = listProfilesForProvider(authStore, pluginProvider.id).length > 0;
-    if (!hasAuth) {
-      continue;
-    }
-    // Convert ProviderPlugin to ProviderConfig
-    providers[pluginProvider.id] = {
-      baseUrl: pluginProvider.models?.baseUrl ?? "",
-      apiKey: undefined,
-      api: pluginProvider.id as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-      models: pluginProvider.models?.models ?? [],
-    };
-  }
+  // Zero-token providers (deepseek-web, qwen-web, etc.) are added explicitly below
+  // via build*WebProvider() functions — no plugin-based provider discovery here.
+  // This avoids upstream's bundled-provider-compat logic that auto-enables
+  // bundled plugins (e.g. anthropic) which are irrelevant for zero-token.
 
   const minimaxKey =
     resolveEnvApiKeyVarName("minimax") ??

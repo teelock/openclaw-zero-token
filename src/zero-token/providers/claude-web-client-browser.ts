@@ -1,14 +1,14 @@
 import crypto from "node:crypto";
 import { chromium } from "playwright-core";
 import type { BrowserContext, Page } from "playwright-core";
-import { getHeadersWithAuth } from "../../browser/cdp.helpers.js";
+import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
 import {
   launchOpenClawChrome,
   stopOpenClawChrome,
   getChromeWebSocketUrl,
   type RunningChrome,
-} from "../../browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../browser/config.js";
+} from "../../../extensions/browser/src/browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 import type { ModelDefinitionConfig } from "../../config/types.models.js";
 
@@ -223,8 +223,9 @@ export class ClaudeWebClientBrowser {
 
     console.log(`[Claude Web Browser] Creating conversation at: ${url}`);
 
+    const convUuid = crypto.randomUUID();
     const response = await page.evaluate(
-      async ({ url, deviceId }) => {
+      async ({ url, deviceId, convUuid }) => {
         const res = await fetch(url, {
           method: "POST",
           headers: {
@@ -234,7 +235,7 @@ export class ClaudeWebClientBrowser {
           },
           body: JSON.stringify({
             name: `Conversation ${new Date().toISOString()}`,
-            uuid: crypto.randomUUID(),
+            uuid: convUuid,
           }),
           credentials: "include",
         });
@@ -247,7 +248,7 @@ export class ClaudeWebClientBrowser {
         const data = await res.json();
         return { ok: true, data };
       },
-      { url, deviceId: this.deviceId },
+      { url, deviceId: this.deviceId, convUuid },
     );
 
     console.log(`[Claude Web Browser] Create conversation response: ${response.status}`);

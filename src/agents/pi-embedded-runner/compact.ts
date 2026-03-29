@@ -21,9 +21,12 @@ import { generateSecureToken } from "../../infra/secure-random.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { type enqueueCommand, enqueueCommandInLane } from "../../process/command-queue.js";
 import { isCronSessionKey, isSubagentSessionKey } from "../../routing/session-key.js";
-import { resolveSignalReactionLevel } from "../../signal/reaction-level.js";
-import { resolveTelegramInlineButtonsScope } from "../../telegram/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "../../telegram/reaction-level.js";
+import { createConfiguredOllamaStreamFn } from "../../plugin-sdk/ollama.js";
+import { resolveSignalReactionLevel } from "../../plugin-sdk/signal.js";
+import {
+  resolveTelegramInlineButtonsScope,
+  resolveTelegramReactionLevel,
+} from "../../plugin-sdk/telegram.js";
 import { buildTtsSystemPromptHint } from "../../tts/tts.js";
 import { resolveUserPath } from "../../utils.js";
 import { normalizeMessageChannel } from "../../utils/message-channel.js";
@@ -41,7 +44,6 @@ import { resolveOpenClawDocsPath } from "../docs-path.js";
 import { getApiKeyForModel, resolveModelAuthMode } from "../model-auth.js";
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelsJson } from "../models-config.js";
-import { createConfiguredOllamaStreamFn } from "../ollama-stream.js";
 import { resolveOwnerDisplaySetting } from "../owner-display.js";
 import {
   ensureSessionHeader,
@@ -100,6 +102,7 @@ export type CompactEmbeddedPiSessionParams = {
   sessionId: string;
   runId?: string;
   sessionKey?: string;
+  allowGatewaySubagentBinding?: boolean;
   messageChannel?: string;
   messageProvider?: string;
   agentAccountId?: string;
@@ -126,8 +129,9 @@ export type CompactEmbeddedPiSessionParams = {
   bashElevated?: ExecElevatedDefaults;
   customInstructions?: string;
   tokenBudget?: number;
+  currentTokenCount?: number;
   force?: boolean;
-  trigger?: "overflow" | "manual";
+  trigger?: "overflow" | "manual" | "budget";
   diagId?: string;
   attempt?: number;
   maxAttempts?: number;
@@ -349,7 +353,7 @@ export async function compactEmbeddedPiSessionDirect(
         );
       }
     } else if (model.provider === "github-copilot") {
-      const { resolveCopilotApiToken } = await import("../../providers/github-copilot-token.js");
+      const { resolveCopilotApiToken } = await import("../../../extensions/github-copilot/token.js");
       const copilotToken = await resolveCopilotApiToken({
         githubToken: apiKeyInfo.apiKey,
       });
@@ -1060,3 +1064,4 @@ export async function compactEmbeddedPiSession(
     }),
   );
 }
+export { runPostCompactionSideEffects } from "./compaction-hooks.js";

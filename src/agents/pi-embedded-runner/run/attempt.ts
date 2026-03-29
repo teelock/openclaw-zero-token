@@ -21,9 +21,12 @@ import type {
 } from "../../../plugins/types.js";
 import { isCronSessionKey, isSubagentSessionKey } from "../../../routing/session-key.js";
 import { joinPresentTextSegments } from "../../../shared/text/join-segments.js";
-import { resolveSignalReactionLevel } from "../../../signal/reaction-level.js";
-import { resolveTelegramInlineButtonsScope } from "../../../telegram/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "../../../telegram/reaction-level.js";
+import { createConfiguredOllamaStreamFn } from "../../../plugin-sdk/ollama.js";
+import { resolveSignalReactionLevel } from "../../../plugin-sdk/signal.js";
+import {
+  resolveTelegramInlineButtonsScope,
+  resolveTelegramReactionLevel,
+} from "../../../plugin-sdk/telegram-runtime.js";
 import { buildTtsSystemPromptHint } from "../../../tts/tts.js";
 import { resolveUserPath } from "../../../utils.js";
 import { normalizeMessageChannel } from "../../../utils/message-channel.js";
@@ -51,7 +54,6 @@ import { resolveImageSanitizationLimits } from "../../image-sanitization.js";
 import { resolveModelAuthMode } from "../../model-auth.js";
 import { normalizeProviderId, resolveDefaultModelForAgent } from "../../model-selection.js";
 import { supportsModelTools } from "../../model-tool-support.js";
-import { createConfiguredOllamaStreamFn } from "../../ollama-stream.js";
 import { createOpenAIWebSocketStreamFn, releaseWsSession } from "../../openai-ws-stream.js";
 import { resolveOwnerDisplaySetting } from "../../owner-display.js";
 import {

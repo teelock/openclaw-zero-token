@@ -1,12 +1,11 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { getHeadersWithAuth } from "../../browser/cdp.helpers.js";
+import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
 import {
-  killExistingChromeOnPort,
   launchOpenClawChrome,
   stopOpenClawChrome,
   getChromeWebSocketUrl,
-} from "../../browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../browser/config.js";
+} from "../../../extensions/browser/src/browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 
 /**
@@ -295,7 +294,6 @@ export async function loginDeepseekWeb(params: {
     // Do NOT kill: user may have already logged in via start-chrome-debug.sh
   } else {
     // Launch our own Chrome: close any existing on this port first to avoid port conflict
-    await killExistingChromeOnPort(profile.cdpPort, params.onProgress);
     params.onProgress("Launching browser...");
     running = await launchOpenClawChrome(browserConfig, profile);
     didLaunch = true;

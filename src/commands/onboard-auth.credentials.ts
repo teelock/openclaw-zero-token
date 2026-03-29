@@ -10,11 +10,11 @@ import {
   type SecretInput,
   type SecretRef,
 } from "../config/types.secrets.js";
-import { KILOCODE_DEFAULT_MODEL_REF } from "../providers/kilocode-shared.js";
+import { KILOCODE_DEFAULT_MODEL_REF } from "../plugins/provider-model-kilocode.js";
 import { PROVIDER_ENV_VARS } from "../secrets/provider-env-vars.js";
 import { normalizeSecretInput } from "../utils/normalize-secret-input.js";
 import type { SecretInputMode } from "./onboard-types.js";
-export { CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_REF } from "../agents/cloudflare-ai-gateway.js";
+export { CLOUDFLARE_AI_GATEWAY_DEFAULT_MODEL_REF } from "../plugin-sdk/cloudflare-ai-gateway.js";
 export { MISTRAL_DEFAULT_MODEL_REF, XAI_DEFAULT_MODEL_REF } from "./onboard-auth.models.js";
 export { KILOCODE_DEFAULT_MODEL_REF };
 
@@ -510,6 +510,178 @@ export async function setPerplexityWebCookie(params: { cookie: string }, agentDi
     credential: {
       type: "api_key",
       provider: "perplexity-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setDoubaoWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "doubao-web:default",
+    credential: {
+      type: "api_key",
+      provider: "doubao-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setQwenWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "qwen-web:default",
+    credential: {
+      type: "api_key",
+      provider: "qwen-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setQwenCNWebCredentials(
+  params: { cookie: string; xsrfToken: string; ut?: string; userAgent?: string },
+  agentDir?: string,
+) {
+  upsertAuthProfile({
+    profileId: "qwen-cn-web:default",
+    credential: {
+      type: "api_key",
+      provider: "qwen-cn-web",
+      key: JSON.stringify(params),
+      metadata: { mode: "cookie+xsrf" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setChatGPTWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "chatgpt-web:default",
+    credential: {
+      type: "api_key",
+      provider: "chatgpt-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setClaudeWebCookie(
+  params: { sessionKey: string; cookie: string; userAgent?: string; organizationId?: string },
+  agentDir?: string,
+) {
+  upsertAuthProfile({
+    profileId: "claude-web:default",
+    credential: {
+      type: "api_key",
+      provider: "claude-web",
+      key: params.cookie,
+      metadata: {
+        mode: "cookie",
+        sessionKey: params.sessionKey,
+        ...(params.organizationId ? { organizationId: params.organizationId } : {}),
+      },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setDeepseekWebCookie(
+  params: { cookie: string; bearer?: string; userAgent?: string },
+  agentDir?: string,
+) {
+  upsertAuthProfile({
+    profileId: "deepseek-web:default",
+    credential: {
+      type: "api_key",
+      provider: "deepseek-web",
+      key: params.cookie,
+      metadata: {
+        mode: "cookie",
+        ...(params.bearer ? { bearer: params.bearer } : {}),
+      },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setGeminiWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "gemini-web:default",
+    credential: {
+      type: "api_key",
+      provider: "gemini-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setGrokWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "grok-web:default",
+    credential: {
+      type: "api_key",
+      provider: "grok-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setKimiWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "kimi-web:default",
+    credential: {
+      type: "api_key",
+      provider: "kimi-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setZWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "glm-web:default",
+    credential: {
+      type: "api_key",
+      provider: "glm-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setGlmIntlWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "glm-intl-web:default",
+    credential: {
+      type: "api_key",
+      provider: "glm-intl-web",
+      key: params.cookie,
+      metadata: { mode: "cookie" },
+    },
+    agentDir: resolveAuthAgentDir(agentDir),
+  });
+}
+
+export async function setXiaomiMimoWebCookie(params: { cookie: string }, agentDir?: string) {
+  upsertAuthProfile({
+    profileId: "xiaomimo-web:default",
+    credential: {
+      type: "api_key",
+      provider: "xiaomimo-web",
       key: params.cookie,
       metadata: { mode: "cookie" },
     },
