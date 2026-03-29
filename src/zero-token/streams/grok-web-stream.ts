@@ -414,11 +414,14 @@ export function createGrokWebStreamFn(cookieOrJson: string): StreamFn {
         };
 
         const processLine = (line: string) => {
-          if (!line || !line.startsWith("data:")) {
+          if (!line) {
             return;
           }
 
-          const dataStr = line.slice(5).trim();
+          // Grok returns raw NDJSON without SSE "data:" prefix.
+          // Try parsing as-is first, then fall back to "data:" prefix (for
+          // compatibility with any embedded SSE lines).
+          const dataStr = line.startsWith("data:") ? line.slice(5).trim() : line.trim();
           if (dataStr === "[DONE]" || !dataStr) {
             return;
           }
@@ -427,8 +430,8 @@ export function createGrokWebStreamFn(cookieOrJson: string): StreamFn {
             const data = JSON.parse(dataStr);
 
             // Extract conversation ID
-            if (data.sessionId || data.sessionId) {
-              sessionMap.set(sessionKey, data.sessionId || data.sessionId);
+            if (data.sessionId) {
+              sessionMap.set(sessionKey, data.sessionId);
             }
 
             // Extract content delta - Grok uses contentDelta field

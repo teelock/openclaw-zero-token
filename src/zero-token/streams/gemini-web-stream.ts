@@ -11,9 +11,55 @@ import {
   type GeminiWebClientOptions,
 } from "../providers/gemini-web-client-browser.js";
 
-// Helper to strip messages for web providers
-function stripForWebProvider(prompt: string): string {
-  return prompt;
+// Strip inbound metadata blocks that are irrelevant for web model consumption.
+// These blocks are injected by the inbound-meta module into user-role message
+// content so the model can reason about context — but web models have no
+// knowledge of OpenClaw internals and will hallucinate when they see them.
+// We keep the actual user text intact and remove only the JSON metadata
+// blocks.
+function stripInboundMetaBlocks(text: string): string {
+  // Remove blocks in order: each block starts with a header and ends with ```
+  // We process them as complete self-contained blocks to avoid partial matches.
+  let result = text;
+
+  // Remove Conversation info block
+  result = result.replace(
+    /Conversation info \(untrusted metadata\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Remove Sender info block
+  result = result.replace(
+    /Sender \(untrusted metadata\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Remove Thread starter block
+  result = result.replace(
+    /Thread starter \(untrusted, for context\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Remove Replied message block
+  result = result.replace(
+    /Replied message \(untrusted, for context\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Remove Forwarded message block
+  result = result.replace(
+    /Forwarded message context \(untrusted metadata\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Remove Chat history block
+  result = result.replace(
+    /Chat history since last reply \(untrusted, for context\):\s*```json\n[\s\S]*?```\s*/g,
+    "",
+  );
+
+  // Clean up any resulting blank lines
+  return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
 // Helper to build XML tool prompt section
@@ -21,7 +67,24 @@ function buildXmlToolPromptSection(tools: unknown[]): string {
   if (!tools || tools.length === 0) {
     return "";
   }
-  return "\n## Tool Use Instructions\n";
+  let section = "\n## Tool Use Instructions\n";
+  section +=
+    "You are equipped with specialized tools to perform actions or retrieve information. " +
+    'To use a tool, output a specific XML tag: <tool_call id="unique_id" name="tool_name">{"arg": "value"}</tool_call>. ' +
+    "Rules for tool use:\n" +
+    "1. ALWAYS think before calling a tool. Explain your reasoning inside <think> tags.\n" +
+    "2. The 'id' attribute should be a unique 8-character string for each call.\n" +
+    "3. Wait for the tool result before proceeding with further analysis.\n\n" +
+    "### Automation Policy\n" +
+    "- DO NOT use the 'exec' tool to install secondary automation libraries like Playwright, Selenium, or Puppeteer if the 'browser' tool fails.\n" +
+    "- Instead, inform the user about the connection issue or try the alternative browser profile.\n\n" +
+    "### Available Tools\n";
+
+  for (const tool of tools as Array<{ name?: string; description?: string; parameters?: unknown }>) {
+    section += `#### ${tool.name ?? "unknown"}\n${tool.description ?? ""}\n`;
+    section += `Parameters: ${JSON.stringify(tool.parameters ?? {})}\n\n`;
+  }
+  return section;
 }
 
 // Helper to get XML tool reminder
@@ -96,7 +159,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
                 content = String(m.content);
               }
               if (m.role === "user" && content) {
-                content = stripForWebProvider(content) || content;
+                content = stripInboundMetaBlocks(content) || content;
               }
               historyParts.push(`${role}: ${content}`);
             }
@@ -125,7 +188,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
                     .map((part) => part.text)
                     .join("");
                 }
-                prompt = stripForWebProvider(prompt) || prompt;
+                prompt = stripInboundMetaBlocks(prompt) || prompt;
               }
             }
             if (toolPrompt) {
@@ -151,7 +214,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
           throw new Error("No message found to send to Gemini API");
         }
 
-        const cleanPrompt = stripForWebProvider(prompt);
+        const cleanPrompt = stripInboundMetaBlocks(prompt);
         if (!cleanPrompt) {
           throw new Error("No message content to send after stripping metadata");
         }

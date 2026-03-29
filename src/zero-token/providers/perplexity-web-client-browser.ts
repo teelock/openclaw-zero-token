@@ -1,7 +1,7 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
-import { getHeadersWithAuth } from "../../browser/cdp.helpers.js";
-import { getChromeWebSocketUrl, launchOpenClawChrome } from "../../browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../browser/config.js";
+import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
+import { getChromeWebSocketUrl, launchOpenClawChrome } from "../../../extensions/browser/src/browser/chrome.js";
+import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 import type { ModelDefinitionConfig } from "../../config/types.models.js";
 
@@ -11,11 +11,6 @@ export interface PerplexityWebClientOptions {
 }
 
 const PERPLEXITY_BASE_URL = "https://www.perplexity.ai";
-
-const MODEL_MAP: Record<string, string> = {
-  "perplexity-web": "sonar",
-  "perplexity-pro": "sonar-pro",
-};
 
 export class PerplexityWebClientBrowser {
   private options: PerplexityWebClientOptions;
@@ -151,7 +146,11 @@ export class PerplexityWebClientBrowser {
         message: string;
         model: string;
       }) => {
-        const modelInternal = MODEL_MAP[model] || model || "sonar";
+        const MODEL_MAP_INTERNAL: Record<string, string> = {
+          "perplexity-web": "sonar",
+          "perplexity-pro": "sonar-pro",
+        };
+        const modelInternal = MODEL_MAP_INTERNAL[model] || model || "sonar";
 
         // Try to get conversation ID from URL if not provided
         let convId = conversationId;

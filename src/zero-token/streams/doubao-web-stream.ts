@@ -35,7 +35,6 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
         let sessionId = sessionMap.get(sessionKey);
 
         const messages = context.messages || [];
-        const systemPrompt = (context as unknown as { systemPrompt?: string }).systemPrompt || "";
 
         // Build tool prompt if tools are available
         const tools = context.tools || [];
@@ -70,50 +69,25 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
         let prompt = "";
 
         if (!sessionId) {
-          // First turn: aggregate all history including system prompt
-          const historyParts: string[] = [];
-          let systemPromptContent = systemPrompt;
-
-          if (toolPrompt) {
-            systemPromptContent += toolPrompt;
-          }
-
-          if (systemPromptContent && !messages.some((m) => (m.role as string) === "system")) {
-            historyParts.push(`System: ${systemPromptContent}`);
-          }
-
-          for (const m of messages) {
-            const role = m.role === "user" || m.role === "toolResult" ? "User" : "Assistant";
-            let content = "";
-
-            if (m.role === "toolResult") {
-              const tr = m as unknown as ToolResultMessage;
-              let resultText = "";
-              if (Array.isArray(tr.content)) {
-                for (const part of tr.content) {
-                  if (part.type === "text") {
-                    resultText += part.text;
-                  }
-                }
-              }
-              content = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n`;
-            } else if (Array.isArray(m.content)) {
-              for (const part of m.content) {
-                if (part.type === "text") {
-                  content += part.text;
-                } else if (part.type === "thinking") {
-                  content += `<think>\n${part.thinking}\n</think>\n`;
-                } else if (part.type === "toolCall") {
-                  const tc = part;
-                  content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;
-                }
-              }
-            } else {
-              content = String(m.content);
+          // First turn: send only the last user message to avoid exceeding
+          // Doubao's prompt length limit. Full conversation history is only
+          // needed after a session ID is established.
+          const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
+          if (lastUserMessage) {
+            if (typeof lastUserMessage.content === "string") {
+              prompt = lastUserMessage.content;
+            } else if (Array.isArray(lastUserMessage.content)) {
+              prompt = lastUserMessage.content
+                .filter((part) => part.type === "text")
+                .map((part) => part.text)
+                .join("");
             }
-            historyParts.push(`${role}: ${content}`);
           }
-          prompt = historyParts.join("\n\n");
+          // Add tool reminder if tools are available
+          if (toolPrompt && prompt) {
+            prompt +=
+              "\n\n[SYSTEM HINT]: Keep in mind your available tools. To use a tool, you MUST output the EXACT XML format: <tool_call id=\"unique_id\" name=\"tool_name\">{\"arg\": \"value\"}</tool_call>.";
+          }
         } else {
           // Continuing turn: check if last message is toolResult or user
           const lastMsg = messages[messages.length - 1];
@@ -283,16 +257,54 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
           }
         };
 
+        // Accumulate raw text in a simple buffer and flush in batches to reduce
+        // UI update frequency. Doubao sends every single Chinese character as a
+        // separate SSE line, which floods the UI with tiny text_delta events.
+        let textBuffer = "";
+        const textFlushThreshold = 20;
+
+        const flushTextBuffer = () => {
+          if (!textBuffer) {return;}
+          const text = textBuffer;
+          textBuffer = "";
+          emitDelta("text", text);
+        };
+
         const pushDelta = (delta: string, forceType?: "text" | "thinking") => {
-          if (!delta) {
-            return;
-          }
-          if (forceType === "thinking") {
-            emitDelta("thinking", delta);
-            return;
-          }
+          if (!delta) {return;}
+
+          // Always accumulate into tagBuffer first so checkTags() can detect boundaries.
           tagBuffer += delta;
 
+          // thinking content is emitted immediately — but we still need checkTags()
+          // to run so the closing </think> tag is detected and we switch back to text.
+          if (forceType === "thinking" || currentMode === "thinking") {
+            flushTextBuffer();
+            emitDelta("thinking", delta);
+            if (forceType === "thinking") {
+              tagBuffer = ""; // consumed the whole delta
+              return;
+            }
+            // fall through to checkTags() to detect </think>
+          }
+
+          // tool_call args are emitted immediately — checkTags() still runs for 」
+          if (currentMode === "tool_call") {
+            flushTextBuffer();
+            emitDelta("toolcall", delta);
+          } else {
+            // text mode: accumulate, flush at threshold
+            textBuffer += delta;
+            if (textBuffer.length >= textFlushThreshold) {
+              flushTextBuffer();
+            }
+          }
+
+          // Always parse tag boundaries from the full accumulated tagBuffer,
+          // regardless of how much text has been buffered or flushed.
+          // prevTagLen = where delta starts in tagBuffer; used in the else branch to
+          // avoid double-emitting text that was already flushed before this delta.
+          let prevTagLen = tagBuffer.length - delta.length;
           const checkTags = () => {
             const thinkStart = tagBuffer.match(/<think\b[^<>]*>/i);
             const thinkEnd = tagBuffer.match(/<\/think\b[^<>]*>/i);
@@ -328,13 +340,16 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
               const first = indices[0];
               const before = tagBuffer.slice(0, first.idx);
               if (before) {
+                // Flush pending text (which includes the "before" content).
+                // Then emit "before" as thinking/toolcall if needed.
+                flushTextBuffer();
                 if (currentMode === "thinking") {
                   emitDelta("thinking", before);
                 } else if (currentMode === "tool_call") {
                   emitDelta("toolcall", before);
-                } else {
-                  emitDelta("text", before);
                 }
+                // If text mode: textBuffer (which included "before") was already
+                // emitted by flushTextBuffer(); do NOT emit again (would double).
               }
 
               if (first.type === "think_start") {
@@ -367,7 +382,7 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
                   } catch (e) {
                     part.arguments = { raw: argStr };
                     console.error(
-                      `[Qwen Stream] Failed to parse JSON for tool call ${currentToolName}:`,
+                      `[Doubao Stream] Failed to parse JSON for tool call ${currentToolName}:`,
                       argStr,
                       "\nError:",
                       e,
@@ -384,29 +399,24 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
                 currentToolIndex++;
               }
               tagBuffer = tagBuffer.slice(first.idx + first.len);
+              // Recurse: everything remaining in tagBuffer is new unprocessed content.
+              prevTagLen = 0;
               checkTags();
             } else {
+              // No tags found — check for partial tag at the end of buffer.
+              // prevTagLen (from pushDelta closure) tells us where new delta starts so
+              // we only emit characters not already accounted for by a previous flush.
               const lastAngle = tagBuffer.lastIndexOf("<");
               if (lastAngle === -1) {
-                const mode =
-                  currentMode === "thinking"
-                    ? "thinking"
-                    : currentMode === "tool_call"
-                      ? "toolcall"
-                      : "text";
-                emitDelta(mode, tagBuffer);
+                // No partial tag; new characters from this delta are safe text
+                textBuffer += tagBuffer.slice(prevTagLen);
                 tagBuffer = "";
               } else if (lastAngle > 0) {
                 const safe = tagBuffer.slice(0, lastAngle);
-                const mode =
-                  currentMode === "thinking"
-                    ? "thinking"
-                    : currentMode === "tool_call"
-                      ? "toolcall"
-                      : "text";
-                emitDelta(mode, safe);
+                textBuffer += safe;
                 tagBuffer = tagBuffer.slice(lastAngle);
               }
+              // else: lastAngle === 0 → starts with '<', all in tagBuffer, nothing to flush
             }
           };
           checkTags();
@@ -426,8 +436,8 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
             const data = JSON.parse(dataStr);
 
             // Extract conversation ID
-            if (data.sessionId || data.sessionId) {
-              sessionMap.set(sessionKey, data.sessionId || data.sessionId);
+            if (data.sessionId) {
+              sessionMap.set(sessionKey, data.sessionId);
             }
 
             // Handle Doubao's event-based response format
@@ -492,7 +502,7 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
           }
         }
 
-        // Flush remaining tag buffer
+        // Flush any remaining text buffer and tag buffer at end of stream
         if (tagBuffer) {
           const mode =
             (currentMode as string) === "thinking"
@@ -500,8 +510,17 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
               : (currentMode as string) === "tool_call"
                 ? "toolcall"
                 : "text";
-          emitDelta(mode, tagBuffer);
+          if (mode === "text") {
+            // All remaining tagBuffer content is text
+            textBuffer += tagBuffer;
+          } else {
+            // thinking or tool_call mode: flush pending text, then emit the
+            // trailing tagBuffer content as the appropriate delta type
+            flushTextBuffer();
+            emitDelta(mode, tagBuffer);
+          }
         }
+        flushTextBuffer();
 
         console.log(
           `[DoubaoWebStream] Stream completed. Parts: ${contentParts.length}, Tools: ${accumulatedToolCalls.length}`,
