@@ -1,13 +1,13 @@
 #!/bin/bash
-# OpenClaw onboard 向导启动脚本
-# 支持官方 onboard 和 webauth (Web 模型授权)
-# 兼容 macOS / Linux (含 Deepin) / Windows (Git Bash / WSL)
+# OpenClaw onboard wizard launcher
+# Supports official onboard and webauth (Web model authorization)
+# Compatible with macOS / Linux / Windows (Git Bash / WSL)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="$SCRIPT_DIR/.openclaw-upstream-state"
 CONFIG_FILE="$STATE_DIR/openclaw.json"
 
-# ─── 环境检测 ────────────────────────────────────────────────
+# ─── Environment detection ────────────────────────────────────
 detect_os() {
   case "$OSTYPE" in
     darwin*)  echo "mac" ;;
@@ -27,7 +27,7 @@ detect_node() {
     echo "$(command -v node)"
     return
   fi
-  # Windows 常见路径
+  # Common Windows paths
   for p in \
     "$PROGRAMFILES/nodejs/node.exe" \
     "$LOCALAPPDATA/Programs/nodejs/node.exe"; do
@@ -40,23 +40,23 @@ OS=$(detect_os)
 NODE=$(detect_node)
 
 if [ -z "$NODE" ]; then
-  echo "✗ 未找到 node，请先安装 Node.js: https://nodejs.org"
+  echo "✗ Node not found. Please install Node.js: https://nodejs.org"
   exit 1
 fi
 
-echo "系统: $OS  |  Node: $($NODE --version 2>/dev/null)"
+echo "System: $OS  |  Node: $($NODE --version 2>/dev/null)"
 
-# ─── 初始化目录与配置 ─────────────────────────────────────────
+# ─── Initialize directories and config ────────────────────────
 mkdir -p "$STATE_DIR"
 
 EXAMPLE_CONFIG="$SCRIPT_DIR/.openclaw-state.example/openclaw.json"
 if [ ! -f "$CONFIG_FILE" ]; then
   if [ -f "$EXAMPLE_CONFIG" ]; then
     cp "$EXAMPLE_CONFIG" "$CONFIG_FILE"
-    echo "已从示例复制配置文件: $EXAMPLE_CONFIG -> $CONFIG_FILE"
+    echo "Copied example config: $EXAMPLE_CONFIG -> $CONFIG_FILE"
   else
     echo '{}' > "$CONFIG_FILE"
-    echo "已创建空配置文件: $CONFIG_FILE（建议从 .openclaw-state.example/openclaw.json 复制完整配置）"
+    echo "Created empty config: $CONFIG_FILE (consider copying from .openclaw-state.example/openclaw.json)"
   fi
 fi
 
@@ -64,53 +64,53 @@ export OPENCLAW_CONFIG_PATH="$CONFIG_FILE"
 export OPENCLAW_STATE_DIR="$STATE_DIR"
 export OPENCLAW_GATEWAY_PORT=3001
 
-echo "配置文件: $OPENCLAW_CONFIG_PATH"
-echo "状态目录: $OPENCLAW_STATE_DIR"
-echo "端口: $OPENCLAW_GATEWAY_PORT"
+echo "Config: $OPENCLAW_CONFIG_PATH"
+echo "State dir: $OPENCLAW_STATE_DIR"
+echo "Port: $OPENCLAW_GATEWAY_PORT"
 echo ""
 
-# ─── 帮助信息 ────────────────────────────────────────────────
+# ─── Help ─────────────────────────────────────────────────────
 show_help() {
-  echo "用法: $0 [命令] [选项]"
+  echo "Usage: $0 [command] [options]"
   echo ""
-  echo "命令:"
-  echo "  onboard         启动官方 onboarding 向导（配置端口、token、API key 等）"
-  echo "  webauth         启动 Web 模型授权向导（Claude、ChatGPT、DeepSeek 等）"
-  echo "  configure       交互式配置向导"
-  echo "  gateway         启动 Gateway 服务"
+  echo "Commands:"
+  echo "  onboard         Start the official onboarding wizard (port, token, API key, etc.)"
+  echo "  webauth         Start the Web model auth wizard (Claude, ChatGPT, DeepSeek, etc.)"
+  echo "  configure       Interactive configuration wizard"
+  echo "  gateway         Start the Gateway service"
   echo ""
-  echo "选项:"
-  echo "  -h, --help      显示帮助信息"
+  echo "Options:"
+  echo "  -h, --help      Show help"
   echo ""
-  echo "示例:"
-  echo "  $0                  # 显示帮助"
-  echo "  $0 onboard          # 官方 onboarding"
-  echo "  $0 webauth          # Web 模型授权"
-  echo "  $0 configure       # 交互式配置"
+  echo "Examples:"
+  echo "  $0                  # Show help"
+  echo "  $0 onboard          # Official onboarding"
+  echo "  $0 webauth          # Web model auth"
+  echo "  $0 configure       # Interactive config"
 }
 
-# ─── 运行 ────────────────────────────────────────────────────
+# ─── Run ──────────────────────────────────────────────────────
 case "${1:-}" in
   -h|--help)
     show_help
     ;;
   webauth)
-    echo "启动 Web 模型授权向导..."
+    echo "Starting Web model auth wizard..."
     echo ""
-    echo "⚠️  提示: 确保 Chrome 调试模式已启动 (./start-chrome-debug.sh)"
+    echo "⚠️  Note: Make sure Chrome debug mode is running (./start-chrome-debug.sh)"
     echo ""
     "$NODE" "$SCRIPT_DIR/openclaw.mjs" onboard webauth
     ;;
   onboard)
-    echo "启动官方 onboard 向导..."
+    echo "Starting official onboard wizard..."
     "$NODE" "$SCRIPT_DIR/openclaw.mjs" onboard "${@:2}"
     ;;
   configure)
-    echo "启动配置向导..."
+    echo "Starting configuration wizard..."
     "$NODE" "$SCRIPT_DIR/openclaw.mjs" configure "${@:2}"
     ;;
   gateway)
-    echo "启动 Gateway..."
+    echo "Starting Gateway..."
     "$NODE" "$SCRIPT_DIR/openclaw.mjs" gateway "${@:2}"
     ;;
   "")
