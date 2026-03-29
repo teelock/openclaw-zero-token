@@ -1,8 +1,8 @@
 /**
  * Web Model Auth Onboard
  *
- * 独立的 Web 模型授权模块
- * 支持同时授权多个 Web 模型
+ * Standalone web model authorization module.
+ * Supports authorizing multiple web models at once.
  */
 
 import fs from "node:fs/promises";
@@ -30,7 +30,7 @@ import { loginQwenWeb } from "../zero-token/providers/qwen-web-auth.js";
 import { loginXiaomiMimoWeb } from "../zero-token/providers/xiaomimo-web-auth.js";
 import { applyAgentDefaultModelPrimary } from "./onboard-auth.config-shared.js";
 
-// Web 模型凭证保存助手函数
+// Save web model credentials to auth store
 async function saveWebModelCredentials(providerId: string, credentials: unknown): Promise<void> {
   const store = ensureAuthProfileStore();
   const profileId = `${providerId}:default`;
@@ -42,19 +42,19 @@ async function saveWebModelCredentials(providerId: string, credentials: unknown)
   };
 
   saveAuthProfileStore(store);
-  console.log(`  > 已保存凭证到 auth-profiles.json`);
+  console.log(`  > Credentials saved to auth-profiles.json`);
 }
 
-// Web 模型白名单更新函数
+// Update model whitelist in config
 async function addModelToWhitelist(providerId: string, modelIds: string[]): Promise<void> {
   const config = loadConfig();
 
-  // 初始化 models 字段（如果不存在）
+  // Initialize models field if missing
   if (!config.agents.defaults.models) {
     config.agents.defaults.models = {};
   }
 
-  // 模型别名映射
+  // Model alias mapping
   const modelAliases: Record<string, Record<string, string>> = {
     "claude-web": {
       "claude-sonnet-4-6": "Claude Web",
@@ -99,7 +99,7 @@ async function addModelToWhitelist(providerId: string, modelIds: string[]): Prom
     },
   };
 
-  // 添加模型到白名单
+  // Add models to whitelist
   for (const modelId of modelIds) {
     const modelKey = `${providerId}/${modelId}`;
     const alias = modelAliases[providerId]?.[modelId] || modelId;
@@ -107,13 +107,13 @@ async function addModelToWhitelist(providerId: string, modelIds: string[]): Prom
   }
 
   await writeConfigFile(config);
-  console.log(`  > 已更新模型白名单到 openclaw.json`);
+  console.log(`  > Model whitelist updated in openclaw.json`);
 }
 
 /**
- * 将 agent models.json 中的 providers 同步到 openclaw.json。
- * 解决首次运行时报错的问题：openclaw.json 初始 models.providers 为空，
- * 导致 resolveConfiguredModelRef 默认回退到 anthropic，且 model catalog 无可用 provider。
+ * Sync providers from agent models.json into openclaw.json.
+ * Prevents first-run errors when openclaw.json models.providers is empty,
+ * which causes resolveConfiguredModelRef to fall back to anthropic.
  */
 async function syncModelsProvidersToConfig(): Promise<void> {
   const config = loadConfig();
@@ -155,7 +155,7 @@ async function syncModelsProvidersToConfig(): Promise<void> {
     agents: config.agents,
   };
 
-  // 若尚未设置主模型，使用首个 web provider 的首个模型，避免回退到 anthropic
+  // If no primary model set, use first web provider's first model to avoid anthropic fallback
   if (!resolveAgentModelPrimaryValue(config.agents?.defaults?.model)) {
     const firstEntry = Object.entries(providers).find(
       ([, p]) =>
@@ -169,16 +169,16 @@ async function syncModelsProvidersToConfig(): Promise<void> {
       const firstModel = (provider as { models: { id: string }[] }).models[0];
       if (firstModel?.id) {
         nextConfig = applyAgentDefaultModelPrimary(nextConfig, `${providerId}/${firstModel.id}`);
-        console.log(`  > 已设置默认模型: ${providerId}/${firstModel.id}`);
+        console.log(`  > Default model set: ${providerId}/${firstModel.id}`);
       }
     }
   }
 
   await writeConfigFile(nextConfig);
-  console.log(`  > 已同步 models.providers 到 openclaw.json`);
+  console.log(`  > Synced models.providers to openclaw.json`);
 }
 
-// Web 模型定义
+// Web model provider definitions
 interface WebModelProvider {
   id: string;
   name: string;
@@ -194,48 +194,47 @@ const WEB_MODEL_PROVIDERS: WebModelProvider[] = [
   { id: "deepseek-web", name: "DeepSeek Web", loginFn: loginDeepseekWeb },
   { id: "doubao-web", name: "Doubao Web", loginFn: loginDoubaoWeb },
   { id: "gemini-web", name: "Gemini Web", loginFn: loginGeminiWeb },
-  { id: "glm-web", name: "GLM Web (国内)", loginFn: loginZWeb },
-  { id: "glm-intl-web", name: "GLM Web (国际)", loginFn: loginGlmIntlWeb },
+  { id: "glm-web", name: "GLM Web (China)", loginFn: loginZWeb },
+  { id: "glm-intl-web", name: "GLM Web (International)", loginFn: loginGlmIntlWeb },
   { id: "grok-web", name: "Grok Web", loginFn: loginGrokWeb },
   { id: "kimi-web", name: "Kimi Web", loginFn: loginKimiWeb },
   { id: "perplexity-web", name: "Perplexity Web", loginFn: loginPerplexityWeb },
-  { id: "qwen-web", name: "Qwen Web (阿里国内)", loginFn: loginQwenWeb },
-  { id: "qwen-cn-web", name: "Qwen Web (阿里国际)", loginFn: loginQwenCNWeb },
+  { id: "qwen-web", name: "Qwen Web International (chat.qwen.ai)", loginFn: loginQwenWeb },
+  { id: "qwen-cn-web", name: "Qwen Web China (qianwen.com)", loginFn: loginQwenCNWeb },
   { id: "xiaomimo-web", name: "Xiaomi Mimo Web", loginFn: loginXiaomiMimoWeb },
 ];
 
 export async function runOnboardWebAuth(): Promise<void> {
   console.log("\n🦞 Web Model Auth Onboard\n");
 
-  // 显示已授权的模型
+  // Show already-authorized models
   const store = ensureAuthProfileStore();
   const authorizedModels = Object.keys(store.profiles).filter(
     (key) => key.endsWith("-web") || key.includes("-web:"),
   );
 
   if (authorizedModels.length > 0) {
-    console.log("已授权的 Web 模型:");
+    console.log("Authorized Web models:");
     for (const model of authorizedModels) {
       console.log(`  - ${model}`);
     }
     console.log("");
   }
 
-  // 选择要授权的模型
-  console.log("请选择要授权的 Web 模型 (多个用逗号分隔):\n");
+  // Select models to authorize
+  console.log("Select Web models to authorize (comma-separated):\n");
 
   for (let i = 0; i < WEB_MODEL_PROVIDERS.length; i++) {
     const provider = WEB_MODEL_PROVIDERS[i];
     const isAuthorized = authorizedModels.some((m) => m.startsWith(provider.id));
-    const status = isAuthorized ? " ✓ 已授权" : "";
+    const status = isAuthorized ? " ✓ Authorized" : "";
     console.log(`  ${i + 1}. ${provider.name}${status}`);
   }
 
-  console.log("\n  0. 退出");
-  console.log("  a. 授权所有模型");
+  console.log("\n  0. Exit");
+  console.log("  a. Authorize all models");
   console.log("");
 
-  // 提示用户输入
   const readline = await import("readline");
   const rl = readline.createInterface({
     input: process.stdin,
@@ -245,16 +244,15 @@ export async function runOnboardWebAuth(): Promise<void> {
   const question = (prompt: string): Promise<string> =>
     new Promise((resolve) => rl.question(prompt, resolve));
 
-  const input = await question("请输入选项: ");
+  const input = await question("Enter selection: ");
 
   rl.close();
 
   if (input.trim() === "0" || input.trim() === "") {
-    console.log("已退出。");
+    console.log("Exited.");
     return;
   }
 
-  // 解析选择的模型
   let selectedProviders: WebModelProvider[] = [];
 
   if (input.trim() === "a") {
@@ -267,13 +265,13 @@ export async function runOnboardWebAuth(): Promise<void> {
   }
 
   if (selectedProviders.length === 0) {
-    console.log("未选择任何模型。");
+    console.log("No models selected.");
     return;
   }
 
-  console.log(`\n将授权以下模型: ${selectedProviders.map((p) => p.name).join(", ")}`);
+  console.log(`\nAuthorizing: ${selectedProviders.map((p) => p.name).join(", ")}`);
 
-  // Web 模型对应的模型 ID 列表
+  // Model IDs for each web provider
   const providerModelIds: Record<string, string[]> = {
     "claude-web": ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-6"],
     "chatgpt-web": ["gpt-4"],
@@ -290,45 +288,41 @@ export async function runOnboardWebAuth(): Promise<void> {
     "xiaomimo-web": ["xiaomimo-chat"],
   };
 
-  // 逐个授权
   for (const provider of selectedProviders) {
-    console.log(`\n正在授权 ${provider.name}...`);
+    console.log(`\nAuthorizing ${provider.name}...`);
     try {
       const result = await provider.loginFn({
         onProgress: (msg) => console.log(`  > ${msg}`),
         openUrl: async (url) => {
-          console.log(`  > 打开浏览器: ${url}`);
+          console.log(`  > Opening browser: ${url}`);
           return true;
         },
       });
 
-      // 如果返回了凭证，保存到 auth-profiles.json
       if (result && typeof result === "object") {
         await saveWebModelCredentials(provider.id, result);
       }
 
-      // 添加模型到白名单
       const modelIds = providerModelIds[provider.id] || [];
       if (modelIds.length > 0) {
         await addModelToWhitelist(provider.id, modelIds);
       }
 
-      console.log(`  ✓ ${provider.name} 授权成功!`);
+      console.log(`  ✓ ${provider.name} authorized!`);
     } catch (error) {
-      console.error(`  ✗ ${provider.name} 授权失败:`, error);
+      console.error(`  ✗ ${provider.name} authorization failed:`, error);
     }
   }
 
-  // 将 agent models.json 的 providers 同步到 openclaw.json，避免首次运行时报错
   if (selectedProviders.length > 0) {
     await syncModelsProvidersToConfig();
   }
 
-  console.log("\n授权完成!");
-  console.log("你可以在 Web UI 中使用这些模型了。");
+  console.log("\nAuthorization complete!");
+  console.log("You can now use these models in the Web UI.");
 }
 
-// 注册为 CLI 命令
+// Register as CLI command
 export const ONBOARD_WEB_AUTH_STEP: WizardStep = {
   title: "Web Model Auth",
   description: "Authorize Web AI models (Claude, ChatGPT, DeepSeek, etc.)",
