@@ -78,27 +78,9 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
           let systemPromptContent = systemPrompt;
 
           if (tools.length > 0) {
-            let toolPrompt = "\n## Tool Use Instructions\n";
-            toolPrompt +=
-              "You are equipped with specialized tools to perform actions or retrieve information. " +
-              'To use a tool, output a specific XML tag: <tool_call id="unique_id" name="tool_name">{"arg": "value"}</tool_call>. ' +
-              "Rules for tool use:\n" +
-              "1. ALWAYS think before calling a tool. Explain your reasoning inside <think> tags.\n" +
-              "2. The 'id' attribute should be a unique 8-character string for each call.\n" +
-              "3. Output the tool call tag ONLY inside a <final> section if you are in reasoning mode.\n" +
-              "4. Wait for the tool result before proceeding with further analysis.\n\n" +
-              "### Special Instructions for Browser Tool\n" +
-              "- **Profile 'openclaw' (Independent/Recommended)**: Opens a SEPARATE independent browser window. Use this for consistent, isolated sessions. Highly recommended for complex automation.\n" +
-              "- Profile 'chrome' (Shared): Uses your existing Chrome tabs (requires extension). Use this if you need to access personal logins or already open tabs.\n" +
-              "- **CONSISTENCY RULE**: Once you have started using a profile (or if you are switched to 'openclaw' due to connection errors), STAY with that profile for the remainder of the session. Do NOT switch back and forth as it will open redundant browser instances.\n\n" +
-              "### Automation Policy\n" +
-              "- DO NOT use the 'exec' tool to install secondary automation libraries like Playwright, Selenium, or Puppeteer if the 'browser' tool fails.\n" +
-              "- Instead, inform the user about the connection issue or try the alternative browser profile ('openclaw').\n" +
-              "- Installing automation tools via 'exec' is slow and redundant; the 'browser' tool is the primary way to interact with web content.\n\n" +
-              "### Available Tools\n";
+            let toolPrompt = "\n## Available Tools\n";
             for (const tool of tools) {
-              toolPrompt += `#### ${tool.name}\n${tool.description}\n`;
-              toolPrompt += `Parameters: ${JSON.stringify(tool.parameters)}\n\n`;
+              toolPrompt += `- ${tool.name}: ${tool.description}\n`;
             }
             systemPromptContent += toolPrompt;
           }

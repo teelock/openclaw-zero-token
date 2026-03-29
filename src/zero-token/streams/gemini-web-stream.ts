@@ -67,22 +67,9 @@ function buildXmlToolPromptSection(tools: unknown[]): string {
   if (!tools || tools.length === 0) {
     return "";
   }
-  let section = "\n## Tool Use Instructions\n";
-  section +=
-    "You are equipped with specialized tools to perform actions or retrieve information. " +
-    'To use a tool, output a specific XML tag: <tool_call id="unique_id" name="tool_name">{"arg": "value"}</tool_call>. ' +
-    "Rules for tool use:\n" +
-    "1. ALWAYS think before calling a tool. Explain your reasoning inside <think> tags.\n" +
-    "2. The 'id' attribute should be a unique 8-character string for each call.\n" +
-    "3. Wait for the tool result before proceeding with further analysis.\n\n" +
-    "### Automation Policy\n" +
-    "- DO NOT use the 'exec' tool to install secondary automation libraries like Playwright, Selenium, or Puppeteer if the 'browser' tool fails.\n" +
-    "- Instead, inform the user about the connection issue or try the alternative browser profile.\n\n" +
-    "### Available Tools\n";
-
-  for (const tool of tools as Array<{ name?: string; description?: string; parameters?: unknown }>) {
-    section += `#### ${tool.name ?? "unknown"}\n${tool.description ?? ""}\n`;
-    section += `Parameters: ${JSON.stringify(tool.parameters ?? {})}\n\n`;
+  let section = "\n## Available Tools\n";
+  for (const tool of tools as Array<{ name?: string; description?: string }>) {
+    section += `- ${tool.name ?? "unknown"}: ${tool.description ?? ""}\n`;
   }
   return section;
 }

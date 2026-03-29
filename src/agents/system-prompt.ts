@@ -13,8 +13,9 @@ import { sanitizeForPromptLiteral } from "./sanitize-for-prompt.js";
  * - "full": All sections (default, for main agent)
  * - "minimal": Reduced sections (Tooling, Workspace, Runtime) - used for subagents
  * - "none": Just basic identity line, no sections
+ * - "web": Stripped-down prompt for zero-token web providers (no tool exec guidance)
  */
-export type PromptMode = "full" | "minimal" | "none";
+export type PromptMode = "full" | "minimal" | "none" | "web";
 type OwnerIdDisplay = "raw" | "hash";
 
 function buildSkillsSection(params: { skillsPrompt?: string; readToolName: string }) {
@@ -378,6 +379,7 @@ export function buildAgentSystemPrompt(params: {
   const messageChannelOptions = listDeliverableMessageChannels().join("|");
   const promptMode = params.promptMode ?? "full";
   const isMinimal = promptMode === "minimal" || promptMode === "none";
+  const isWeb = promptMode === "web";
   const sandboxContainerWorkspace = params.sandboxInfo?.containerWorkspaceDir?.trim();
   const sanitizedWorkspaceDir = sanitizeForPromptLiteral(params.workspaceDir);
   const sanitizedSandboxContainerWorkspace = sandboxContainerWorkspace
@@ -417,6 +419,35 @@ export function buildAgentSystemPrompt(params: {
   // For "none" mode, return just the basic identity line
   if (promptMode === "none") {
     return "You are a personal assistant running inside OpenClaw.";
+  }
+
+  // For "web" mode (zero-token web providers), return a stripped-down prompt
+  if (isWeb) {
+    const lines: string[] = [
+      "You are a personal assistant running inside OpenClaw.",
+      "",
+      "## Safety",
+      "You have no independent goals: do not pursue self-preservation, replication, or power-seeking.",
+      "",
+      ...(params.ownerNumbers && params.ownerNumbers.length > 0
+        ? [
+            "## Authorized Senders",
+            `Authorized senders: ${params.ownerNumbers.join(", ")}.`,
+            "",
+          ]
+        : []),
+      ...(params.userTimezone ? ["## Current Date & Time", `Time zone: ${params.userTimezone}`, ""] : []),
+      "## Runtime",
+      buildRuntimeLine(
+        params.runtimeInfo,
+        undefined,
+        [],
+        params.defaultThinkLevel,
+      ),
+      `Reasoning: ${params.reasoningLevel ?? "off"} (hidden unless on/stream).`,
+      "",
+    ];
+    return lines.filter(Boolean).join("\n");
   }
 
   const lines = [

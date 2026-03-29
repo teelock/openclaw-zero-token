@@ -37,13 +37,9 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
 
         let toolPrompt = "";
         if (tools.length > 0) {
-          toolPrompt = `
-
-### Available Tools
-`;
+          toolPrompt = "\n## Available Tools\n";
           for (const tool of tools) {
-            toolPrompt += `#### ${tool.name}\n${tool.description}\n`;
-            toolPrompt += `Parameters: ${JSON.stringify(tool.parameters)}\n\n`;
+            toolPrompt += `- ${tool.name}: ${tool.description}\n`;
           }
         }
 
