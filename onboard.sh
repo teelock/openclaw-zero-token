@@ -1,13 +1,13 @@
 #!/bin/bash
 # OpenClaw onboard wizard launcher
-# Supports official onboard and webauth (Web model authorization)
-# Compatible with macOS / Linux / Windows (Git Bash / WSL)
+# Supports official onboard and webauth (web model authorization)
+# Compatible with macOS / Linux (incl. Deepin) / Windows (Git Bash / WSL)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STATE_DIR="$SCRIPT_DIR/.openclaw-upstream-state"
 CONFIG_FILE="$STATE_DIR/openclaw.json"
 
-# ─── Environment detection ────────────────────────────────────
+# ─── Environment Detection ───────────────────────────────────
 detect_os() {
   case "$OSTYPE" in
     darwin*)  echo "mac" ;;
@@ -40,13 +40,13 @@ OS=$(detect_os)
 NODE=$(detect_node)
 
 if [ -z "$NODE" ]; then
-  echo "✗ Node not found. Please install Node.js: https://nodejs.org"
+  echo "✗ Node not found, please install Node.js: https://nodejs.org"
   exit 1
 fi
 
 echo "System: $OS  |  Node: $($NODE --version 2>/dev/null)"
 
-# ─── Initialize directories and config ────────────────────────
+# ─── Initialize Directory and Config ─────────────────────────
 mkdir -p "$STATE_DIR"
 
 EXAMPLE_CONFIG="$SCRIPT_DIR/.openclaw-state.example/openclaw.json"
@@ -56,7 +56,7 @@ if [ ! -f "$CONFIG_FILE" ]; then
     echo "Copied example config: $EXAMPLE_CONFIG -> $CONFIG_FILE"
   else
     echo '{}' > "$CONFIG_FILE"
-    echo "Created empty config: $CONFIG_FILE (consider copying from .openclaw-state.example/openclaw.json)"
+    echo "Created empty config: $CONFIG_FILE (recommend copying from .openclaw-state.example/openclaw.json)"
   fi
 fi
 
@@ -74,10 +74,10 @@ show_help() {
   echo "Usage: $0 [command] [options]"
   echo ""
   echo "Commands:"
-  echo "  onboard         Start the official onboarding wizard (port, token, API key, etc.)"
-  echo "  webauth         Start the Web model auth wizard (Claude, ChatGPT, DeepSeek, etc.)"
+  echo "  onboard         Launch official onboarding wizard (port, token, API key, etc.)"
+  echo "  webauth         Launch web model authorization wizard (Claude, ChatGPT, DeepSeek, etc.)"
   echo "  configure       Interactive configuration wizard"
-  echo "  gateway         Start the Gateway service"
+  echo "  gateway         Start Gateway service"
   echo ""
   echo "Options:"
   echo "  -h, --help      Show help"
@@ -85,8 +85,8 @@ show_help() {
   echo "Examples:"
   echo "  $0                  # Show help"
   echo "  $0 onboard          # Official onboarding"
-  echo "  $0 webauth          # Web model auth"
-  echo "  $0 configure       # Interactive config"
+  echo "  $0 webauth          # Web model authorization"
+  echo "  $0 configure       # Interactive configuration"
 }
 
 # ─── Run ──────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ case "${1:-}" in
     show_help
     ;;
   webauth)
-    echo "Starting Web model auth wizard..."
+    echo "Starting web model authorization wizard..."
     echo ""
     echo "⚠️  Note: Make sure Chrome debug mode is running (./start-chrome-debug.sh)"
     echo ""
