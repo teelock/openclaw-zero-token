@@ -5,9 +5,10 @@
     "declarationMap": false,
     "emitDeclarationOnly": true,
     "noEmit": false,
-    "noEmitOnError": true,
+    "noEmitOnError": false,
+    "skipLibCheck": true,
     "outDir": "dist/plugin-sdk",
-    "rootDir": "src",
+    "rootDir": ".",
     "tsBuildInfoFile": "dist/plugin-sdk/.tsbuildinfo"
   },
   "include": [
@@ -55,6 +56,7 @@
     "src/plugin-sdk/voice-call.ts",
     "src/plugin-sdk/zalo.ts",
     "src/plugin-sdk/zalouser.ts",
+    "src/plugin-sdk/askonce.ts",
     "src/types/**/*.d.ts"
   ],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts"]

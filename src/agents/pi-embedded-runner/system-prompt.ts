@@ -51,10 +51,9 @@ export function buildEmbeddedSystemPrompt(params: {
   userTime?: string;
   userTimeFormat?: ResolvedTimeFormat;
   contextFiles?: EmbeddedContextFile[];
-  bootstrapTruncationWarningLines?: string[];
   memoryCitationsMode?: MemoryCitationsMode;
 }): string {
-  const base = buildAgentSystemPrompt({
+  return buildAgentSystemPrompt({
     workspaceDir: params.workspaceDir,
     defaultThinkLevel: params.defaultThinkLevel,
     reasoningLevel: params.reasoningLevel,
@@ -83,11 +82,6 @@ export function buildEmbeddedSystemPrompt(params: {
     contextFiles: params.contextFiles,
     memoryCitationsMode: params.memoryCitationsMode,
   });
-  const lines = params.bootstrapTruncationWarningLines?.filter((l) => l.trim().length > 0) ?? [];
-  if (lines.length === 0) {
-    return base;
-  }
-  return `${lines.join("\n")}\n\n${base}`;
 }
 
 export function createSystemPromptOverride(
