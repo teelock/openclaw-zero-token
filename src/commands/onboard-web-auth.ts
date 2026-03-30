@@ -133,6 +133,13 @@ async function syncModelsProvidersToConfig(): Promise<void> {
     return;
   }
 
+  // Filter out web providers — they are handled by zero-token bridge, not upstream config
+  const webProviderIds = new Set(WEB_MODEL_PROVIDERS.map((p) => p.id));
+  const filtered = Object.fromEntries(
+    Object.entries(providers).filter(([k]) => !webProviderIds.has(k)),
+  );
+  providers = filtered;
+
   if (Object.keys(providers).length === 0) {
     return;
   }
