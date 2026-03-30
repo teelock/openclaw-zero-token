@@ -1,47 +1,47 @@
 #!/bin/bash
-# setup-scrapling.sh - 安装 Scrapling MCP 集成
+# setup-scrapling.sh - Install Scrapling MCP integration
 #
-# 用法: ./scripts/setup-scrapling.sh
+# Usage: ./scripts/setup-scrapling.sh
 
 set -e
 
-echo "=== Scrapling MCP 安装脚本 ==="
+echo "=== Scrapling MCP Setup Script ==="
 echo
 
-# 检查 Python
+# Check Python
 if ! command -v python3 &> /dev/null; then
-    echo "错误: 需要 Python 3"
+    echo "Error: Python 3 is required"
     exit 1
 fi
 
-echo "[1/5] 安装 Scrapling 及依赖..."
+echo "[1/5] Installing Scrapling and dependencies..."
 pip3 install scrapling mcp curl_cffi browserforge msgspec patchright markdownify --quiet
 
-echo "[2/5] 检查 acpx 插件依赖..."
+echo "[2/5] Checking acpx plugin dependencies..."
 if [ -d "extensions/acpx" ]; then
     cd extensions/acpx
     pnpm install --silent
     cd ../..
-    echo "  - acpx 依赖已安装"
+    echo "  - acpx dependencies installed"
 else
-    echo "  警告: 未找到 extensions/acpx 目录，跳过"
+    echo "  Warning: extensions/acpx directory not found, skipping"
 fi
 
-echo "[3/5] 配置 OpenClaw MCP Server..."
+echo "[3/5] Configuring OpenClaw MCP Server..."
 
-# 配置文件路径
+# Config file path
 CONFIG_FILE="$HOME/.openclaw/openclaw.json"
 
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo "错误: 未找到 OpenClaw 配置文件 ($CONFIG_FILE)"
+    echo "Error: OpenClaw config file not found ($CONFIG_FILE)"
     exit 1
 fi
 
-# 检查是否已配置 scrapling
+# Check if scrapling is already configured
 if grep -q '"scrapling"' "$CONFIG_FILE" 2>/dev/null; then
-    echo "  - Scrapling MCP 已配置"
+    echo "  - Scrapling MCP already configured"
 else
-    # 使用 Python 添加配置
+    # Use Python to add config
     python3 << 'PYTHON_SCRIPT'
 import json
 import os
@@ -51,13 +51,13 @@ config_file = os.path.expanduser("~/.openclaw/openclaw.json")
 with open(config_file, "r") as f:
     config = json.load(f)
 
-# 确保 plugins.entries 存在
+# Ensure plugins.entries exists
 if "plugins" not in config:
     config["plugins"] = {"entries": {}}
 if "entries" not in config["plugins"]:
     config["plugins"]["entries"] = {}
 
-# 添加 acpx 配置
+# Add acpx config
 config["plugins"]["entries"]["acpx"] = {
     "enabled": True,
     "config": {
@@ -70,7 +70,7 @@ config["plugins"]["entries"]["acpx"] = {
     }
 }
 
-# 确保 browser.profiles.chrome.color 存在
+# Ensure browser.profiles.chrome.color exists
 if "browser" not in config:
     config["browser"] = {"profiles": {"chrome": {}}}
 elif "profiles" not in config["browser"]:
@@ -84,30 +84,30 @@ if "color" not in config["browser"]["profiles"]["chrome"]:
 with open(config_file, "w") as f:
     json.dump(config, f, indent=2)
 
-print("  - 配置已更新")
+print("  - Config updated")
 PYTHON_SCRIPT
 fi
 
-echo "[4/5] 验证安装..."
+echo "[4/5] Verifying installation..."
 if command -v scrapling &> /dev/null; then
-    echo "  - scrapling 命令可用"
+    echo "  - scrapling command available"
 else
-    echo "  错误: scrapling 命令未找到"
+    echo "  Error: scrapling command not found"
     exit 1
 fi
 
-echo "[5/5] 完成!"
+echo "[5/5] Done!"
 echo
-echo "=== 下一步 ==="
-echo "1. 重启 OpenClaw Gateway:"
+echo "=== Next Steps ==="
+echo "1. Restart OpenClaw Gateway:"
 echo "   pnpm openclaw gateway run --bind loopback --port 18789 --force"
 echo
-echo "2. 在 OpenClaw 中使用自然语言调用:"
-echo '   "使用 scrapling 获取 https://example.com"'
-echo '   "用 scrapling 抓取 https://x.com/..."'
+echo "2. Use natural language in OpenClaw to invoke:"
+echo '   "Use scrapling to fetch https://example.com"'
+echo '   "Scrape https://x.com/... with scrapling"'
 echo
-echo "=== 可用工具 ==="
-echo "  - get: 基本 HTTP 请求"
-echo "  - fetch: Playwright 浏览器抓取"
-echo "  - stealthy_fetch: Cloudflare 绕过抓取"
+echo "=== Available Tools ==="
+echo "  - get: Basic HTTP request"
+echo "  - fetch: Playwright browser scraping"
+echo "  - stealthy_fetch: Cloudflare bypass scraping"
 echo
