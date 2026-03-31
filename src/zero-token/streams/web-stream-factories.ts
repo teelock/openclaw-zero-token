@@ -44,3 +44,25 @@ export function getWebStreamFactory(api: string): ((cookie: string) => StreamFn)
 export function listWebStreamApiIds(): WebStreamApiId[] {
   return Object.keys(WEB_STREAM_FACTORIES) as WebStreamApiId[];
 }
+
+export function isWebStreamApiId(api: string): api is WebStreamApiId {
+  return api in WEB_STREAM_FACTORIES;
+}
+
+/**
+ * Get a web stream factory wrapped with automatic auth retry.
+ * On 401/403, silently refreshes the browser session and retries once.
+ *
+ * Returns an async factory — caller must `await` it to get the `(cookie) => StreamFn`.
+ * Uses dynamic import to avoid pulling in playwright/CDP at module load time.
+ */
+export async function getWebStreamFactoryWithRetry(
+  api: string,
+  configReloader: () => string | undefined,
+): Promise<((cookie: string) => StreamFn) | undefined> {
+  if (!isWebStreamApiId(api)) {
+    return undefined;
+  }
+  const { createWebStreamFnWithRetry } = await import("./web-stream-retry.js");
+  return (cookie: string) => createWebStreamFnWithRetry(api, cookie, configReloader);
+}

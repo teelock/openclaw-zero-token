@@ -4,6 +4,8 @@
  */
 export {
   getWebStreamFactory,
+  getWebStreamFactoryWithRetry,
+  isWebStreamApiId,
   listWebStreamApiIds,
   type WebStreamApiId,
 } from "../zero-token/streams/web-stream-factories.js";
