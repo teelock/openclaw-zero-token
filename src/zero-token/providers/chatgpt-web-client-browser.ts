@@ -8,7 +8,10 @@ import {
   getChromeWebSocketUrl,
   type RunningChrome,
 } from "../../../extensions/browser/src/browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
+import {
+  resolveBrowserConfig,
+  resolveProfile,
+} from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 import type { ModelDefinitionConfig } from "../../config/types.models.js";
 
@@ -219,13 +222,13 @@ export class ChatGPTWebClientBrowser {
       }
 
       const sendSelectors = [
-        "#composer-submit-button",
-        'button[data-testid="send-button"]',
-        "button.btn.relative.btn-primary",
-        "button.mb-1.mr-1.flex.h-8.w-8.items-center.justify-center.rounded-full.bg-black",
-        'button[aria-label*="Send"]',
-        'button[type="submit"]',
+        'button[data-testid="send-message-button"]',
+        'button[aria-label*="Send"][disabled="false"]',
+        'button[aria-label*="发送"]',
+        'button[aria-label*="Submit"]',
+        "button[type='submit']",
         "form button[type=submit]",
+        "textarea+button",
       ];
       let sendBtn: HTMLElement | null = null;
       for (const sel of sendSelectors) {
@@ -235,7 +238,29 @@ export class ChatGPTWebClientBrowser {
         }
       }
       if (!sendBtn) {
-        return { ok: false, error: "找不到发送按钮" };
+        // Fallback: submit via form or Enter key
+        const form = inputEl.closest("form");
+        if (form) {
+          const formBtn = form.querySelector("button[type=submit]");
+          if (formBtn) {
+            formBtn.click();
+            return { ok: true, via: "form-submit-button" };
+          }
+          form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+          return { ok: true, via: "form-submit" };
+        }
+        // Last resort: Enter key
+        inputEl.dispatchEvent(
+          new KeyboardEvent("keydown", {
+            key: "Enter",
+            code: "Enter",
+            keyCode: 13,
+            which: 13,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+        return { ok: true, via: "enter-key" };
       }
       sendBtn.click();
       return { ok: true };
@@ -390,6 +415,8 @@ export class ChatGPTWebClientBrowser {
         }
 
         async function tryFetchWithSentinel(accessToken: string | undefined, deviceId: string) {
+          // Warm up sentinel endpoints before the real request
+          await warmupSentinel(accessToken, deviceId);
           const scripts = Array.from(document.scripts);
           const assetSrc = scripts
             .map((s) => s.src)
@@ -492,14 +519,14 @@ export class ChatGPTWebClientBrowser {
           signal: params.signal,
         });
       }
-      const sentinelHint = responseData.sentinelError
-        ? ` Sentinel: ${responseData.sentinelError}`
-        : " 若持续 403，需在 chatgpt.com 控制台检查 oaistatic 脚本导出名是否变更。";
       if (responseData.status === 401) {
         throw new Error("ChatGPT 认证失败，请重新运行 ./onboard.sh 刷新 session。");
       }
+      const sentinelHint = responseData.sentinelError
+        ? ` Sentinel: ${responseData.sentinelError}`
+        : " 若持续 403，需在 chatgpt.com 控制台检查 oaistatic 脚本导出名是否变更。";
       throw new Error(
-        `ChatGPT API 错误 ${responseData.status}: ${responseData.error?.slice(0, 200) || ""}`,
+        `ChatGPT API 错误 ${responseData.status}: ${responseData.error?.slice(0, 200) || ""}${sentinelHint}`,
       );
     }
 

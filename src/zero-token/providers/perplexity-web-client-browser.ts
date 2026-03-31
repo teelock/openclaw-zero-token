@@ -1,7 +1,13 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
-import { getChromeWebSocketUrl, launchOpenClawChrome } from "../../../extensions/browser/src/browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
+import {
+  getChromeWebSocketUrl,
+  launchOpenClawChrome,
+} from "../../../extensions/browser/src/browser/chrome.js";
+import {
+  resolveBrowserConfig,
+  resolveProfile,
+} from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 import type { ModelDefinitionConfig } from "../../config/types.models.js";
 
@@ -163,21 +169,9 @@ export class PerplexityWebClientBrowser {
           convId = m?.[1] ?? undefined;
         }
 
-        // Build query params
-        const paramsObj: Record<string, string> = {
-          q: message,
-          source: "search",
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          locale: navigator.language || "en-US",
-        };
-        if (convId) {
-          paramsObj["session"] = convId;
-        }
-        const queryString = new URLSearchParams(paramsObj).toString();
-
         // Call the Perplexity frontend API endpoint
-        // The web app uses SSE for streaming responses
-        const response = await fetch(`https://www.perplexity.ai/search?${queryString}`, {
+        // Note: message goes in body only — query string was causing 414 on long prompts
+        const response = await fetch("https://www.perplexity.ai/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -222,24 +216,21 @@ export class PerplexityWebClientBrowser {
     );
 
     const timeoutMs = 120000;
-    const result = await Promise.race([
-      evalResult,
-      new Promise<never>((_, reject) =>
-        setTimeout(
-          () =>
-            reject(
-              new Error(
-                `Perplexity request timed out (${timeoutMs / 1000}s). Please ensure perplexity.ai is logged in.`,
-              ),
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Perplexity request timed out (${timeoutMs / 1000}s). Please ensure perplexity.ai is logged in.`,
             ),
-          timeoutMs,
-        ),
-      ),
-    ]).catch((err) => {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.error(`[Perplexity Web Browser] Error:`, msg);
-      throw err;
+          ),
+        timeoutMs,
+      );
     });
+    const result = await Promise.race([evalResult, timeoutPromise]).finally(() =>
+      clearTimeout(timeoutId),
+    );
 
     const apiResult = result as { chunks: number[][]; conversationId?: string };
     this.lastConversationId = apiResult.conversationId ?? undefined;

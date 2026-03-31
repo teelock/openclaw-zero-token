@@ -1,7 +1,13 @@
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright-core";
 import { getHeadersWithAuth } from "../../../extensions/browser/src/browser/cdp.helpers.js";
-import { getChromeWebSocketUrl, launchOpenClawChrome } from "../../../extensions/browser/src/browser/chrome.js";
-import { resolveBrowserConfig, resolveProfile } from "../../../extensions/browser/src/browser/config.js";
+import {
+  getChromeWebSocketUrl,
+  launchOpenClawChrome,
+} from "../../../extensions/browser/src/browser/chrome.js";
+import {
+  resolveBrowserConfig,
+  resolveProfile,
+} from "../../../extensions/browser/src/browser/config.js";
 import { loadConfig } from "../../config/io.js";
 
 export interface GeminiWebClientOptions {
@@ -123,14 +129,13 @@ export class GeminiWebClientBrowser {
     const sent = await this.page.evaluate((msg: string) => {
       // 输入框：优先匹配 Gemini 占位符，再通用选择器（参考 Scrapling 多策略）
       const inputSelectors = [
-        '[placeholder*="Gemini"]',
-        '[placeholder*="问问"]',
-        '[data-placeholder*="Gemini"]',
-        '[contenteditable="true"]',
-        'div[role="textbox"]',
+        'textarea[placeholder*="Gemini"]',
+        'textarea[placeholder*="问问"]',
+        'textarea[aria-label*="prompt"]',
+        'textarea[aria-label*="message"]',
         "textarea",
-        '[aria-label*="message"]',
-        '[aria-label*="prompt"]',
+        'div[role="textbox"]',
+        '[contenteditable="true"][aria-label*="message"]',
       ];
       let inputEl: HTMLElement | null = null;
       for (const sel of inputSelectors) {
@@ -155,17 +160,11 @@ export class GeminiWebClientBrowser {
       }
 
       const sendSelectors = [
-        'button[aria-label*="Send"]',
-        'button[aria-label*="send"]',
-        'button[aria-label*="提交"]',
-        'button[aria-label*="发送"]',
-        'button[type="submit"]',
-        'button[data-icon="send"]',
-        'button[data-testid*="send"]',
+        'button[aria-label*="提交"], button[aria-label*="发送"]',
+        'button[aria-label*="Run"]',
+        '[aria-label*="submit"], [aria-label*="Submit"]',
+        "button[type='submit']",
         "form button[type=submit]",
-        'button[class*="send"]',
-        '[aria-label*="Send message"]',
-        ".send-button",
       ];
       let sendBtn: HTMLElement | null = null;
       for (const sel of sendSelectors) {
@@ -264,8 +263,16 @@ export class GeminiWebClientBrowser {
 
         let text = "";
         const modelSelectors = [
+          // 2025-2026 Gemini UI selectors
           '[data-message-author="model"]',
           '[data-sender="model"]',
+          '[data-testid*="response"]',
+          '[data-testid*="message"]',
+          '[class*="response-text"]',
+          '[class*="model-response"]',
+          '[class*="gemini-response"]',
+          '[class*="generation"]',
+          // Legacy/generic selectors
           '[class*="model-turn"]',
           '[class*="modelResponse"]',
           '[class*="assistant-message"]',

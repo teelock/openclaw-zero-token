@@ -29,10 +29,7 @@ function stripInboundMetaBlocks(text: string): string {
   );
 
   // Remove Sender info block
-  result = result.replace(
-    /Sender \(untrusted metadata\):\s*```json\n[\s\S]*?```\s*/g,
-    "",
-  );
+  result = result.replace(/Sender \(untrusted metadata\):\s*```json\n[\s\S]*?```\s*/g, "");
 
   // Remove Thread starter block
   result = result.replace(
@@ -510,7 +507,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
             },
             timestamp: Date.now(),
           },
-        } as any);
+        } as unknown as Parameters<typeof stream.push>[0]);
       } finally {
         stream.end();
       }

@@ -192,8 +192,7 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
             },
             timestamp: Date.now(),
           },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
+        } as unknown as Parameters<typeof stream.push>[0]);
       } finally {
         stream.end();
       }

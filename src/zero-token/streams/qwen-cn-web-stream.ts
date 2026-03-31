@@ -395,7 +395,6 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
           checkTags();
         };
 
-        let hasExtractedContent = false;
         let lastExtractedContent = "";
         const processLine = (line: string) => {
           if (!line) {
@@ -459,8 +458,8 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
             }
 
             // Extract conversation ID
-            if (data.sessionId || data.sessionId) {
-              sessionMap.set(sessionKey, data.sessionId || data.sessionId);
+            if (data.sessionId) {
+              sessionMap.set(sessionKey, data.sessionId);
             }
 
             // Extract content delta - Qwen v2 uses choices[0].delta.content
@@ -607,7 +606,7 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
             },
             timestamp: Date.now(),
           },
-        } as any);
+        } as unknown as Parameters<typeof stream.push>[0]);
       } finally {
         stream.end();
       }
