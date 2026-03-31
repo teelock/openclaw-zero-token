@@ -151,6 +151,8 @@ async function syncModelsProvidersToConfig(): Promise<void> {
       mode: config.models?.mode ?? "merge",
       providers: { ...config.models?.providers, ...providers },
     },
+    // Preserve existing agents.defaults.models whitelist — do NOT overwrite it.
+    agents: config.agents,
   };
 
   // 若尚未设置主模型，使用首个 web provider 的首个模型，避免回退到 anthropic
