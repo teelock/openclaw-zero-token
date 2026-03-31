@@ -1,0 +1,79 @@
+{
+  "active_context": [
+    {
+      "order": 3,
+      "path": "_index.md",
+      "tokens": 476,
+      "type": "summary"
+    },
+    {
+      "order": 2,
+      "path": "config/_index.md",
+      "tokens": 240,
+      "type": "summary"
+    },
+    {
+      "order": 2,
+      "path": "design/_index.md",
+      "tokens": 379,
+      "type": "summary"
+    },
+    {
+      "order": 2,
+      "path": "plugins/_index.md",
+      "tokens": 416,
+      "type": "summary"
+    },
+    {
+      "order": 1,
+      "path": "config/web_providers/_index.md",
+      "tokens": 275,
+      "type": "summary"
+    },
+    {
+      "order": 1,
+      "path": "plugins/opik_observability/_index.md",
+      "tokens": 155,
+      "type": "summary"
+    },
+    {
+      "importance": 50,
+      "path": "config/web_providers/web_provider_api_configuration.md",
+      "tokens": 312,
+      "type": "context"
+    },
+    {
+      "importance": 50,
+      "path": "design/session_watchdog/context.md",
+      "tokens": 43,
+      "type": "context"
+    },
+    {
+      "importance": 50,
+      "path": "design/session_watchdog/session_watchdog.md",
+      "tokens": 449,
+      "type": "context"
+    },
+    {
+      "importance": 50,
+      "path": "plugins/lossless_claw/lossless_claw_plugin.md",
+      "tokens": 320,
+      "type": "context"
+    },
+    {
+      "importance": 50,
+      "path": "plugins/opik_observability/opik_plugin.md",
+      "tokens": 217,
+      "type": "context"
+    }
+  ],
+  "generated_at": "2026-03-31T13:25:05.439Z",
+  "lane_tokens": {
+    "contexts": 1341,
+    "stubs": 0,
+    "summaries": 1941
+  },
+  "source_fingerprint": "2a7e74ea0afdff117a959d76f9ddbe652618302c2d3090227f9ecee957377ec3",
+  "total_tokens": 3282,
+  "version": 1
+}
