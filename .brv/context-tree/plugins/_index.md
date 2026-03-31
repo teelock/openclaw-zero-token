@@ -1,33 +1,39 @@
 ---
-children_hash: 5483b26d488c91cde877520aeb4979c73772d25f9c81bcb85f7f96f8e7ec2039
-compression_ratio: 0.7761194029850746
+children_hash: 9dd687f880f88bd06d9beaa10e6be3d746e6c8478f2e21ad64230d12943949f9
+compression_ratio: 0.6896046852122987
 condensation_order: 2
 covers: [lossless_claw/_index.md, opik_observability/_index.md]
-covers_token_total: 536
+covers_token_total: 683
 summary_level: d2
-token_count: 416
+token_count: 471
 type: summary
 ---
 
-# Structural Summary: Plugin Architecture
+# OpenClaw Plugin Architecture Summary
 
-This summary provides a structural overview of the OpenClaw plugin ecosystem, covering the Lossless-Claw context engine and Opik observability integration.
+This summary covers the primary extension modules for the OpenClaw system, specifically the context engine and observability framework.
 
 ## Lossless-Claw Plugin
 
-Refer to `lossless_claw_plugin.md` for complete configuration and implementation details.
+The Lossless-Claw plugin serves as the primary context engine (`plugins.slots.contextEngine`), managing conversation summarization and session lifecycles.
 
-- **Primary Function**: Acts as the system’s primary context engine (`plugins.slots.contextEngine`).
-- **Architecture**: Operates via a systemd gateway service (`~/.config/systemd/user/openclaw-gateway.service`) and is configured through `.openclaw-upstream-state/extensions/lossless-claw/openclaw.plugin.json`.
-- **Configuration Requirements**: Must be explicitly enabled in `plugins.allow`. Utilizes `~/.env` for credential management via `EnvironmentFile`.
-- **Key Capabilities**: Supports advanced context management including incremental compaction, configurable depth/thresholds, and model/provider overrides.
-- **Schema Parameters**: Includes `contextThreshold`, `incrementalMaxDepth`, `freshTailCount`, and `dbPath`.
+- **Configuration**: Defined in `.openclaw-upstream-state/extensions/lossless-claw/openclaw.plugin.json`.
+- **Parameterization**: Supports `contextThreshold`, `incrementalMaxDepth` (set to 1), `freshTailCount` (64), and a 7-day session idle timeout.
+- **Storage**: Database path defaults to `~/.openclaw/lcm.db`.
+- **Architectural Dependencies**: Requires `opik-openclaw` in `plugins.allow`. Relies on the gateway service at `~/.config/systemd/user/openclaw-gateway.service` with secrets sourced from `~/.env`.
+- **Exclusions**: Pattern matching `agent:*:cron:**` is ignored to protect background tasks.
+- **Drill-down**: See `lossless_claw_plugin.md` and `lossless_claw_configuration.md` for implementation details.
 
 ## Opik Observability Plugin
 
-Refer to `opik_plugin.md` for integration and tracking specifications.
+The Opik plugin provides observability by tracking OpenClaw traces to the Opik Cloud platform.
 
-- **Primary Function**: Provides observability by tracking traces to the "openclaw" project on Opik Cloud.
-- **Installation & Management**: Located at `.openclaw-upstream-state/extensions/opik-openclaw/` and managed via `plugins.entries.opik-openclaw`. Maintenance is handled via `npm pack` with the plugin excluded from git.
-- **Operational Requirements**: Version 0.2.9 requires `OPIK_API_KEY` to be defined in `~/.env`.
-- **Scope**: Specifically targets the free tier of Opik Cloud for trace telemetry.
+- **Configuration**: Managed via `plugins.entries.opik-openclaw` within the plugin system.
+- **Installation**: Located at `.openclaw-upstream-state/extensions/opik-openclaw/`.
+- **Environment**: Requires `OPIK_API_KEY` present in `~/.env`.
+- **Maintenance**: Version 0.2.9; excluded from git and managed via `npm pack`.
+- **Drill-down**: See `opik_plugin.md` for specific trace tracking logic.
+
+## System Integration
+
+The plugins are tightly coupled through the `plugins.allow` configuration. The Lossless-Claw context engine relies on the presence of the Opik plugin, and both utilize the central `~/.env` for secret management and the `plugins` registry for lifecycle orchestration.

@@ -3,7 +3,7 @@
     {
       "order": 3,
       "path": "_index.md",
-      "tokens": 476,
+      "tokens": 619,
       "type": "summary"
     },
     {
@@ -21,7 +21,7 @@
     {
       "order": 2,
       "path": "plugins/_index.md",
-      "tokens": 416,
+      "tokens": 471,
       "type": "summary"
     },
     {
@@ -31,15 +31,9 @@
       "type": "summary"
     },
     {
-      "order": 1,
-      "path": "plugins/opik_observability/_index.md",
-      "tokens": 155,
-      "type": "summary"
-    },
-    {
       "importance": 50,
       "path": "config/web_providers/web_provider_api_configuration.md",
-      "tokens": 312,
+      "tokens": 314,
       "type": "context"
     },
     {
@@ -51,29 +45,35 @@
     {
       "importance": 50,
       "path": "design/session_watchdog/session_watchdog.md",
-      "tokens": 449,
+      "tokens": 451,
+      "type": "context"
+    },
+    {
+      "importance": 50,
+      "path": "plugins/lossless_claw/lossless_claw_plugin/lossless_claw_configuration.md",
+      "tokens": 268,
       "type": "context"
     },
     {
       "importance": 50,
       "path": "plugins/lossless_claw/lossless_claw_plugin.md",
-      "tokens": 320,
+      "tokens": 323,
       "type": "context"
     },
     {
       "importance": 50,
       "path": "plugins/opik_observability/opik_plugin.md",
-      "tokens": 217,
+      "tokens": 220,
       "type": "context"
     }
   ],
-  "generated_at": "2026-03-31T13:25:05.439Z",
+  "generated_at": "2026-03-31T13:32:47.283Z",
   "lane_tokens": {
-    "contexts": 1341,
+    "contexts": 1619,
     "stubs": 0,
-    "summaries": 1941
+    "summaries": 1984
   },
-  "source_fingerprint": "2a7e74ea0afdff117a959d76f9ddbe652618302c2d3090227f9ecee957377ec3",
-  "total_tokens": 3282,
+  "source_fingerprint": "ab9a27d6352e4a6549f73b99666ae3cfb8a0716ffd3b0063486df16c5c8f8e98",
+  "total_tokens": 3603,
   "version": 1
 }
