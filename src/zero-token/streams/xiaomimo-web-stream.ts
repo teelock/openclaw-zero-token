@@ -153,7 +153,7 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
         const reader = responseStream.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-
+        let accumulatedContent = "";
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
         const contentParts: (TextContent | ThinkingContent | ToolCall)[] = [];
@@ -424,14 +424,28 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
 
             // MiMo 格式: {"type":"text","content":"..."}
             if (data.content && typeof data.content === "string") {
-              pushDelta(data.content);
+              // MiMo sends full accumulated content in each event — only emit the new portion
+              if (data.content.length > accumulatedContent.length) {
+                const newDelta = data.content.slice(accumulatedContent.length);
+                accumulatedContent = data.content;
+                if (newDelta) {
+                  pushDelta(newDelta);
+                }
+              }
               return;
             }
 
             // OpenAI 格式
             const delta = data.choices?.[0]?.delta?.content ?? data.text ?? data.delta;
             if (typeof delta === "string" && delta) {
-              pushDelta(delta);
+              // OpenAI SSE may also send full content — dedup the same way
+              if (delta.length > accumulatedContent.length) {
+                const newDelta = delta.slice(accumulatedContent.length);
+                accumulatedContent = delta;
+                if (newDelta) {
+                  pushDelta(newDelta);
+                }
+              }
             }
           } catch {
             // 可能是纯文本

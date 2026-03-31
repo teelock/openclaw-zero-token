@@ -154,7 +154,7 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
         const reader = responseStream.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-
+        let accumulatedContent = "";
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
         const contentParts: (TextContent | ThinkingContent | ToolCall)[] = [];
@@ -451,7 +451,14 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
             }
 
             if (typeof delta === "string" && delta) {
-              pushDelta(delta);
+              // GLM sends full accumulated content in each event — only emit the new portion
+              if (delta.length > accumulatedContent.length) {
+                const newDelta = delta.slice(accumulatedContent.length);
+                accumulatedContent = delta;
+                if (newDelta) {
+                  pushDelta(newDelta);
+                }
+              }
             }
           } catch {
             // Ignore parse errors

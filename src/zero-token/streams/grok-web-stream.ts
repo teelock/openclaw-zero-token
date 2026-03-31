@@ -154,7 +154,7 @@ export function createGrokWebStreamFn(cookieOrJson: string): StreamFn {
         const reader = responseStream.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-
+        let accumulatedContent = "";
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
         const contentParts: (TextContent | ThinkingContent | ToolCall)[] = [];
@@ -350,10 +350,7 @@ export function createGrokWebStreamFn(cookieOrJson: string): StreamFn {
                   } catch (e) {
                     part.arguments = { raw: argStr };
                     console.error(
-                      `[Qwen Stream] Failed to parse JSON for tool call ${currentToolName}:`,
-                      argStr,
-                      "\nError:",
-                      e,
+                      `[GrokWebStream] Failed to parse JSON for tool call ${currentToolName}: ${argStr}\nError: ${String(e)}`,
                     );
                   }
                   stream.push({
@@ -424,8 +421,14 @@ export function createGrokWebStreamFn(cookieOrJson: string): StreamFn {
               data.content ??
               data.delta;
             if (typeof delta === "string" && delta) {
-              console.log(`[GrokWebStream] Delta: ${delta.slice(0, 100)}...`);
-              pushDelta(delta);
+              // Grok sends full accumulated content in each event — only emit the new portion
+              if (delta.length > accumulatedContent.length) {
+                const newDelta = delta.slice(accumulatedContent.length);
+                accumulatedContent = delta;
+                if (newDelta) {
+                  pushDelta(newDelta);
+                }
+              }
             }
           } catch {
             // Ignore parse errors
