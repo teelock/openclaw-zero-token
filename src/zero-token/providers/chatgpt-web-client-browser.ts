@@ -243,7 +243,8 @@ export class ChatGPTWebClientBrowser {
         if (form) {
           const formBtn = form.querySelector("button[type=submit]");
           if (formBtn) {
-            formBtn.click();
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            (formBtn as HTMLElement).click();
             return { ok: true, via: "form-submit-button" };
           }
           form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
