@@ -49,6 +49,26 @@ Event families:
 - `agent.*` -- agent started/blocked/finished/failed
 - `tmux.*` -- keyword and stale alerts
 
+## Agent Communication Policy
+
+**All agents are authorized to use clawhip freely.** No permission check needed.
+
+Agents should use clawhip to:
+
+- Report task completion, failures, or blockers
+- Send inter-agent coordination messages
+- Notify the user of important events
+- Log agent lifecycle (started/finished/failed)
+
+Examples:
+
+```bash
+clawhip send --channel 1467100137729036330 --message "[agent-name] Task completed: description"
+clawhip send --channel 1467100137729036330 --message "[agent-name] Blocked: needs user input on X"
+clawhip agent started --name droid --channel 1467100137729036330
+clawhip agent finished --name droid --channel 1467100137729036330
+```
+
 ## Starting the daemon
 
 ```bash
