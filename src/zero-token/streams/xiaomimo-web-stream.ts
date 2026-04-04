@@ -5,7 +5,6 @@ import {
   type TextContent,
   type ThinkingContent,
   type ToolCall,
-  type ToolResultMessage,
 } from "@mariozechner/pi-ai";
 import {
   XiaomiMimoWebClientBrowser,
@@ -30,91 +29,21 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
     const run = async () => {
       try {
         const messages = context.messages;
-        const systemPrompt = context.systemPrompt || "";
-        const tools = context.tools || [];
         const sessionKey = model.id;
         const sessionId = sessionMap.get(sessionKey);
 
-        let toolPrompt = "";
-        if (tools.length > 0) {
-          toolPrompt = "\n## Available Tools\n";
-          for (const tool of tools) {
-            toolPrompt += `- ${tool.name}: ${tool.description}\n`;
-          }
-        }
-
+        // XiaomiMimo web uses DOM simulation — only send the last user message.
+        // System prompts, tools, and full history would overwhelm the input.
         let prompt = "";
-
-        if (!sessionId) {
-          const historyParts: string[] = [];
-          let systemPromptContent = systemPrompt;
-
-          if (toolPrompt) {
-            systemPromptContent += toolPrompt;
-          }
-
-          if (systemPromptContent && !messages.some((m) => (m.role as string) === "system")) {
-            historyParts.push(`System: ${systemPromptContent}`);
-          }
-
-          for (const m of messages) {
-            const role = m.role === "user" || m.role === "toolResult" ? "User" : "Assistant";
-            let content = "";
-
-            if (m.role === "toolResult") {
-              const tr = m as unknown as ToolResultMessage;
-              let resultText = "";
-              if (Array.isArray(tr.content)) {
-                for (const part of tr.content) {
-                  if (part.type === "text") {
-                    resultText += part.text;
-                  }
-                }
-              }
-              content = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n`;
-            } else if (Array.isArray(m.content)) {
-              for (const part of m.content) {
-                if (part.type === "text") {
-                  content += part.text;
-                } else if (part.type === "thinking") {
-                  content += `<think>\n${part.thinking}\n
-</think>\n`;
-                } else if (part.type === "toolCall") {
-                  const tc = part;
-                  content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;
-                }
-              }
-            } else {
-              content = String(m.content);
-            }
-            historyParts.push(`${role}: ${content}`);
-          }
-          prompt = historyParts.join("\n\n");
-        } else {
-          const lastMsg = messages[messages.length - 1];
-          if (lastMsg?.role === "toolResult") {
-            const tr = lastMsg as unknown as ToolResultMessage;
-            let resultText = "";
-            if (Array.isArray(tr.content)) {
-              for (const part of tr.content) {
-                if (part.type === "text") {
-                  resultText += part.text;
-                }
-              }
-            }
-            prompt = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n\nPlease proceed based on this tool result.`;
-          } else {
-            const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
-            if (lastUserMessage) {
-              if (typeof lastUserMessage.content === "string") {
-                prompt = lastUserMessage.content;
-              } else if (Array.isArray(lastUserMessage.content)) {
-                prompt = lastUserMessage.content
-                  .filter((part) => part.type === "text")
-                  .map((part) => part.text)
-                  .join("");
-              }
-            }
+        const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
+        if (lastUserMessage) {
+          if (typeof lastUserMessage.content === "string") {
+            prompt = lastUserMessage.content;
+          } else if (Array.isArray(lastUserMessage.content)) {
+            prompt = (lastUserMessage.content as TextContent[])
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("");
           }
         }
 
@@ -122,21 +51,8 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
           throw new Error("No message found to send to XiaomiMimo Web API");
         }
 
-        // MiMo Web API 限制非常严格
-        const MAX_PROMPT_LENGTH = 3000;
-        if (prompt.length > MAX_PROMPT_LENGTH) {
-          console.log(
-            `[XiaomiMimoWebStream] Truncating from ${prompt.length} to ${MAX_PROMPT_LENGTH}`,
-          );
-          // 只保留最后一个 User 消息
-          const userParts = prompt.split("User:");
-          const lastUser = userParts[userParts.length - 1];
-          prompt = "你是一个AI助手。\n\nUser:" + (lastUser || "").slice(-MAX_PROMPT_LENGTH + 50);
-        }
-
         console.log(`[XiaomiMimoWebStream] Starting run for session: ${sessionKey}`);
         console.log(`[XiaomiMimoWebStream] Conversation ID: ${sessionId || "new"}`);
-        console.log(`[XiaomiMimoWebStream] Tools available: ${tools.length}`);
         console.log(`[XiaomiMimoWebStream] Prompt length: ${prompt.length}`);
 
         const responseStream = await client.chatCompletions({

@@ -5,7 +5,6 @@ import {
   type TextContent,
   type ThinkingContent,
   type ToolCall,
-  type ToolResultMessage,
 } from "@mariozechner/pi-ai";
 import {
   DoubaoWebClientBrowser,
@@ -36,73 +35,19 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
 
         const messages = context.messages || [];
 
-        // Build tool prompt if tools are available
-        const tools = context.tools || [];
-        let toolPrompt = "";
-
-        if (tools.length > 0) {
-          toolPrompt = "\n## Available Tools\n";
-          for (const tool of tools) {
-            toolPrompt += `- ${tool.name}: ${tool.description}\n`;
-          }
-        }
-
-        // Build prompt based on conversation state
+        // Doubao web uses DOM simulation — only send the last user message.
+        // System prompts, tools, and full history would overwhelm the input.
         let prompt = "";
-
-        if (!sessionId) {
-          // First turn: send only the last user message to avoid exceeding
-          // Doubao's prompt length limit. Full conversation history is only
-          // needed after a session ID is established.
-          const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
-          if (lastUserMessage) {
-            if (typeof lastUserMessage.content === "string") {
-              prompt = lastUserMessage.content;
-            } else if (Array.isArray(lastUserMessage.content)) {
-              prompt = lastUserMessage.content
-                .filter((part) => part.type === "text")
-                .map((part) => part.text)
-                .join("");
-            }
+        const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
+        if (lastUserMessage) {
+          if (typeof lastUserMessage.content === "string") {
+            prompt = lastUserMessage.content;
+          } else if (Array.isArray(lastUserMessage.content)) {
+            prompt = (lastUserMessage.content as TextContent[])
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("");
           }
-          // Add tool reminder if tools are available
-          if (toolPrompt && prompt) {
-            prompt +=
-              '\n\n[SYSTEM HINT]: Keep in mind your available tools. To use a tool, you MUST output the EXACT XML format: <tool_call id="unique_id" name="tool_name">{"arg": "value"}</tool_call>.';
-          }
-        } else {
-          // Continuing turn: check if last message is toolResult or user
-          const lastMsg = messages[messages.length - 1];
-          if (lastMsg?.role === "toolResult") {
-            const tr = lastMsg as unknown as ToolResultMessage;
-            let resultText = "";
-            if (Array.isArray(tr.content)) {
-              for (const part of tr.content) {
-                if (part.type === "text") {
-                  resultText += part.text;
-                }
-              }
-            }
-            prompt = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n\nPlease proceed based on this tool result.`;
-          } else {
-            const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
-            if (lastUserMessage) {
-              if (typeof lastUserMessage.content === "string") {
-                prompt = lastUserMessage.content;
-              } else if (Array.isArray(lastUserMessage.content)) {
-                prompt = lastUserMessage.content
-                  .filter((part) => part.type === "text")
-                  .map((part) => part.text)
-                  .join("");
-              }
-            }
-          }
-        }
-
-        // Add tool reminder for continuing conversations
-        if (toolPrompt && sessionId) {
-          prompt +=
-            '\n\n[SYSTEM HINT]: Keep in mind your available tools. To use a tool, you MUST output the EXACT XML format: <tool_call id="unique_id" name="tool_name">{"arg": "value"}</tool_call>. Using plain text to describe your action will FAIL to execute the tool.';
         }
 
         if (!prompt) {
@@ -111,7 +56,6 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
 
         console.log(`[DoubaoWebStream] Starting run for session: ${sessionKey}`);
         console.log(`[DoubaoWebStream] Conversation ID: ${sessionId || "new"}`);
-        console.log(`[DoubaoWebStream] Tools available: ${tools.length}`);
         console.log(`[DoubaoWebStream] Prompt length: ${prompt.length}`);
 
         const responseStream = await client.chatCompletions({

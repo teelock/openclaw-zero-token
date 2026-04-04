@@ -4,7 +4,6 @@ import {
   type AssistantMessage,
   type TextContent,
   type ToolCall,
-  type ToolResultMessage,
 } from "@mariozechner/pi-ai";
 import {
   GeminiWebClientBrowser,
@@ -59,23 +58,6 @@ function stripInboundMetaBlocks(text: string): string {
   return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
-// Helper to build XML tool prompt section
-function buildXmlToolPromptSection(tools: unknown[]): string {
-  if (!tools || tools.length === 0) {
-    return "";
-  }
-  let section = "\n## Available Tools\n";
-  for (const tool of tools as Array<{ name?: string; description?: string }>) {
-    section += `- ${tool.name ?? "unknown"}: ${tool.description ?? ""}\n`;
-  }
-  return section;
-}
-
-// Helper to get XML tool reminder
-function getXmlToolReminder(): string {
-  return "\nRemember to use tools when needed.";
-}
-
 const conversationMap = new Map<string, string>();
 
 export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
@@ -99,98 +81,20 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
         let conversationId = conversationMap.get(sessionKey);
 
         const messages = context.messages || [];
-        const systemPrompt = (context as unknown as { systemPrompt?: string }).systemPrompt || "";
-        const tools = context.tools || [];
-        const toolPrompt = buildXmlToolPromptSection(tools);
 
+        // Gemini web uses DOM simulation (typing into the browser input box).
+        // Only send the last user message — system prompts and tools would
+        // overwhelm the input and produce garbage responses.
         let prompt = "";
-
-        if (tools.length > 0) {
-          // Full conversation with tool support: first turn = full history, continuing = last message only
-          if (!conversationId) {
-            const historyParts: string[] = [];
-            let systemPromptContent = systemPrompt;
-            if (toolPrompt) {
-              systemPromptContent += toolPrompt;
-            }
-            if (systemPromptContent && !messages.some((m) => (m.role as string) === "system")) {
-              historyParts.push(`System: ${systemPromptContent}`);
-            }
-            for (const m of messages) {
-              const role = m.role === "user" || m.role === "toolResult" ? "User" : "Assistant";
-              let content = "";
-              if (m.role === "toolResult") {
-                const tr = m as unknown as ToolResultMessage;
-                let resultText = "";
-                if (Array.isArray(tr.content)) {
-                  for (const part of tr.content) {
-                    if (part.type === "text") {
-                      resultText += part.text;
-                    }
-                  }
-                }
-                content = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n`;
-              } else if (Array.isArray(m.content)) {
-                for (const part of m.content) {
-                  if (part.type === "text") {
-                    content += part.text;
-                  } else if (part.type === "toolCall") {
-                    const tc = part;
-                    content += `<tool_call id="${tc.id}" name="${tc.name}">${JSON.stringify(tc.arguments)}</tool_call>`;
-                  }
-                }
-              } else {
-                content = String(m.content);
-              }
-              if (m.role === "user" && content) {
-                content = stripInboundMetaBlocks(content) || content;
-              }
-              historyParts.push(`${role}: ${content}`);
-            }
-            prompt = historyParts.join("\n\n");
-          } else {
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg?.role === "toolResult") {
-              const tr = lastMsg as unknown as ToolResultMessage;
-              let resultText = "";
-              if (Array.isArray(tr.content)) {
-                for (const part of tr.content) {
-                  if (part.type === "text") {
-                    resultText += part.text;
-                  }
-                }
-              }
-              prompt = `\n<tool_response id="${tr.toolCallId}" name="${tr.toolName}">\n${resultText}\n</tool_response>\n\nPlease proceed based on this tool result.`;
-            } else {
-              const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
-              if (lastUserMessage) {
-                if (typeof lastUserMessage.content === "string") {
-                  prompt = lastUserMessage.content;
-                } else if (Array.isArray(lastUserMessage.content)) {
-                  prompt = (lastUserMessage.content as TextContent[])
-                    .filter((part) => part.type === "text")
-                    .map((part) => part.text)
-                    .join("");
-                }
-                prompt = stripInboundMetaBlocks(prompt) || prompt;
-              }
-            }
-            if (toolPrompt) {
-              prompt += getXmlToolReminder();
-            }
-          }
-        } else {
-          // No tools: original behaviour – only last user message
-          const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
-          if (lastUserMessage) {
-            if (typeof lastUserMessage.content === "string") {
-              prompt = lastUserMessage.content;
-            } else if (Array.isArray(lastUserMessage.content)) {
-              prompt = (lastUserMessage.content as TextContent[])
-                .filter((part) => part.type === "text")
-                .map((part) => part.text)
-                .join("");
-            }
+        const lastUserMessage = [...messages].toReversed().find((m) => m.role === "user");
+        if (lastUserMessage) {
+          if (typeof lastUserMessage.content === "string") {
+            prompt = lastUserMessage.content;
+          } else if (Array.isArray(lastUserMessage.content)) {
+            prompt = (lastUserMessage.content as TextContent[])
+              .filter((part) => part.type === "text")
+              .map((part) => part.text)
+              .join("");
           }
         }
 
@@ -205,9 +109,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
 
         console.log(`[GeminiWebStream] Starting run for session: ${sessionKey}`);
         console.log(`[GeminiWebStream] Conversation ID: ${conversationId || "new"}`);
-        console.log(
-          `[GeminiWebStream] Tools: ${tools.length}, prompt length: ${cleanPrompt.length}`,
-        );
+        console.log(`[GeminiWebStream] prompt length: ${cleanPrompt.length}`);
 
         const responseStream = await client.chatCompletions({
           conversationId,
@@ -312,7 +214,8 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
           if (!delta) {
             return;
           }
-          if (tools.length === 0) {
+          // DOM simulation: always use simple text path
+          {
             if (contentParts.length === 0) {
               contentParts[0] = { type: "text", text: "" };
               stream.push({ type: "text_start", contentIndex: 0, partial: createPartial() });
@@ -451,7 +354,7 @@ export function createGeminiWebStreamFn(cookieOrJson: string): StreamFn {
           }
         }
 
-        if (tools.length > 0 && tagBuffer) {
+        if (tagBuffer) {
           const mode = currentMode as "text" | "toolcall";
           if (mode === "toolcall") {
             emitDelta("toolcall", tagBuffer);
