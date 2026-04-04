@@ -9,11 +9,7 @@ import {
   ChatGPTWebClientBrowser,
   type ChatGPTWebClientOptions,
 } from "../providers/chatgpt-web-client-browser.js";
-
-// Helper to strip messages for web providers
-function stripForWebProvider(prompt: string): string {
-  return prompt;
-}
+import { stripInboundMeta } from "./strip-inbound-meta.js";
 
 const conversationMap = new Map<string, string>();
 const parentMessageMap = new Map<string, string>();
@@ -66,7 +62,7 @@ export function createChatGPTWebStreamFn(cookieOrJson: string): StreamFn {
           throw new Error("No message found to send to ChatGPT API");
         }
 
-        const cleanPrompt = stripForWebProvider(prompt);
+        const cleanPrompt = stripInboundMeta(prompt);
         if (!cleanPrompt) {
           throw new Error("No message content to send after stripping metadata");
         }
