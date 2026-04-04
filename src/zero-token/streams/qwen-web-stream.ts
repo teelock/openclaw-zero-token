@@ -10,6 +10,7 @@ import {
   QwenWebClientBrowser,
   type QwenWebClientOptions,
 } from "../providers/qwen-web-client-browser.js";
+import { stripInboundMeta } from "./strip-inbound-meta.js";
 
 const conversationMap = new Map<string, string>();
 
@@ -60,6 +61,7 @@ export function createQwenWebStreamFn(cookieOrJson: string): StreamFn {
           }
         }
 
+        prompt = stripInboundMeta(prompt);
         if (!prompt) {
           throw new Error("No message found to send to Qwen API");
         }

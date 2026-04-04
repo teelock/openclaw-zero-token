@@ -10,6 +10,7 @@ import {
   GlmIntlWebClientBrowser,
   type GlmIntlWebClientOptions,
 } from "../providers/glm-intl-web-client-browser.js";
+import { stripInboundMeta } from "./strip-inbound-meta.js";
 
 const sessionMap = new Map<string, string>();
 
@@ -50,6 +51,7 @@ export function createGlmIntlWebStreamFn(cookieOrJson: string): StreamFn {
           }
         }
 
+        prompt = stripInboundMeta(prompt);
         if (!prompt) {
           throw new Error("No message found to send to GLM International API");
         }
