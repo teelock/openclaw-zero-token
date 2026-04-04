@@ -192,87 +192,30 @@ export class ChatGPTWebClientBrowser {
   }): Promise<ReadableStream<Uint8Array>> {
     const { page } = await this.ensureBrowser();
 
-    const sent = await page.evaluate((msg: string) => {
-      // 多备选选择器适配 ChatGPT 不同版本 UI
-      const inputSelectors = [
-        "#prompt-textarea",
-        "textarea[placeholder]",
-        "textarea",
-        '[contenteditable="true"][data-placeholder]',
-        "[contenteditable='true']",
-      ];
-      let inputEl: HTMLTextAreaElement | HTMLElement | null = null;
-      for (const sel of inputSelectors) {
-        inputEl = document.querySelector(sel);
-        if (inputEl && inputEl.offsetParent !== null) {
-          break;
-        }
+    // Use Playwright native APIs for reliable input (same as Gemini/Grok/Perplexity)
+    const inputSelectors = [
+      "#prompt-textarea",
+      "textarea[placeholder]",
+      "textarea",
+      '[contenteditable="true"]',
+    ];
+    let inputHandle = null;
+    for (const sel of inputSelectors) {
+      inputHandle = await page.$(sel);
+      if (inputHandle) {
+        break;
       }
-      if (!inputEl) {
-        return { ok: false, error: "找不到输入框" };
-      }
-
-      inputEl.focus();
-      if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
-        (inputEl as HTMLTextAreaElement).value = msg;
-        (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
-      } else {
-        (inputEl as HTMLElement).textContent = msg;
-        (inputEl as HTMLElement).dispatchEvent(new Event("input", { bubbles: true }));
-      }
-
-      const sendSelectors = [
-        'button[data-testid="send-button"]',
-        'button[data-testid="send-message-button"]',
-        'button[aria-label="Send prompt"]',
-        'button[aria-label*="Send"]',
-        'button[aria-label*="发送"]',
-        'button[aria-label*="Submit"]',
-        "button[type='submit']",
-        "form button[type=submit]",
-        "textarea+button",
-        "textarea ~ button",
-      ];
-      let sendBtn: HTMLElement | null = null;
-      for (const sel of sendSelectors) {
-        sendBtn = document.querySelector(sel);
-        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {
-          break;
-        }
-      }
-      if (!sendBtn) {
-        // Fallback: submit via form or Enter key
-        const form = inputEl.closest("form");
-        if (form) {
-          const formBtn = form.querySelector("button[type=submit]");
-          if (formBtn) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            (formBtn as HTMLElement).click();
-            return { ok: true, via: "form-submit-button" };
-          }
-          form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-          return { ok: true, via: "form-submit" };
-        }
-        // Last resort: Enter key
-        inputEl.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "Enter",
-            code: "Enter",
-            keyCode: 13,
-            which: 13,
-            bubbles: true,
-            cancelable: true,
-          }),
-        );
-        return { ok: true, via: "enter-key" };
-      }
-      sendBtn.click();
-      return { ok: true };
-    }, params.message);
-
-    if (!sent.ok) {
-      throw new Error(`ChatGPT DOM 模拟失败: ${sent.error}`);
     }
+    if (!inputHandle) {
+      throw new Error("ChatGPT DOM 模拟失败: 找不到输入框");
+    }
+
+    await inputHandle.click();
+    await page.waitForTimeout(300);
+    await page.keyboard.type(params.message, { delay: 20 });
+    await page.waitForTimeout(500);
+    await page.keyboard.press("Enter");
+    console.log("[ChatGPT Web Browser] DOM: typed message and pressed Enter");
 
     // 轮询等待回复完成（最多约 90 秒，降低频率减少封号风险）
     const maxWaitMs = 90000;
