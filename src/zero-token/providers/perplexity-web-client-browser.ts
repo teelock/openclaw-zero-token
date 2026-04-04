@@ -146,11 +146,9 @@ export class PerplexityWebClientBrowser {
     // Perplexity's /search API now returns HTML, not SSE, so we interact via DOM.
     const page = this.page;
 
-    // Navigate to home page if currently on a search result page
-    if (page.url().includes("/search/") || page.url().includes("/c/")) {
-      await page.goto("https://www.perplexity.ai/", { waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(2000);
-    }
+    // Always navigate to home page for a fresh search
+    await page.goto("https://www.perplexity.ai/", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2000);
 
     // Find and focus the input
     const inputSel = 'div[contenteditable="true"], [role="textbox"], textarea';
@@ -161,7 +159,9 @@ export class PerplexityWebClientBrowser {
     await inputHandle.click();
     await page.waitForTimeout(300);
 
-    // Type message using Playwright keyboard (more reliable than dispatchEvent)
+    // Clear any residual text, then type message
+    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("Backspace");
     await page.keyboard.type(message, { delay: 20 });
     await page.waitForTimeout(500);
 
@@ -169,10 +169,13 @@ export class PerplexityWebClientBrowser {
     await page.keyboard.press("Enter");
     console.log("[Perplexity Web Browser] DOM: typed message and pressed Enter");
 
-    // Wait for URL change (Perplexity navigates to /search/... on submit)
+    // Wait for URL to change from home to a search result page
     try {
-      await page.waitForURL(/perplexity\.ai\/(search|c)\//, { timeout: 15000 });
-      console.log("[Perplexity Web Browser] DOM: navigated to search result page");
+      await page.waitForURL(
+        (url) => url.pathname.startsWith("/search/") || url.pathname.startsWith("/c/"),
+        { timeout: 15000 },
+      );
+      console.log("[Perplexity Web Browser] DOM: navigated to", page.url());
     } catch {
       console.log("[Perplexity Web Browser] DOM: no URL change after Enter, polling anyway");
     }
