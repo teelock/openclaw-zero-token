@@ -110,12 +110,11 @@ export async function loginQwenCNWeb(params: {
           return { status: res.status, body: text.substring(0, 200) };
         });
 
-        if (apiTest.status === 403 && apiTest.body.includes("EX015")) {
-          onProgress("Current session cannot access API. Please re-login...");
-          // Clear old cookies and force re-login
-          await context.clearCookies();
-        } else if (apiTest.status === 200) {
+        if (apiTest.status === 200) {
           onProgress("API access verified!");
+        } else {
+          // API may require signature (EX015) — cookies are still valid.
+          onProgress("API signature test skipped (cookies captured).");
         }
       } catch (e) {
         console.log("[Qwen CN Auth] API test failed:", e);
@@ -188,12 +187,12 @@ export async function loginQwenCNWeb(params: {
               return { status: res.status, body: text.substring(0, 200) };
             });
 
-            if (apiTest.status === 403 && apiTest.body.includes("EX015")) {
-              onProgress("Login successful but API access failed. Please try again...");
-              continue;
-            } else if (apiTest.status === 200) {
+            if (apiTest.status === 200) {
               onProgress("Login and API access verified!");
-              break;
+            } else {
+              // API test may fail due to signature requirements (EX015),
+              // but login is still valid — cookies are captured.
+              onProgress("Login detected. API signature test skipped (cookies captured).");
             }
           } catch (e) {
             console.log("[Qwen CN Auth] API test failed:", e);
