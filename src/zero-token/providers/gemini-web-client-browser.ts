@@ -214,10 +214,29 @@ export class GeminiWebClientBrowser {
       await new Promise((r) => setTimeout(r, pollIntervalMs));
 
       const result = await this.page.evaluate(() => {
+        // 清理不可见 Unicode 字符
         const clean = (t: string) => t.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
 
-        // 排除：侧边栏、问候、建议按钮
-        const skipTexts = [
+        // 使用 innerText（排除隐藏元素和 CSS 控制的不可见内容）而非 textContent
+        const getText = (el: Element): string => {
+          const raw = (el as HTMLElement).innerText ?? "";
+          return clean(raw);
+        };
+
+        // 排除区域检测
+        const sidebarRoot = document.querySelector('[aria-label*="对话"], [class*="sidebar"], nav');
+        const inputEl = document.querySelector(
+          '[contenteditable="true"], textarea, [placeholder*="Gemini"], [placeholder*="问问"]',
+        );
+        const inputRoot =
+          inputEl?.closest("form") ??
+          inputEl?.closest("[class*='input']") ??
+          inputEl?.parentElement?.parentElement;
+
+        const isExcluded = (el: Element) => sidebarRoot?.contains(el) || inputRoot?.contains(el);
+
+        // 噪声文本过滤
+        const noisePatterns = [
           "Ask Gemini",
           "问问 Gemini",
           "Enter a prompt",
@@ -233,26 +252,24 @@ export class GeminiWebClientBrowser {
           "给我的一天注入活力",
           "升级到 Google AI Plus",
           "正在加载",
+          "复制",
+          "分享",
+          "修改",
+          "朗读",
         ];
-        const isGreeting = (t: string) =>
-          /sage[,，]?\s*你好/i.test(t) ||
-          (t.includes("你好") && (t.includes("需要") || t.includes("做些什么"))) ||
-          t.startsWith("需要我为你做些什么");
-        const isSkip = (t: string) =>
-          skipTexts.some((s) => t.includes(s)) || isGreeting(t) || t.length < 20;
+        const isNoise = (t: string) =>
+          t.length < 20 ||
+          noisePatterns.some((p) => t.includes(p)) ||
+          /^(你好|需要我|sage)/i.test(t);
 
-        const sidebarRoot = document.querySelector('[aria-label*="对话"], [class*="sidebar"], nav');
-        const notInSidebar = (el: Element) => !sidebarRoot?.contains(el);
-
-        // 排除输入区域：输入框及其父容器（含建议按钮）
-        const inputEl = document.querySelector(
-          '[contenteditable="true"], textarea, [placeholder*="Gemini"], [placeholder*="问问"]',
-        );
-        const inputRoot =
-          inputEl?.closest("form") ??
-          inputEl?.closest("[class*='input']") ??
-          inputEl?.parentElement?.parentElement;
-        const notInInputArea = (el: Element) => !inputRoot?.contains(el);
+        // 去除回复中的 UI 按钮文字（如 "复制 分享 修改 朗读" 等尾部噪声）
+        const stripTrailingUI = (t: string) =>
+          t
+            .replace(
+              /\n?\s*(复制|分享|修改|朗读|Copy|Share|Edit|Read aloud|thumb_up|thumb_down|more_vert)[\s\n]*/gi,
+              "",
+            )
+            .replace(/\s+$/, "");
 
         const main =
           document.querySelector("main") ??
@@ -262,34 +279,30 @@ export class GeminiWebClientBrowser {
         const scoped = main === document.body ? document : main;
 
         let text = "";
+
+        // 策略 1：精确匹配 Gemini 模型回复容器（只取最后一条）
         const modelSelectors = [
-          // 2025-2026 Gemini UI selectors
+          "model-response message-content", // Gemini 2025+ web component
+          '[data-message-author="model"] .message-content',
           '[data-message-author="model"]',
           '[data-sender="model"]',
-          '[data-testid*="response"]',
-          '[data-testid*="message"]',
-          '[class*="response-text"]',
+          '[class*="model-response"] [class*="markdown"]',
           '[class*="model-response"]',
-          '[class*="gemini-response"]',
-          '[class*="generation"]',
-          // Legacy/generic selectors
-          '[class*="model-turn"]',
-          '[class*="modelResponse"]',
-          '[class*="assistant-message"]',
+          '[class*="response-content"] [class*="markdown"]',
           '[class*="response-content"]',
-          "article",
-          "[class*='markdown']",
         ];
+
         for (const sel of modelSelectors) {
           const els = scoped.querySelectorAll(sel);
+          // 从最后一个元素开始（最新回复）
           for (let i = els.length - 1; i >= 0; i--) {
             const el = els[i];
-            if (!notInSidebar(el) || !notInInputArea(el)) {
+            if (isExcluded(el)) {
               continue;
             }
-            const t = clean((el as HTMLElement).textContent ?? "");
-            if (t.length >= 30 && !isSkip(t)) {
-              text = t;
+            const t = getText(el);
+            if (t.length >= 30 && !isNoise(t)) {
+              text = stripTrailingUI(t);
               break;
             }
           }
@@ -298,24 +311,31 @@ export class GeminiWebClientBrowser {
           }
         }
 
-        // 策略 2：主区域内按文本量取最后的实质内容块（排除输入区）
+        // 策略 2（受限回退）：只在 main 区域内找 markdown 渲染块，不匹配泛化选择器
         if (!text) {
-          const candidates: Array<{ el: Element; text: string }> = [];
-          scoped.querySelectorAll("p, div[class], li, span[class]").forEach((el) => {
-            if (!notInSidebar(el) || !notInInputArea(el)) {
-              return;
+          const fallbackSelectors = ['[class*="markdown"]', "article"];
+          for (const sel of fallbackSelectors) {
+            const els = scoped.querySelectorAll(sel);
+            for (let i = els.length - 1; i >= 0; i--) {
+              const el = els[i];
+              if (isExcluded(el)) {
+                continue;
+              }
+              const t = getText(el);
+              if (t.length >= 30 && !isNoise(t)) {
+                text = stripTrailingUI(t);
+                break;
+              }
             }
-            const t = clean((el as HTMLElement).textContent ?? "");
-            if (t.length > 50 && !isSkip(t) && !candidates.some((c) => c.text === t)) {
-              candidates.push({ el, text: t });
+            if (text) {
+              break;
             }
-          });
-          if (candidates.length > 0) {
-            text = candidates[candidates.length - 1].text;
           }
         }
 
-        const stopBtn = document.querySelector('[aria-label*="Stop"], [aria-label*="stop"]');
+        const stopBtn = document.querySelector(
+          '[aria-label*="Stop"], [aria-label*="stop"], [aria-label*="停止"]',
+        );
         const isStreaming = !!stopBtn;
         return { text, isStreaming };
       });

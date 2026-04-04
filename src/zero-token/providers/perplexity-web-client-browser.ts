@@ -137,134 +137,103 @@ export class PerplexityWebClientBrowser {
       throw new Error("PerplexityWebClientBrowser not initialized");
     }
 
-    const { conversationId, message, model } = params;
+    const { conversationId, message } = params;
     console.log(
       `[Perplexity Web Browser] Sending request... conversationId=${conversationId ?? "(new)"} messageLen=${message.length}`,
     );
 
-    const evalResult = await this.page.evaluate(
-      async ({
-        conversationId,
-        message,
-        model,
-      }: {
-        conversationId?: string;
-        message: string;
-        model: string;
-      }) => {
-        const MODEL_MAP_INTERNAL: Record<string, string> = {
-          "perplexity-web": "sonar",
-          "perplexity-pro": "sonar-pro",
-        };
-        const modelInternal = MODEL_MAP_INTERNAL[model] || model || "sonar";
+    // DOM simulation using Playwright native APIs (not page.evaluate for input).
+    // Perplexity's /search API now returns HTML, not SSE, so we interact via DOM.
+    const page = this.page;
 
-        // Try to get conversation ID from URL if not provided
-        let convId = conversationId;
-        if (!convId) {
-          const m = window.location.pathname.match(/\/search\/([a-zA-Z0-9_-]+)/);
-          convId = m?.[1] ?? undefined;
+    // Navigate to home page if currently on a search result page
+    if (page.url().includes("/search/") || page.url().includes("/c/")) {
+      await page.goto("https://www.perplexity.ai/", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2000);
+    }
+
+    // Find and focus the input
+    const inputSel = 'div[contenteditable="true"], [role="textbox"], textarea';
+    const inputHandle = await page.$(inputSel);
+    if (!inputHandle) {
+      throw new Error("Perplexity DOM: input not found");
+    }
+    await inputHandle.click();
+    await page.waitForTimeout(300);
+
+    // Type message using Playwright keyboard (more reliable than dispatchEvent)
+    await page.keyboard.type(message, { delay: 20 });
+    await page.waitForTimeout(500);
+
+    // Press Enter to submit
+    await page.keyboard.press("Enter");
+    console.log("[Perplexity Web Browser] DOM: typed message and pressed Enter");
+
+    // Wait for URL change (Perplexity navigates to /search/... on submit)
+    try {
+      await page.waitForURL(/perplexity\.ai\/(search|c)\//, { timeout: 15000 });
+      console.log("[Perplexity Web Browser] DOM: navigated to search result page");
+    } catch {
+      console.log("[Perplexity Web Browser] DOM: no URL change after Enter, polling anyway");
+    }
+
+    // Poll for response content
+    const maxWaitMs = 120_000;
+    const pollInterval = 3000;
+    let lastText = "";
+    let stableCount = 0;
+
+    for (let elapsed = 0; elapsed < maxWaitMs; elapsed += pollInterval) {
+      await page.waitForTimeout(pollInterval);
+
+      const text = await page.evaluate(() => {
+        const clean = (t: string) => t.replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+        // Perplexity answer selectors — prose class is the main answer container
+        const selectors = [
+          '[class*="prose"]',
+          '[class*="break-words"][class*="font-sans"]',
+          '[class*="markdown"]',
+          '[class*="threadConten"] [class*="gap-y-sm"]',
+        ];
+        for (const sel of selectors) {
+          const els = document.querySelectorAll(sel);
+          for (let i = els.length - 1; i >= 0; i--) {
+            const t = clean((els[i] as HTMLElement).innerText ?? "");
+            if (t.length >= 2) {
+              return t;
+            }
+          }
         }
-        if (!convId) {
-          const m = window.location.pathname.match(/\/c\/([a-zA-Z0-9_-]+)/);
-          convId = m?.[1] ?? undefined;
-        }
+        return "";
+      });
 
-        // Call the Perplexity frontend API endpoint
-        // Note: message goes in body only — query string was causing 414 on long prompts
-        const response = await fetch("https://www.perplexity.ai/search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "text/event-stream",
-            "X-Requested-With": "XMLHttpRequest",
-          },
-          body: JSON.stringify({
-            query: message,
-            model: modelInternal,
-            source: "default",
-            mode: "copilot",
-            ...(convId ? { session_id: convId } : {}),
-          }),
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(
-            `Perplexity API error: ${response.status} ${response.statusText} - ${errText.slice(0, 300)}`,
-          );
-        }
-
-        // Return the SSE stream as text
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error("No response body");
-        }
-
-        const chunks: number[][] = [];
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
+      if (text && text.length >= 2) {
+        if (text !== lastText) {
+          lastText = text;
+          stableCount = 0;
+        } else {
+          stableCount++;
+          if (stableCount >= 2) {
             break;
           }
-          chunks.push(Array.from(value));
         }
-
-        return { chunks, conversationId: convId };
-      },
-      { conversationId, message, model },
-    );
-
-    const timeoutMs = 120000;
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(
-        () =>
-          reject(
-            new Error(
-              `Perplexity request timed out (${timeoutMs / 1000}s). Please ensure perplexity.ai is logged in.`,
-            ),
-          ),
-        timeoutMs,
-      );
-    });
-    const result = await Promise.race([evalResult, timeoutPromise]).finally(() =>
-      clearTimeout(timeoutId),
-    );
-
-    const apiResult = result as { chunks: number[][]; conversationId?: string };
-    this.lastConversationId = apiResult.conversationId ?? undefined;
-
-    const fullBytes = apiResult.chunks.flatMap((c) => c);
-    const fullText = new TextDecoder().decode(new Uint8Array(fullBytes));
-    console.log(`[Perplexity Web Browser] Response length: ${fullBytes.length} bytes`);
-
-    // Parse SSE lines and extract content
-    const lines = fullText.split("\n").filter((line) => line.trim());
-    const parsedChunks: string[] = [];
-    for (const line of lines) {
-      try {
-        const data = JSON.parse(line);
-        const content =
-          data.text ?? data.content ?? data.delta ?? data.choices?.[0]?.delta?.content;
-        if (typeof content === "string" && content) {
-          parsedChunks.push(content);
-        }
-      } catch {
-        // Skip unparseable lines
       }
     }
 
-    let index = 0;
-    return new ReadableStream({
-      pull(controller) {
-        if (index < parsedChunks.length) {
-          const line = JSON.stringify({ contentDelta: parsedChunks[index] }) + "\n";
-          controller.enqueue(new TextEncoder().encode(line));
-          index++;
-        } else {
-          controller.close();
-        }
+    if (!lastText) {
+      throw new Error("Perplexity DOM: no response detected after submit");
+    }
+
+    console.log(`[Perplexity Web Browser] Got response: ${lastText.length} chars`);
+
+    // Return a ReadableStream with SSE format that perplexity-web-stream.ts can parse
+    const ssePayload = `data: ${JSON.stringify({ text: lastText })}\n\ndata: [DONE]\n\n`;
+    const sseBytes = new TextEncoder().encode(ssePayload);
+
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(sseBytes);
+        controller.close();
       },
     });
   }

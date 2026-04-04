@@ -222,13 +222,16 @@ export class ChatGPTWebClientBrowser {
       }
 
       const sendSelectors = [
+        'button[data-testid="send-button"]',
         'button[data-testid="send-message-button"]',
-        'button[aria-label*="Send"][disabled="false"]',
+        'button[aria-label="Send prompt"]',
+        'button[aria-label*="Send"]',
         'button[aria-label*="发送"]',
         'button[aria-label*="Submit"]',
         "button[type='submit']",
         "form button[type=submit]",
         "textarea+button",
+        "textarea ~ button",
       ];
       let sendBtn: HTMLElement | null = null;
       for (const sel of sendSelectors) {

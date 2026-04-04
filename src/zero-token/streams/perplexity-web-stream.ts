@@ -69,7 +69,25 @@ export function createPerplexityWebStreamFn(cookieOrJson: string): StreamFn {
           historyParts.push(`${role}: ${content}`);
         }
 
-        const prompt = historyParts.join("\n\n");
+        // Perplexity is a search engine, not a chat model.
+        // Only send the last user message to avoid overwhelming it with system prompts.
+        let prompt = "";
+        const lastUserMsg = [...messages].toReversed().find((m) => m.role === "user");
+        if (lastUserMsg) {
+          if (typeof lastUserMsg.content === "string") {
+            prompt = stripForWebProvider(lastUserMsg.content) || lastUserMsg.content;
+          } else if (Array.isArray(lastUserMsg.content)) {
+            prompt = (lastUserMsg.content as Array<{ type: string; text?: string }>)
+              .filter((p) => p.type === "text")
+              .map((p) => p.text || "")
+              .join("");
+            prompt = stripForWebProvider(prompt) || prompt;
+          }
+        }
+        if (!prompt) {
+          // Fallback to full history if no user message found
+          prompt = historyParts.join("\n\n");
+        }
         if (!prompt) {
           throw new Error("No message found to send to Perplexity API");
         }

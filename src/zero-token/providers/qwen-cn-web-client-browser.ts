@@ -268,6 +268,7 @@ export class QwenCNWebClientBrowser {
               "x-req-from": "pc_web",
             },
             body: JSON.stringify(bodyObj),
+            credentials: "include",
           });
 
           if (!res.ok) {

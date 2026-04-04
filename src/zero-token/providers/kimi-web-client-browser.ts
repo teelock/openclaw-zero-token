@@ -250,8 +250,22 @@ export class KimiWebClientBrowser {
                   obj.error.message || obj.error.code || JSON.stringify(obj.error).slice(0, 200),
               };
             }
-            if (obj.block?.text?.content && ["set", "append"].includes(obj.op || "")) {
+            // Collect text: only from "append" or "set" ops on assistant response blocks.
+            // "append" = incremental streaming chunk, "set" = full replacement.
+            // Skip other ops (like "init" which may echo back the user prompt).
+            const op = obj.op || "";
+            if (obj.block?.text?.content && (op === "append" || op === "set")) {
               texts.push(obj.block.text.content);
+            } else if (obj.text?.content && (op === "append" || op === "set")) {
+              texts.push(obj.text.content);
+            }
+            // If no op field at all but there's a "message" with role=assistant, take it
+            if (!op && obj.message?.role === "assistant" && obj.message?.blocks) {
+              for (const blk of obj.message.blocks) {
+                if (blk.text?.content) {
+                  texts.push(blk.text.content);
+                }
+              }
             }
             if (obj.done) {
               break;
