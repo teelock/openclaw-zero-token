@@ -146,9 +146,20 @@ export class PerplexityWebClientBrowser {
     // Perplexity's /search API now returns HTML, not SSE, so we interact via DOM.
     const page = this.page;
 
-    // Always navigate to home page for a fresh search
-    await page.goto("https://www.perplexity.ai/", { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(2000);
+    // Click "新建问题" (New Thread) to start a fresh search.
+    // This is more reliable than navigating to home page.
+    const newThreadBtn = await page.$(
+      'button:has-text("新建问题"), button:has-text("New Thread"), a:has-text("新建问题"), a:has-text("New Thread")',
+    );
+    if (newThreadBtn) {
+      await newThreadBtn.click();
+      console.log("[Perplexity Web Browser] Clicked 'New Thread' button");
+      await page.waitForTimeout(1500);
+    } else {
+      // Fallback: navigate to home page
+      await page.goto("https://www.perplexity.ai/", { waitUntil: "domcontentloaded" });
+      await page.waitForTimeout(2000);
+    }
 
     // Find and focus the input
     const inputSel = 'div[contenteditable="true"], [role="textbox"], textarea';
@@ -162,17 +173,23 @@ export class PerplexityWebClientBrowser {
     // Clear any residual text, then type message
     await page.keyboard.press("Meta+a");
     await page.keyboard.press("Backspace");
+    await page.waitForTimeout(200);
     await page.keyboard.type(message, { delay: 20 });
     await page.waitForTimeout(500);
+
+    // Record URL before submit to detect navigation
+    const urlBeforeSubmit = page.url();
 
     // Press Enter to submit
     await page.keyboard.press("Enter");
     console.log("[Perplexity Web Browser] DOM: typed message and pressed Enter");
 
-    // Wait for URL to change from home to a search result page
+    // Wait for URL to change (new search creates a new URL)
     try {
       await page.waitForURL(
-        (url) => url.pathname.startsWith("/search/") || url.pathname.startsWith("/c/"),
+        (url) =>
+          url.href !== urlBeforeSubmit &&
+          (url.pathname.startsWith("/search/") || url.pathname.startsWith("/c/")),
         { timeout: 15000 },
       );
       console.log("[Perplexity Web Browser] DOM: navigated to", page.url());
