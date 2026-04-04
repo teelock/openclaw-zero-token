@@ -324,8 +324,6 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
           // Parse SSE format: event: xxx\ndata: yyy
           // Current line could be event: or data:
           if (line.startsWith("event:")) {
-            const eventType = line.slice(6).trim();
-            console.log(`[QwenCNWebStream] SSE event type: ${eventType}`);
             return;
           }
 
@@ -340,42 +338,6 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
 
           try {
             const data = JSON.parse(dataStr);
-            console.log(`[QwenCNWebStream] Parsed data keys: ${Object.keys(data).join(", ")}`);
-            if (Object.keys(data).length > 0) {
-              console.log(
-                `[QwenCNWebStream] Data sample: ${JSON.stringify(data).substring(0, 200)}...`,
-              );
-            }
-            // Deep debug for data.data
-            if (data.data && typeof data.data === "object") {
-              console.log(`[QwenCNWebStream] data.data keys: ${Object.keys(data.data).join(", ")}`);
-              if (data.data.messages && Array.isArray(data.data.messages)) {
-                console.log(
-                  `[QwenCNWebStream] messages array length: ${data.data.messages.length}`,
-                );
-                for (let i = 0; i < data.data.messages.length; i++) {
-                  const msg = data.data.messages[i];
-                  console.log(
-                    `[QwenCNWebStream] messages[${i}] keys: ${Object.keys(msg).join(", ")}`,
-                  );
-                  if (msg.content) {
-                    console.log(
-                      `[QwenCNWebStream] messages[${i}].content: "${String(msg.content).substring(0, 100)}"`,
-                    );
-                  }
-                  if (msg.text) {
-                    console.log(
-                      `[QwenCNWebStream] messages[${i}].text: "${String(msg.text).substring(0, 100)}"`,
-                    );
-                  }
-                  if (msg.delta) {
-                    console.log(
-                      `[QwenCNWebStream] messages[${i}].delta: "${String(msg.delta).substring(0, 100)}"`,
-                    );
-                  }
-                }
-              }
-            }
 
             // Extract conversation ID
             if (data.sessionId) {
@@ -390,35 +352,6 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
             console.log(
               `[QwenCNWebStream] Debug data.communication: ${JSON.stringify(data.communication)?.substring(0, 200)}`,
             );
-
-            // Debug messages array if present
-            if (
-              data.data?.messages &&
-              Array.isArray(data.data.messages) &&
-              data.data.messages.length > 0
-            ) {
-              console.log(
-                `[QwenCNWebStream] Debug messages[0]: ${JSON.stringify(data.data.messages[0])?.substring(0, 300)}`,
-              );
-              // Check for content in various possible locations
-              const msg = data.data.messages[0];
-              console.log(`[QwenCNWebStream] Debug msg keys: ${Object.keys(msg).join(", ")}`);
-              if (msg.content) {
-                console.log(
-                  `[QwenCNWebStream] Debug msg.content: ${typeof msg.content} = "${String(msg.content).substring(0, 100)}"`,
-                );
-              }
-              if (msg.text) {
-                console.log(
-                  `[QwenCNWebStream] Debug msg.text: ${typeof msg.text} = "${String(msg.text).substring(0, 100)}"`,
-                );
-              }
-              if (msg.delta) {
-                console.log(
-                  `[QwenCNWebStream] Debug msg.delta: ${typeof msg.delta} = "${String(msg.delta).substring(0, 100)}"`,
-                );
-              }
-            }
 
             let delta = "";
             // Qwen CN Web specific extraction
@@ -449,14 +382,22 @@ export function createQwenCNWebStreamFn(cookieOrJson: string): StreamFn {
                 delta = data.text ?? data.content ?? data.delta;
               }
             }
-            console.log(`[QwenCNWebStream] Delta extracted: ${typeof delta}, value="${delta}"`);
             if (typeof delta === "string" && delta) {
-              // Avoid duplicate content from multiple SSE events
-              if (delta !== lastExtractedContent) {
+              // Qwen CN sends accumulated content (not incremental deltas).
+              // Only emit the new portion to avoid repetition.
+              if (
+                delta.length > lastExtractedContent.length &&
+                delta.startsWith(lastExtractedContent)
+              ) {
+                const newPart = delta.slice(lastExtractedContent.length);
+                lastExtractedContent = delta;
+                if (newPart) {
+                  pushDelta(newPart);
+                }
+              } else if (delta !== lastExtractedContent) {
+                // Completely different content — emit as-is (new message)
                 lastExtractedContent = delta;
                 pushDelta(delta);
-              } else {
-                console.log(`[QwenCNWebStream] Skipping duplicate content`);
               }
             }
           } catch {
