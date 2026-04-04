@@ -126,77 +126,35 @@ export class GeminiWebClientBrowser {
       throw new Error("GeminiWebClientBrowser not initialized");
     }
 
-    const sent = await this.page.evaluate((msg: string) => {
-      // 输入框：优先匹配 Gemini 占位符，再通用选择器（参考 Scrapling 多策略）
-      const inputSelectors = [
-        'textarea[placeholder*="Gemini"]',
-        'textarea[placeholder*="问问"]',
-        'textarea[aria-label*="prompt"]',
-        'textarea[aria-label*="message"]',
-        "textarea",
-        'div[role="textbox"]',
-        '[contenteditable="true"][aria-label*="message"]',
-      ];
-      let inputEl: HTMLElement | null = null;
-      for (const sel of inputSelectors) {
-        const el = document.querySelector(sel);
-        if (el && (el as HTMLElement).offsetParent !== null) {
-          inputEl = el as HTMLElement;
-          break;
-        }
-      }
-      if (!inputEl) {
-        return { ok: false, error: "找不到输入框" };
-      }
+    const page = this.page;
 
-      inputEl.focus();
-      if (inputEl.tagName === "TEXTAREA" || (inputEl as HTMLInputElement).tagName === "INPUT") {
-        (inputEl as HTMLTextAreaElement).value = msg;
-        (inputEl as HTMLTextAreaElement).dispatchEvent(new Event("input", { bubbles: true }));
-      } else {
-        inputEl.innerText = msg;
-        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-        inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+    // Find input using Playwright selector
+    const inputSelectors = [
+      'textarea[placeholder*="Gemini"]',
+      'textarea[placeholder*="问问"]',
+      'textarea[aria-label*="prompt"]',
+      "textarea",
+      'div[role="textbox"]',
+      '[contenteditable="true"]',
+    ];
+    let inputHandle = null;
+    for (const sel of inputSelectors) {
+      inputHandle = await page.$(sel);
+      if (inputHandle) {
+        break;
       }
-
-      const sendSelectors = [
-        'button[aria-label*="提交"], button[aria-label*="发送"]',
-        'button[aria-label*="Run"]',
-        '[aria-label*="submit"], [aria-label*="Submit"]',
-        "button[type='submit']",
-        "form button[type=submit]",
-      ];
-      let sendBtn: HTMLElement | null = null;
-      for (const sel of sendSelectors) {
-        sendBtn = document.querySelector(sel);
-        if (sendBtn && !(sendBtn as HTMLButtonElement).disabled) {
-          break;
-        }
-      }
-      if (sendBtn) {
-        sendBtn.click();
-        return { ok: true };
-      }
-      const formSubmit = inputEl.closest("form")?.querySelector("button[type=submit]");
-      if (formSubmit) {
-        (formSubmit as HTMLElement).click();
-        return { ok: true };
-      }
-      inputEl.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "Enter",
-          code: "Enter",
-          keyCode: 13,
-          which: 13,
-          bubbles: true,
-        }),
-      );
-      return { ok: true };
-    }, params.message);
-
-    if (!sent.ok) {
-      throw new Error(`Gemini DOM 模拟失败: ${sent.error}`);
     }
+    if (!inputHandle) {
+      throw new Error("Gemini DOM 模拟失败: 找不到输入框");
+    }
+
+    // Use Playwright native APIs for reliable input
+    await inputHandle.click();
+    await page.waitForTimeout(300);
+    await page.keyboard.type(params.message, { delay: 20 });
+    await page.waitForTimeout(300);
+    await page.keyboard.press("Enter");
+    console.log("[Gemini Web Browser] DOM: typed message and pressed Enter");
 
     console.log("[Gemini Web Browser] DOM 模拟已发送，轮询等待回复...");
 
