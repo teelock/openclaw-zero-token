@@ -245,7 +245,7 @@ node openclaw.mjs onboard
 # To add more providers later, just run ./onboard.sh webauth again.
 ```
 
-When the wizard prints **Authorization complete** (or per-provider success lines), you are finished: the shell prompt should return. If the Node process **does not exit** (known issue with some browser CDP sessions), press **Ctrl+C**—credentials and config updates are already written by then.
+When the wizard prints **Authorization complete** (or per-provider success lines), the process will automatically exit and return you to the shell prompt.
 
 Follow the prompts (choose e.g. **DeepSeek (Browser Login)** and **Automated Login (Recommended)**).  
 To add more providers later, just run `./onboard.sh webauth` again.
