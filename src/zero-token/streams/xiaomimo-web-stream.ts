@@ -109,6 +109,8 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
         let currentToolName = "";
         let currentToolIndex = 0;
         let tagBuffer = "";
+        let currentSseEvent = "";
+        let insideThink = false;
 
         const emitDelta = (
           type: "text" | "thinking" | "toolcall",
@@ -321,6 +323,8 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
             if (event === "error") {
               currentMode = "error";
             }
+            // Track current SSE event type to skip non-message events
+            currentSseEvent = event;
             return;
           }
 
@@ -340,15 +344,38 @@ export function createXiaomiMimoWebStreamFn(cookieOrJson: string): StreamFn {
               sessionMap.set(sessionKey, data.sessionId);
             }
 
-            // MiMo 格式: {"type":"text","content":"..."}
+            // Skip non-message events (dialogId, etc.)
+            if (currentSseEvent && currentSseEvent !== "message") {
+              return;
+            }
+
+            // MiMo 格式: {"type":"text","content":"<think>...</think>actual answer"}
             if (data.content && typeof data.content === "string") {
-              // MiMo sends full accumulated content in each event — only emit the new portion
-              if (data.content.length > accumulatedContent.length) {
-                const newDelta = data.content.slice(accumulatedContent.length);
-                accumulatedContent = data.content;
-                if (newDelta) {
-                  pushDelta(newDelta);
+              let content = data.content;
+
+              // Strip <think>...</think> blocks (MiMo reasoning)
+              // Handle both complete and partial <think> tags in accumulated content
+              if (content.includes("<think>")) {
+                insideThink = true;
+              }
+              if (insideThink) {
+                const thinkEnd = content.indexOf("</think>");
+                if (thinkEnd !== -1) {
+                  // Thinking ended — only keep content after </think>
+                  content = content.slice(thinkEnd + 8);
+                  insideThink = false;
+                } else {
+                  // Still inside thinking — skip entirely
+                  return;
                 }
+              }
+
+              // Also strip null bytes that MiMo sometimes inserts
+              // eslint-disable-next-line no-control-regex -- MiMo inserts null bytes
+              content = content.replace(/\x00/g, "");
+
+              if (content) {
+                pushDelta(content);
               }
               return;
             }
