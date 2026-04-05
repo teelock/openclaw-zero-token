@@ -21,14 +21,85 @@ import { extractToolCall } from "./web-tool-parser.js";
 import { shouldInjectToolPrompt, getToolPrompt } from "./web-tool-prompt.js";
 
 /**
+ * Quick keyword check: does this message likely need tool use?
+ * Only inject tool prompt when keywords suggest a tool action,
+ * keeping normal chat messages short to reduce ban risk.
+ */
+function needsToolInjection(message: string): boolean {
+  const lower = message.toLowerCase();
+  const keywords = [
+    // File operations
+    "文件",
+    "file",
+    "read",
+    "write",
+    "创建",
+    "写入",
+    "读取",
+    "打开",
+    "保存",
+    "桌面",
+    "desktop",
+    "目录",
+    "directory",
+    "folder",
+    "文件夹",
+    // Command execution
+    "执行",
+    "运行",
+    "命令",
+    "command",
+    "run",
+    "exec",
+    "terminal",
+    "终端",
+    "shell",
+    // Web operations
+    "搜索",
+    "search",
+    "查找",
+    "查询",
+    "fetch",
+    "抓取",
+    "网页",
+    "url",
+    "http",
+    "天气",
+    "weather",
+    "新闻",
+    "news",
+    // Message
+    "发送",
+    "send",
+    "消息",
+    "message",
+    "通知",
+    "notify",
+    // General tool hints
+    "帮我",
+    "help me",
+    "查看",
+    "check",
+    "look",
+    "看看",
+    "show",
+    "下载",
+    "download",
+    "安装",
+    "install",
+    "更新",
+    "update",
+  ];
+  return keywords.some((kw) => lower.includes(kw));
+}
+
+/**
  * Wrap a web stream function with tool calling middleware.
  * - Rewrites context: only sends last user message + optional tool prompt
  * - Parses response: extracts tool_call JSON → emits ToolCall events
  */
 export function wrapWithToolCalling(streamFn: StreamFn, api: string): StreamFn {
   return (model, context, options) => {
-    const injectTools = shouldInjectToolPrompt(api) && (context.tools?.length ?? 0) > 0;
-
     // --- Input rewriting ---
     const messages = context.messages || [];
     const lastMsg = messages[messages.length - 1];
@@ -80,6 +151,12 @@ export function wrapWithToolCalling(streamFn: StreamFn, api: string): StreamFn {
     if (!userMessage) {
       return streamFn(model, context, options);
     }
+
+    // Only inject tool prompt when the message likely needs tool use.
+    // This reduces ban risk by keeping most messages short and natural.
+    const hasAgentTools = (context.tools?.length ?? 0) > 0;
+    const injectTools =
+      shouldInjectToolPrompt(api) && hasAgentTools && needsToolInjection(userMessage);
 
     // Build the prompt: tool prompt (if applicable) + user message
     const prompt = injectTools ? getToolPrompt(api) + userMessage : userMessage;
