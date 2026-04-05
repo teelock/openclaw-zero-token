@@ -167,8 +167,8 @@ src/zero-token/tool-calling/
 | Xiaomi MiMo | ✅ | ✅ | web_search 成功 |
 | Doubao | ❌ | ⚠️ | 不理解工具提示词，回复有重复 |
 | GLM | ✅ | ✅ | 工具调用和普通问答均通过 |
-| GLM Intl | ❌ | ⚠️ | thinking 泄露 |
+| GLM Intl | ✅ | ✅ | 工具调用和普通问答均通过 |
 | Perplexity | — | ✅ | 搜索引擎，不注入工具 |
 
-**10/13 支持工具调用**，3 个不支持（Doubao、GLM Intl、Perplexity）。
+**11/13 支持工具调用**，2 个不支持（Doubao、Perplexity）。
 ````
