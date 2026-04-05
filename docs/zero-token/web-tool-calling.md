@@ -166,9 +166,9 @@ src/zero-token/tool-calling/
 | Gemini | ✅ | ⚠️ | web_search 触发成功，DOM 抓取偶尔不稳定 |
 | Xiaomi MiMo | ✅ | ✅ | web_search 成功 |
 | Doubao | ❌ | ⚠️ | 不理解工具提示词，回复有重复 |
-| GLM | ❌ | ❌ | 经常无回复（已知问题） |
+| GLM | ✅ | ✅ | 工具调用和普通问答均通过 |
 | GLM Intl | ❌ | ⚠️ | thinking 泄露 |
 | Perplexity | — | ✅ | 搜索引擎，不注入工具 |
 
-**9/13 支持工具调用**，4 个不支持（Doubao、GLM、GLM Intl、Perplexity）。
+**10/13 支持工具调用**，3 个不支持（Doubao、GLM Intl、Perplexity）。
 ````
