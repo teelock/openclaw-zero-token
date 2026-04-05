@@ -113,14 +113,10 @@ export function wrapWithToolCalling(streamFn: StreamFn, api: string): StreamFn {
         let toolCallEmitted = false;
 
         for await (const event of originalStream) {
-          // Accumulate text content
-          if (event.type === "text_delta") {
-            accumulatedText += event.delta;
-          }
-
-          // On stream completion, check for tool calls
+          // On stream completion, check final message for tool calls
           if (event.type === "done") {
-            // Also check final message content
+            // Use final message content (already deduplicated by stream parser)
+            // instead of accumulating text_delta events which may contain duplicates
             const finalMsg = event.message;
             if (finalMsg && Array.isArray(finalMsg.content)) {
               for (const part of finalMsg.content) {
