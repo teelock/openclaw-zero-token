@@ -65,23 +65,27 @@ OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw
 
 ### Tool calling
 
-All supported models can call **local tools** (`exec`, `read_file`, `list_dir`, `browser`, `apply_patch`, etc.) so that agents can run commands, read/write workspace files, and automate the browser.
+Web models can call **local tools** (`web_search`, `web_fetch`, `exec`, `read`, `write`, `message`) via prompt-injected tool definitions. Based on [arXiv:2407.04997](https://arxiv.org/html/2407.04997v1) and [ComfyUI LLM Party](https://github.com/heshengtao/comfyui_LLM_party) (5k+ stars).
 
-| Provider type                                                                           | Tools | How                                                                                                                                                                                               |
-| --------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Web — native API (DeepSeek, Claude, GLM)                                                | ✅    | Upstream native `tools` / `tool_calls`                                                                                                                                                            |
-| Web — prompt-injected (Kimi, ChatGPT, Gemini, Grok, Qwen, Qwen CN, Doubao, Xiaomi MiMo) | ✅    | Tool definitions injected via prompt engineering ([paper](https://arxiv.org/html/2407.04997v1), [ComfyUI LLM Party](https://github.com/heshengtao/comfyui_LLM_party)); response parsed with regex |
-| Web — search engine (Perplexity)                                                        | ❌    | Search only, no tool calling                                                                                                                                                                      |
-| OpenRouter / OpenAI-compatible APIs                                                     | ✅    | Uses native `tools` / `tool_calls`                                                                                                                                                                |
-| Ollama                                                                                  | ✅    | Uses native `/api/chat` tools                                                                                                                                                                     |
+**11/13 web models support tool calling** (verified):
 
-**Web model tool calling** works through a unified middleware (`src/zero-token/tool-calling/`) that:
+| Model       | Tool Calling | Chat | Notes                               |
+| ----------- | ------------ | ---- | ----------------------------------- |
+| DeepSeek    | ✅           | ✅   | exec: list desktop files            |
+| Kimi        | ✅           | ✅   | All 6 tools verified                |
+| Claude      | ✅           | ✅   | web_search OK                       |
+| ChatGPT     | ✅           | ✅   | web_search OK                       |
+| Qwen CN     | ✅           | ✅   | web_search OK                       |
+| Qwen Web    | ✅           | ✅   | web_search OK                       |
+| Grok        | ✅           | ✅   | web_search OK                       |
+| Gemini      | ✅           | ⚠️   | web_search OK, DOM polling unstable |
+| Xiaomi MiMo | ✅           | ✅   | web_search OK                       |
+| GLM         | ✅           | ✅   | Tool calling and chat OK            |
+| GLM Intl    | ✅           | ✅   | Tool calling and chat OK            |
+| Doubao      | ❌           | ⚠️   | Excluded (stream parser limitation) |
+| Perplexity  | —            | ✅   | Search engine, no tool injection    |
 
-1. Injects 6 core tool definitions (~780 chars) into the user message
-2. Parses `tool_json` blocks from the model response
-3. Executes the tool and feeds the result back to the model
-
-Supported tools: `web_search`, `web_fetch`, `exec`, `read`, `write`, `message`.
+The middleware (`src/zero-token/tool-calling/`) only injects tool prompts when keywords in the user message suggest a tool action — normal chat stays short to reduce ban risk.
 
 Agent file access is restricted by the configured **workspace** directory (see `agents.defaults.workspace`).
 
