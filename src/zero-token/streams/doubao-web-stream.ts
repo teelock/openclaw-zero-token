@@ -73,8 +73,6 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
         const reader = responseStream.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-        // Doubao sends accumulated content (not deltas) — track to emit only new parts
-        let lastAccumulatedContent = "";
 
         const indexMap = new Map<string, number>();
         let nextIndex = 0;
@@ -433,22 +431,8 @@ export function createDoubaoWebStreamFn(cookieOrJson: string): StreamFn {
             }
 
             if (typeof delta === "string" && delta) {
-              // Doubao sends accumulated content, not incremental deltas.
-              // Only emit the new portion to avoid repetition.
-              if (
-                delta.length > lastAccumulatedContent.length &&
-                delta.startsWith(lastAccumulatedContent)
-              ) {
-                const newPart = delta.slice(lastAccumulatedContent.length);
-                lastAccumulatedContent = delta;
-                if (newPart) {
-                  pushDelta(newPart);
-                }
-              } else if (delta !== lastAccumulatedContent) {
-                // Completely different content — emit as-is
-                lastAccumulatedContent = delta;
-                pushDelta(delta);
-              }
+              // Doubao sends incremental deltas (each event = new chars only).
+              pushDelta(delta);
             }
           } catch {
             // Ignore parse errors
