@@ -10,27 +10,41 @@ import { toolDefsJson } from "./web-tool-defs.js";
 
 const TOOL_DEFS = toolDefsJson();
 
-const EN_TEMPLATE = `Tools: ${TOOL_DEFS}
-Use tool? Reply ONLY: \`\`\`tool_json
-{"tool":"name","parameters":{"k":"v"}}
+// Example-based teaching (key insight from arXiv:2407.04997 and ComfyUI LLM Party):
+// A trivial example teaches the model the output format without confusing it with real tools.
+const TOOL_EXAMPLE = `Example: to add 1 to number 5, return:
+\`\`\`tool_json
+{"tool":"plus_one","parameters":{"number":"5"}}
 \`\`\`
-No tool? Answer directly.
+(plus_one is just an example, not a real tool)`;
+
+const EN_TEMPLATE = `Tools: ${TOOL_DEFS}
+
+${TOOL_EXAMPLE}
+
+Your actual tools are listed above. To use one, reply ONLY with the tool_json block.
+No tool needed? Answer directly.
 
 `;
 
 const EN_STRICT_TEMPLATE = `Tools: ${TOOL_DEFS}
-Use tool? Reply ONLY: \`\`\`tool_json
-{"tool":"name","parameters":{"k":"v"}}
-\`\`\`
-No extra text. No tool? Answer directly.
+
+${TOOL_EXAMPLE}
+
+Your actual tools are listed above. To use one, reply ONLY with the tool_json block. No extra text.
+No tool needed? Answer directly.
 
 `;
 
 const CN_TEMPLATE = `工具: ${TOOL_DEFS}
-用工具则只回复: \`\`\`tool_json
-{"tool":"名","parameters":{"键":"值"}}
+
+示例: 要给数字5加1，返回:
+\`\`\`tool_json
+{"tool":"plus_one","parameters":{"number":"5"}}
 \`\`\`
-不用则直接答。
+(plus_one仅为示例，非真实工具)
+
+你的真实工具见上方列表。需要时只回复tool_json块。不需要则直接回答。
 
 `;
 
