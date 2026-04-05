@@ -67,12 +67,21 @@ OpenClaw Zero Token is a fork of [OpenClaw](https://github.com/openclaw/openclaw
 
 All supported models can call **local tools** (`exec`, `read_file`, `list_dir`, `browser`, `apply_patch`, etc.) so that agents can run commands, read/write workspace files, and automate the browser.
 
-| Provider type                                                            | Tools | Notes                                                                  |
-| ------------------------------------------------------------------------ | ----- | ---------------------------------------------------------------------- |
-| Web (DeepSeek, Qwen, Kimi, Claude, Doubao, GLM, Grok, Xiaomi MiMo, etc.) | ✅    | Inject XML tool descriptions in `system`, parse `<tool_call>` streams. |
-| ChatGPT Web / Gemini Web / Manus API                                     | ✅    | Similar via tool descriptions + multi-turn context + `<tool_call>`.    |
-| OpenRouter / OpenAI-compatible APIs                                      | ✅    | Uses native `tools` / `tool_calls`.                                    |
-| Ollama                                                                   | ✅    | Uses native `/api/chat` tools.                                         |
+| Provider type                                                                           | Tools | How                                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Web — native API (DeepSeek, Claude, GLM)                                                | ✅    | Upstream native `tools` / `tool_calls`                                                                                                                                                            |
+| Web — prompt-injected (Kimi, ChatGPT, Gemini, Grok, Qwen, Qwen CN, Doubao, Xiaomi MiMo) | ✅    | Tool definitions injected via prompt engineering ([paper](https://arxiv.org/html/2407.04997v1), [ComfyUI LLM Party](https://github.com/heshengtao/comfyui_LLM_party)); response parsed with regex |
+| Web — search engine (Perplexity)                                                        | ❌    | Search only, no tool calling                                                                                                                                                                      |
+| OpenRouter / OpenAI-compatible APIs                                                     | ✅    | Uses native `tools` / `tool_calls`                                                                                                                                                                |
+| Ollama                                                                                  | ✅    | Uses native `/api/chat` tools                                                                                                                                                                     |
+
+**Web model tool calling** works through a unified middleware (`src/zero-token/tool-calling/`) that:
+
+1. Injects 6 core tool definitions (~780 chars) into the user message
+2. Parses `tool_json` blocks from the model response
+3. Executes the tool and feeds the result back to the model
+
+Supported tools: `web_search`, `web_fetch`, `exec`, `read`, `write`, `message`.
 
 Agent file access is restricted by the configured **workspace** directory (see `agents.defaults.workspace`).
 

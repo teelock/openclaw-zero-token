@@ -40,17 +40,17 @@ src/zero-token/tool-calling/
 
 Tool calling prompt injection is applied to **DOM-simulation models** only:
 
-| Model       | Template Style                        | Status         |
-| ----------- | ------------------------------------- | -------------- |
-| ChatGPT     | JSON with ```tool_json                | Verified       |
-| Kimi        | JSON with ```tool_json                | Verified       |
-| Gemini      | JSON with ```tool_json                | Not yet tested |
-| Grok        | JSON with ```tool_json                | Not yet tested |
-| Qwen Web    | JSON with ```tool_json                | Not yet tested |
-| Qwen CN     | JSON with ```tool_json                | Not yet tested |
-| Doubao      | JSON with ```tool_json                | Not yet tested |
-| Xiaomi MiMo | JSON with ```tool_json                | Not yet tested |
-| Perplexity  | Excluded (search engine, no tool use) |
+| Model       | Template  | Tool Call  | Result Feedback | Status                   |
+| ----------- | --------- | ---------- | --------------- | ------------------------ |
+| Kimi        | CN        | web_search | 实时天气        | PASS                     |
+| ChatGPT     | EN strict | web_search | 天气数据        | PASS                     |
+| Gemini      | EN        | web_search | 触发成功        | PASS                     |
+| Grok        | EN        | web_search | 实时天气        | PASS                     |
+| Qwen CN     | CN        | web_search | 18°C 阴天       | PASS                     |
+| Qwen Web    | EN        | web_search | 天气数据        | PASS                     |
+| Doubao      | CN        | web_search | 天气数据        | PASS                     |
+| Xiaomi MiMo | CN        | web_search | 实时天气        | PASS                     |
+| Perplexity  | —         | —          | —               | Excluded (search engine) |
 
 **Not wrapped** (these use raw API with native tool calling):
 
