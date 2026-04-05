@@ -154,17 +154,21 @@ src/zero-token/tool-calling/
 
 ## 已验证模型
 
-| 模型 | web_search | exec | read | write | web_fetch | 直答 |
-|------|-----------|------|------|-------|-----------|------|
-| Kimi | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| DeepSeek | ✅ | ✅ | - | - | - | ✅ |
-| ChatGPT | ✅ | - | - | - | - | ✅ |
-| Gemini | ✅ | - | - | - | - | ✅ |
-| Grok | ✅ | - | - | - | - | ✅ |
-| Qwen CN | ✅ | - | - | - | - | ✅ |
-| Qwen Web | ✅ | - | - | - | - | ✅ |
-| Doubao | ✅ | - | - | - | - | ✅ |
-| Xiaomi MiMo | ✅ | - | - | - | - | ✅ |
+| 模型 | 工具调用 | 普通问答 | 备注 |
+|------|---------|---------|------|
+| DeepSeek | ✅ | ✅ | exec 列桌面文件成功 |
+| Kimi | ✅ | ✅ | 6 个工具全部验证通过 |
+| Claude | ✅ | ✅ | web_search 成功 |
+| ChatGPT | ✅ | ✅ | web_search 成功 |
+| Qwen CN | ✅ | ✅ | web_search 成功 |
+| Qwen Web | ✅ | ✅ | web_search 成功 |
+| Grok | ✅ | ✅ | web_search 成功 |
+| Gemini | ✅ | ⚠️ | web_search 触发成功，DOM 抓取偶尔不稳定 |
+| Xiaomi MiMo | ✅ | ✅ | web_search 成功 |
+| Doubao | ❌ | ⚠️ | 不理解工具提示词，回复有重复 |
+| GLM | ❌ | ❌ | 经常无回复（已知问题） |
+| GLM Intl | ❌ | ⚠️ | thinking 泄露 |
+| Perplexity | — | ✅ | 搜索引擎，不注入工具 |
 
-`-` 表示未测试（非不支持）。Kimi 全部 6 个工具已验证通过。
+**9/13 支持工具调用**，4 个不支持（Doubao、GLM、GLM Intl、Perplexity）。
 ````
