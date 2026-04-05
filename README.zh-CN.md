@@ -245,72 +245,48 @@ AskOnce 一次提问多模型回答
 
 ### 安装说明
 
-#### 克隆仓库
+#### 克隆并编译
 
 ```bash
 git clone https://github.com/linuxhsj/openclaw-zero-token.git
-```
-
-#### 进入项目
-
-```bash
 cd openclaw-zero-token
-```
-
-#### 安装依赖
-
-```bash
 pnpm install
-```
-
-#### 启动项目
-
-#### 步骤 1：编译
-
-```bash
 pnpm build
 pnpm ui:build
 ```
 
-#### 步骤 2：配置认证
+#### 配置认证
 
 ```bash
-# 拷贝配置文件
-# 拷贝配置文件（可选：若不存在时才需要）
-
-首次运行时,onboard.sh 会提示是否复制配置文件，选择是即可.会将 .openclaw-state.example/openclaw.json 复制到 .openclaw-upstream-state/openclaw.json；非首次运行时，不需要复制这些配置文件.
-
-
-# 启动浏览器调试模式
+# 启动浏览器调试模式（保持此终端不要关闭）
 ./start-chrome-debug.sh
-注意不要关闭这个终端，否则后续步骤会失败，要一直打开它
 
+# 在打开的浏览器标签页中登录各 Web 模型
+# （DeepSeek、千问、Kimi、Claude、ChatGPT、Gemini、Grok 等）
 
-# 登录各模型网页
-以 DeepSeek 为例，登录 https://chat.deepseek.com/
-
-
-# 运行配置向导
-新开一个终端执行（不要和上一步在同一个终端，因为./start-chrome-debug.sh终端要一直开着）
+# 新开一个终端，运行授权向导
 ./onboard.sh webauth
-# 或使用编译后的版本
-node openclaw.mjs onboard
-
-# 选择认证方式
-以deepseek为例
-? Auth provider: DeepSeek (Browser Login)
-
-# 选择登录模式
-? DeepSeek Auth Mode:
-  > Automated Login (Recommended)  # 自动捕获凭证
-
-
-deepseek授权的时候，如果一直显示等待，记得刷新下网页
-
-看到认证成功就可以了，如果要增加其他模型，再运行一次 ./onboard.sh webauth
-
-当出现「授权完成」等结束提示后，进程会自动退出并回到 shell 提示符。
 ```
+
+#### 启动服务
+
+```bash
+./server.sh
+```
+
+打开终端输出的 Web UI 地址即可使用。
+
+#### 完全重建（遇到 `ERR_MODULE_NOT_FOUND` 时）
+
+```bash
+rm -rf dist dist-runtime node_modules
+pnpm install
+pnpm build
+pnpm ui:build
+./server.sh restart
+```
+
+> **注意：** 始终使用 `pnpm build`（不要用 `npm run build`）。如果遇到 `Cannot find module dist/xxx-HASH.js` 报错，按上述完全重建流程操作。
 
 #### 步骤 3：启动 Gateway
 
