@@ -10,37 +10,27 @@ import { toolDefsJson } from "./web-tool-defs.js";
 
 const TOOL_DEFS = toolDefsJson();
 
-const EN_TEMPLATE = `You have these tools:
-${TOOL_DEFS}
-
-To use a tool, reply ONLY with:
-\`\`\`tool_json
-{"tool":"name","parameters":{"key":"value"}}
+const EN_TEMPLATE = `Tools: ${TOOL_DEFS}
+Use tool? Reply ONLY: \`\`\`tool_json
+{"tool":"name","parameters":{"k":"v"}}
 \`\`\`
-If no tool needed, answer directly.
+No tool? Answer directly.
 
 `;
 
-const EN_STRICT_TEMPLATE = `You have these tools:
-${TOOL_DEFS}
-
-To use a tool, reply ONLY with:
-\`\`\`tool_json
-{"tool":"name","parameters":{"key":"value"}}
+const EN_STRICT_TEMPLATE = `Tools: ${TOOL_DEFS}
+Use tool? Reply ONLY: \`\`\`tool_json
+{"tool":"name","parameters":{"k":"v"}}
 \`\`\`
-Do not add any text before or after the JSON block when using a tool.
-If no tool needed, answer directly.
+No extra text. No tool? Answer directly.
 
 `;
 
-const CN_TEMPLATE = `你可以使用以下工具:
-${TOOL_DEFS}
-
-需要使用工具时，只需回复:
-\`\`\`tool_json
-{"tool":"工具名","parameters":{"参数名":"参数值"}}
+const CN_TEMPLATE = `工具: ${TOOL_DEFS}
+用工具则只回复: \`\`\`tool_json
+{"tool":"名","parameters":{"键":"值"}}
 \`\`\`
-不需要工具则直接回答。
+不用则直接答。
 
 `;
 

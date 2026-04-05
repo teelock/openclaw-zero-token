@@ -10,20 +10,12 @@ export interface WebToolDef {
 }
 
 export const WEB_CORE_TOOLS: WebToolDef[] = [
-  { name: "web_search", description: "Search the web", parameters: { query: "search query" } },
-  { name: "web_fetch", description: "Fetch URL content", parameters: { url: "URL to fetch" } },
-  { name: "exec", description: "Run shell command", parameters: { command: "shell command" } },
-  { name: "read", description: "Read file contents", parameters: { path: "file path" } },
-  {
-    name: "write",
-    description: "Write to file",
-    parameters: { path: "file path", content: "file content" },
-  },
-  {
-    name: "message",
-    description: "Send message",
-    parameters: { text: "message text", channel: "channel name" },
-  },
+  { name: "web_search", description: "Search web", parameters: { query: "string" } },
+  { name: "web_fetch", description: "Fetch URL", parameters: { url: "string" } },
+  { name: "exec", description: "Run command", parameters: { command: "string" } },
+  { name: "read", description: "Read file", parameters: { path: "string" } },
+  { name: "write", description: "Write file", parameters: { path: "string", content: "string" } },
+  { name: "message", description: "Send msg", parameters: { text: "string", channel: "string" } },
 ];
 
 /** Compact JSON string of tool definitions */
