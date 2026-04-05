@@ -48,14 +48,22 @@ const CN_TEMPLATE = `工具: ${TOOL_DEFS}
 
 `;
 
-/** Models that use raw API and have native tool calling — skip prompt injection */
-const NATIVE_TOOL_MODELS = new Set(["claude-web", "deepseek-web", "glm-web"]);
+/** No web models skip prompt injection — web interfaces don't pass native tools.
+ *  Even DeepSeek/Claude/GLM need prompt injection when accessed via browser. */
+const NATIVE_TOOL_MODELS = new Set<string>();
 
 /** Models excluded from tool calling entirely */
 const EXCLUDED_MODELS = new Set(["perplexity-web"]);
 
 /** Chinese-language models */
-const CN_MODELS = new Set(["doubao-web", "qwen-cn-web", "kimi-web", "xiaomimo-web"]);
+const CN_MODELS = new Set([
+  "deepseek-web",
+  "doubao-web",
+  "qwen-cn-web",
+  "kimi-web",
+  "glm-web",
+  "xiaomimo-web",
+]);
 
 /** Models that tend to add extra text after JSON */
 const STRICT_MODELS = new Set(["chatgpt-web"]);
