@@ -13,7 +13,8 @@ export interface ParsedToolCall {
 }
 
 // Fenced code block format (most reliable)
-const FENCED_REGEX = /```tool_json\s*\n?\s*(\{[\s\S]*?\})\s*\n?\s*```/;
+// Match both complete {"tool":...}} and truncated {"tool":...} (missing outer brace)
+const FENCED_REGEX = /```tool_json\s*\n?\s*(\{[\s\S]*?\})\}?\s*\n?\s*```/;
 
 // Bare JSON format
 const BARE_JSON_REGEX = /\{\s*"tool"\s*:\s*"([^"]+)"\s*,\s*"parameters"\s*:\s*(\{[\s\S]*?\})\s*\}/;
@@ -45,12 +46,30 @@ export function extractToolCall(text: string): ParsedToolCall | null {
     return parseToolJson(xml[1]);
   }
 
+  // 4. Fuzzy repair: if text looks like a truncated tool_call JSON, try to fix it.
+  // Common issue: SSE stream drops the final "}" → {"tool":"exec","parameters":{"command":"ls"}
+  const fuzzyMatch = text.match(/\{\s*"tool"\s*:\s*"([^"]+)"\s*,\s*"parameters"\s*:\s*\{([^}]*)\}/);
+  if (fuzzyMatch) {
+    // We matched inner params but might be missing outer }
+    const repaired = `{"tool":"${fuzzyMatch[1]}","parameters":{${fuzzyMatch[2]}}}`;
+    const result = parseToolJson(repaired);
+    if (result) {
+      return result;
+    }
+  }
+
   return null;
 }
 
 function parseToolJson(raw: string): ParsedToolCall | null {
   try {
-    const cleaned = raw.trim();
+    let cleaned = raw.trim();
+    // Auto-repair: if JSON has unbalanced braces, try appending }
+    const opens = (cleaned.match(/\{/g) || []).length;
+    const closes = (cleaned.match(/\}/g) || []).length;
+    if (opens > closes) {
+      cleaned += "}".repeat(opens - closes);
+    }
     const obj = JSON.parse(cleaned);
 
     // ComfyUI LLM Party format: {"tool":"name","parameters":{...}}
