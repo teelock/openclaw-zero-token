@@ -18,6 +18,10 @@ function stripForWebProvider(prompt: string): string {
   return prompt;
 }
 
+// Force English responses from web models that default to Chinese
+const ENGLISH_PREFIX =
+  "[IMPORTANT: Always reply in English. Never use Chinese or any other language.]\n\n";
+
 // Keep track of session IDs per session key to avoid creating too many web chat sessions
 const sessionMap = new Map<string, string>();
 const parentMessageMap = new Map<string, string | number>();
@@ -176,6 +180,9 @@ export function createDeepseekWebStreamFn(cookieOrJson: string): StreamFn {
           console.error(`[DeepseekWebStream] No prompt to send:`, JSON.stringify(messages));
           throw new Error("No message found to send to DeepSeek web API");
         }
+
+        // Force English output
+        prompt = ENGLISH_PREFIX + prompt;
 
         const searchEnabled =
           (options as unknown as { searchEnabled?: boolean })?.searchEnabled ?? true;
