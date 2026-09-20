@@ -18,8 +18,15 @@ if [ -n "$(git status --porcelain)" ]; then
     timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     git commit -m "Backup - $timestamp"
 
-    git remote set-url backup "https://${TOKEN}@github.com/teelock/openclaw-zero-token.git" 2>/dev/null || \
-        git remote add backup "https://${TOKEN}@github.com/teelock/openclaw-zero-token.git"
+    # Use embedded URL for classic PAT; rely on gh auth mechanism for OAuth tokens (gho_... format)
+    if echo "$TOKEN" | grep -q '^gho_'; then
+        # OAuth token: use clean URL with gh credential mechanism (already configured)
+        git remote set-url backup "https://github.com/teelock/openclaw-zero-token.git" 2>/dev/null || \
+            git remote add backup "https://github.com/teelock/openclaw-zero-token.git"
+    else
+        git remote set-url backup "https://${TOKEN}@github.com/teelock/openclaw-zero-token.git" 2>/dev/null || \
+            git remote add backup "https://${TOKEN}@github.com/teelock/openclaw-zero-token.git"
+    fi
     git push backup main
     # Restore clean remote URL (no token in git config)
     git remote set-url backup "https://github.com/teelock/openclaw-zero-token.git"
