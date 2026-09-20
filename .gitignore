@@ -131,3 +131,6 @@ dev-debug.sh
 .gateway.pid
 reports/
 .env.schema
+
+# Pi session transcripts contain sensitive data
+.pi/sessions/
