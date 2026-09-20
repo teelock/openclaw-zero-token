@@ -130,3 +130,4 @@ dist/protocol.schema.json
 dev-debug.sh
 .gateway.pid
 reports/
+.env.schema
