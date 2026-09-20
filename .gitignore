@@ -134,3 +134,6 @@ reports/
 
 # Pi session transcripts contain sensitive data
 .pi/sessions/
+
+# Serena generated cache
+.serena/cache/
